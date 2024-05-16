@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <Preference android:title="Renew TE Pin" android:key="@string/RenewTEPin"/>
+    <Preference android:title="Database Diagnostic" android:key="@string/DbDiagnostic"/>
+
+    <PreferenceCategory android:title="Backup">
+        <Preference android:title="Backup DB" android:key="@string/BackupDB"/>
+<!--        <Preference android:title="Restore DB" android:key="@string/RestoreDB"/>-->
+        <Preference android:title="Download Data" android:key="@string/DownloadData"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Reset">
+        <Preference android:title="Reset EMV Config File" android:key="@string/ResetEMVConfigFile"/>
+        <Preference android:title="Reset Config" android:key="@string/ResetConfig"/>
+        <Preference android:title="Reset DB" android:key="@string/ResetDB"/>
+        <Preference android:title="Reset NRT" android:key="@string/ResetNRT"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Clear">
+        <Preference android:title="Clear Reversal" android:key="@string/ClearReversal"/>
+        <Preference android:title="Clear Settlement" android:key="@string/ClearSettlement"/>
+    </PreferenceCategory>
+</PreferenceScreen>

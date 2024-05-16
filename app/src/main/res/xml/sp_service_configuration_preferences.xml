@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory android:title="Payment Type">
+        <SwitchPreference android:title="Visa"
+            android:key="@string/IsVisaEnabled"
+            android:defaultValue="true"/>
+        <SwitchPreference android:title="Mastercard"
+            android:key="@string/IsMasterEnabled"
+            android:defaultValue="true"/>
+        <SwitchPreference android:title="American Express"
+            android:key="@string/IsAmexEnabled"
+            android:defaultValue="false"/>
+        <SwitchPreference android:title="MyDebit"
+            android:key="@string/IsMCCSEnabled"
+            android:defaultValue="true"/>
+        <SwitchPreference android:title="UnionPay"
+            android:key="@string/IsUPIEEnabled"
+            android:defaultValue="false"/>
+        <SwitchPreference android:title="Touch'n Go"
+            android:key="@string/IsTngEnabled"
+            android:defaultValue="true"/>
+        <SwitchPreference android:title="MiFare"
+            android:key="@string/IsMifareEnabled"
+            android:defaultValue="false"/>
+        <SwitchPreference android:title="QR User Scan"
+            android:key="@string/IsQRUserScanEnabled"
+            android:defaultValue="false"/>
+        <SwitchPreference android:title="QR Merchant Scan"
+            android:key="@string/IsQRMerchantScanEnabled"
+            android:defaultValue="false"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Auto Settlement">
+        <SwitchPreference
+            android:title="Enable Auto Settlement"
+            android:key="@string/EnableAutoSettlement"/>
+        <EditTextPreference
+            android:title="Auto Settlement Time"
+            android:inputType="number"
+            android:key="@string/AutoSettlementTime"
+            app:useSimpleSummaryProvider="true"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Auto Reboot" >
+        <SwitchPreference
+            android:title="Enable Auto Reboot"
+            android:key="@string/EnableAutoReboot"/>
+        <EditTextPreference
+            android:title="Auto Reboot Time"
+            android:inputType="number"
+            android:key="@string/AutoRebootTime"
+            app:useSimpleSummaryProvider="true"/>
+    </PreferenceCategory>
+
+</PreferenceScreen>

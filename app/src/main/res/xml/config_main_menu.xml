@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <Preference
+        app:title="About"
+        app:fragment="com.sonicboom.sonicpayvui.config.fragment.MenuFragment$AboutFragment"/>
+
+    <Preference
+        app:fragment="com.sonicboom.sonicpayvui.config.fragment.SPUIConfigFragment"
+        app:key="sp_ui_header"
+        app:title="@string/app_name" />
+
+    <Preference
+        app:fragment="com.sonicboom.sonicpayvui.config.fragment.SPServiceConfigFragment"
+        app:key="sp_service_header"
+        app:title="SonicpayV Service" />
+
+</PreferenceScreen>

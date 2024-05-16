@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory android:title="@string/app_name">
+        <EditTextPreference
+            android:title="Client Code"
+            android:key="@string/client_code"
+            android:defaultValue="SBS"
+            android:selectable="false"
+            android:textAllCaps="true"
+            app:useSimpleSummaryProvider="true"/>
+        <DropDownPreference
+            android:title="Fare Mode"
+            android:key="@string/fare_mode"
+            android:entryValues="@array/fare_mode_values"
+            android:entries="@array/fare_mode_entries"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Server URL"
+            android:key="@string/server_url"
+            android:defaultValue="http://haste.my"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Monitoring URL"
+            android:key="@string/monitoring_url"
+            android:defaultValue="haste.my:1883"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="App Update Server URL"
+            android:key="@string/app_update_server_url"
+            android:defaultValue="http://haste.my/AppUpdate"
+            app:useSimpleSummaryProvider="true"/>
+        <SwitchPreference android:title="Enable Navigation Bar"
+            android:key="@string/enable_nav_bar"
+            android:defaultValue="false" />
+        <SwitchPreference android:title="Enable Status Bar"
+            android:key="@string/enable_status_bar"
+            android:defaultValue="false" />
+        <SwitchPreference android:title="Enable Auto Request QR"
+            android:key="@string/enable_auto_request_qr"
+            android:defaultValue="false" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory android:title="Acquirer Bank">
+        <EditTextPreference
+            android:title="Acquirer Bank"
+            android:key="@string/AcquirerBank"
+            app:useSimpleSummaryProvider="true"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:key="cEMVAppSelection" android:title="EMV App Selection">
+        <SwitchPreference android:title="Opt-In" android:key="@string/EmvOptIn"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:key="cEMVBatchNo" android:title="Batch No">
+        <EditTextPreference
+            android:title="Visa/Mastercard"
+            android:key="@string/VisaMasterBatchNo"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Visa"
+            android:key="@string/VisaBatchNo"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Mastercard"
+            android:key="@string/MasterBatchNo"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="American Express"
+            android:inputType="number"
+            android:key="@string/AmexBatchNo"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="MyDebit"
+            android:inputType="number"
+            android:key="@string/MCCSBatchNo"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="UnionPay"
+            android:key="@string/UPIBatchNo"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Visa (Debt Recovery)"
+            android:key="@string/VisaDRBatchNo"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Mastercard (Debt Recovery)"
+            android:key="@string/MasterDRBatchNo"
+            app:useSimpleSummaryProvider="true"/>
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="EMV Mode" android:key="cEMVMode">
+        <SwitchPreference android:title="Enable PreAuth" android:key="@string/EnablePreAuth" app:useSimpleSummaryProvider="true"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="MID/TID" android:key="cMIDTID">
+        <EditTextPreference
+            android:title="Visa/Mastercard MID"
+            android:key="@string/VisaMasterMID"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Visa/Mastercard TID"
+            android:key="@string/VisaMasterTID"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Visa MID"
+            android:key="@string/VisaMID"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Visa TID"
+            android:key="@string/VisaTID"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Mastercard MID"
+            android:key="@string/MasterMID"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Mastercard TID"
+            android:key="@string/MasterTID"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Amex MID"
+            android:key="@string/AmexMID"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Amex TID"
+            android:key="@string/AmexTID"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="MyDebit MID"
+            android:key="@string/MCCSMID"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="MyDebit TID"
+            android:key="@string/MCCSTID"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="UnionPay MID"
+            android:key="@string/UPIMID"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="UnionPay TID"
+            android:key="@string/UPITID"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Visa MID (Debt Recovery)"
+            android:key="@string/VisaMIDDR"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Visa TID (Debt Recovery)"
+            android:key="@string/VisaTIDDR"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Mastercard MID (Debt Recovery)"
+            android:key="@string/MasterMIDDR"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Mastercard MID (Debt Recovery)"
+            android:key="@string/MasterTIDDR"
+            app:useSimpleSummaryProvider="true"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="TPDU NII" android:key="cTPDUNII">
+        <EditTextPreference
+            android:title="TPDU NII"
+            android:key="@string/TPDUNII"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Visa"
+            android:key="@string/VisaTPDUNII"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Mastercard"
+            android:key="@string/MasterTPDUNII"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="MyDebit"
+            android:key="@string/MCCSTPDUNII"
+            app:useSimpleSummaryProvider="true"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="NII" android:key="cNII">
+        <EditTextPreference
+            android:title="Visa/Mastercard"
+            android:key="@string/VisaMasterNII"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Visa"
+            android:key="@string/VisaNII"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Mastercard"
+            android:key="@string/MasterNII"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Amex"
+            android:key="@string/AmexNII"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="MyDebit"
+            android:key="@string/MCCSNII"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="UnionPay"
+            android:key="@string/UPINII"
+            app:useSimpleSummaryProvider="true"/>
+    </PreferenceCategory>
+
+</PreferenceScreen>

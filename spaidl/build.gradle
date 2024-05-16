@@ -1,0 +1,36 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 33
+
+    defaultConfig {
+        namespace 'com.sbs.aidl'
+        minSdkVersion 25
+        targetSdkVersion 33
+        versionCode 11
+        versionName "1.0.1"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles 'consumer-rules.pro'
+    }
+
+    buildTypes {
+        release {
+            buildConfigField('boolean','RELEASE','true')
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        autoTest{
+            buildConfigField('boolean','RELEASE','false')
+        }
+        debug{
+            buildConfigField('boolean','RELEASE','false')
+        }
+    }
+
+}
+
+dependencies {
+
+    implementation 'androidx.appcompat:appcompat:1.4.1'
+    implementation 'com.google.android.material:material:1.5.0'
+}

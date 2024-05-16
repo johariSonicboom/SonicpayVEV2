@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <DropDownPreference
+        android:title="Operation Type"
+        android:key="@string/OperationType"
+        android:entries="@array/operation_type_entries"
+        android:entryValues="@array/operation_type_values"
+        app:useSimpleSummaryProvider="true">
+    </DropDownPreference>
+    <PreferenceCategory android:title="Parameter">
+        <SwitchPreference
+            android:title="Enable Param Download"
+            android:key="@string/ParamDownloadEnable"/>
+        <SwitchPreference
+            android:title="Enable TNG ORT Handling"
+            android:key="@string/TNGORTHandling"/>
+        <EditTextPreference
+            android:title="Param Status Limit"
+            app:useSimpleSummaryProvider="true"
+            android:key="@string/ParamStatusLimit"/>
+        <EditTextPreference
+            android:title="Last Param Time"
+            app:useSimpleSummaryProvider="true"
+            android:selectable="false"
+            android:key="@string/LastParamTime"/>
+        <EditTextPreference
+            android:title="Last FN No"
+            app:useSimpleSummaryProvider="true"
+            android:inputType="number"
+            android:key="@string/LastFNNo"/>
+        <EditTextPreference
+            android:title="Last BL No"
+            app:useSimpleSummaryProvider="true"
+            android:inputType="number"
+            android:key="@string/LastBLNo"/>
+        <EditTextPreference
+            android:title="Param Schedule Time"
+            app:useSimpleSummaryProvider="true"
+            android:inputType="number"
+            android:key="@string/ParamScheduleTime"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="SAM">
+        <EditTextPreference
+            android:title="SAM ID"
+            app:useSimpleSummaryProvider="true"
+            android:selectable="false"
+            android:key="@string/SAMID"/>
+        <EditTextPreference
+            android:title="SAM Key"
+            app:useSimpleSummaryProvider="true"
+            android:key="@string/SAMKey"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Host">
+        <SwitchPreference
+            android:title="Enable Host Auth"
+            android:key="@string/HostAuthEnable"/>
+        <EditTextPreference
+            android:title="Host Auth IP"
+            app:useSimpleSummaryProvider="true"
+            android:key="@string/HostAuthIP"/>
+        <EditTextPreference
+            android:title="Host IP"
+            app:useSimpleSummaryProvider="true"
+            android:key="@string/NRTHostIP"/>
+        <EditTextPreference
+            android:title="Host Port"
+            app:useSimpleSummaryProvider="true"
+            android:inputType="number"
+            android:key="@string/NRTHostPort"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Batch No">
+        <EditTextPreference
+            android:title="TNG"
+            android:inputType="number"
+            android:key="@string/TNGBatchNo"
+            app:useSimpleSummaryProvider="true"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="PayDirect">
+        <SwitchPreference
+            android:title="Enable PayDirect"
+            android:key="@string/PayDirectEnable"/>
+        <EditTextPreference
+            android:title="Server Address"
+            app:useSimpleSummaryProvider="true"
+            android:key="@string/PayDirectServerAddress"/>
+        <EditTextPreference
+            android:title="Client Id"
+            app:useSimpleSummaryProvider="true"
+            android:key="@string/PayDirectClientId"/>
+        <EditTextPreference
+            android:title="Private Key"
+            app:useSimpleSummaryProvider="true"
+            android:key="@string/PayDirectPrivateKey"/>
+        <EditTextPreference
+            android:title="Timeout"
+            app:useSimpleSummaryProvider="true"
+            android:key="@string/PayDirectTimeout"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Param Files">
+
+    </PreferenceCategory>
+</PreferenceScreen>

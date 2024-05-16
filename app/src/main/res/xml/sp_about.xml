@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <EditTextPreference android:title="IP"
+        android:key="@string/ip_address"
+        android:selectable="false"
+        app:useSimpleSummaryProvider="true"/>
+    <EditTextPreference android:title="Serial Number"
+        android:key="@string/serial_number"
+        android:selectable="false"
+        app:useSimpleSummaryProvider="true"/>
+    <EditTextPreference android:title="SP UI Version"
+        android:key="@string/ui_app_version"
+        android:selectable="false"
+        app:useSimpleSummaryProvider="true"/>
+    <EditTextPreference android:title=""
+        app:useSimpleSummaryProvider="true"
+        android:defaultValue="*Compatible with SP5 Service 5.1.6 onwards"
+        />
+    <EditTextPreference android:title="SP5 Service Version"
+        android:key="@string/service_app_version"
+        android:selectable="false"
+        app:useSimpleSummaryProvider="true"/>
+    <EditTextPreference android:title="Firmware Version"
+        android:key="@string/firmware_version"
+        android:selectable="false"
+        app:useSimpleSummaryProvider="true"/>
+
+    <PreferenceCategory android:title="Package List">
+
+    </PreferenceCategory>
+</PreferenceScreen>

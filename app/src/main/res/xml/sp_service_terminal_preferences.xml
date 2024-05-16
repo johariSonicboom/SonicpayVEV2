@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory android:title="Terminal">
+        <DropDownPreference
+            android:title="Card Interface"
+            android:key="@string/CardInterface"
+            android:entries="@array/card_interface_entries"
+            android:entryValues="@array/card_interface_values"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:title="Card-Insert Timeout (ms)"
+            android:key="@string/CardInsertTimeout"
+            android:inputType="number"
+            app:useSimpleSummaryProvider="true"/>
+    </PreferenceCategory>
+</PreferenceScreen>

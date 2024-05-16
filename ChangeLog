@@ -1,0 +1,63 @@
+SonicpayUI
+
+REMARKS:
+- MainActivity, Sales Completion will show Please Tap screen for MyDebit certification (to be rollback)
+
+version 1.0.10
+    - Added flag to keep screen always on (temporary solution to prevent forced screen off by IM30-V2 OS)
+    - [Fix] Sales with QR shown, QR not shown when hit Tap Again
+    - [MQTT] Don't try connect server if url not set
+    - Show MaybankQR as DuitNowQR color
+
+Version 1.0.9
+    - Added app startup loading page
+    - Added ParkingExit swap card logic
+    - Added Reset function in maintenance for: Emv Config File, Settings, Emv Database, NRT Database
+    - Added backup database function
+    - [MQTT] Added Reset Emv Config File
+
+Version 1.0.8
+Version 1.0.7 (missing app auto start setting)
+    2024-01-30
+    - Added aidl PerformAction
+    - Added "Download CAPK" handling in maintenance mode
+    - Added TNG param download and delete
+    - After service download config, read below setting from service and update UI setting:
+        - UI Controller IP and Port
+        - UI Auto Request QR (follow QR User Scan enablement)
+    - [TapCardFragment] Show scheme logo auto play base on scheme enablement
+    - [Fix] Welcome screen scheme logo not shown when only 1 scheme enabled
+    - [Fix] Remove QR code shown on screen for ReadCard command
+
+Version 1.0.6
+    2024-01-24
+    - Enabled app auto start
+
+Version 1.0.5
+    2024-01-24
+    - [Fix] Wrong path for retrieving log file during file upload
+
+Version 1.0.4
+    2024-01-17
+    - Add handling for mobile payment processing flow that required extra step from holder like phone unlock
+    - Added beep sound for DisplayInfo page
+    - [GLTCPClient] Missing close tcp connection after respond controller, causing app hang due to fd limit
+    - [RetrofitClient] Change log level to BASIC
+    - [GLTCPServer] Change GLCommDebut level from All to Error
+
+Version 1.0.3
+    2024-01-15
+    - Default Monitoring URL from http://haste.my:1883 to haste.my:1883
+    - Adjusted the generated QR width and height (fit for half screen size)
+
+Version 1.0.2
+    2024-01-09
+    - Stop the result page auto redirection to idle page timer if received new command
+    - [Fix] MQTT FileUpload inverted date from and date to value
+
+Version 1.0.1
+    2024-01-01
+    - Added app auto start feature
+    - [Fix] ParkingExit response missing SystemId
+
+Version 1.0.0

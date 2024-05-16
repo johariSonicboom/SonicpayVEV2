@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory android:title="Server">
+        <EditTextPreference android:title="IP Address"
+            app:useSimpleSummaryProvider="true"
+            android:key="@string/ServerIP"
+            android:inputType="number"/>
+        <EditTextPreference
+            android:title="Port"
+            app:useSimpleSummaryProvider="true"
+            android:key="@string/ServerPort" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="TMS Service">
+        <EditTextPreference
+            android:title="Web Service URL"
+            app:useSimpleSummaryProvider="true"
+            android:key="@string/TMSWSURL" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Master Terminal" android:key="cMasterTerminal">
+        <EditTextPreference android:title="IP Address"
+            app:useSimpleSummaryProvider="true"
+            android:key="@string/MasterTerminalIP"
+            android:inputType="number"/>
+        <EditTextPreference
+            android:title="Port"
+            app:useSimpleSummaryProvider="true"
+            android:key="@string/MasterTerminalPort"
+            android:inputType="number"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Bank Host" android:key="cBankHost">
+        <EditTextPreference android:title="IP Address"
+            app:useSimpleSummaryProvider="true"
+            android:key="@string/BankHostIP" />
+        <EditTextPreference android:title="Secondary IP Address"
+            app:useSimpleSummaryProvider="true"
+            android:key="@string/SecondaryBankHostIP" />
+        <EditTextPreference
+            android:title="Port"
+            app:useSimpleSummaryProvider="true"
+            android:key="@string/BankHostPort" />
+        <EditTextPreference
+            android:title="Port 2"
+            app:useSimpleSummaryProvider="true"
+            android:key="@string/BankHostPort2" />
+        <EditTextPreference
+            android:title="Receive Timeout (ms)"
+            app:useSimpleSummaryProvider="true"
+            android:key="@string/BankHostReceiveTimeout" />
+        <SwitchPreference
+            android:title="Secure Conn. (SSL)"
+            android:key="@string/EnableHostSSL"
+            app:useSimpleSummaryProvider="true" />
+        <EditTextPreference android:title="SSL Cert Name"
+            app:useSimpleSummaryProvider="true"
+            android:key="@string/BankHostSSLCertname" />
+    </PreferenceCategory>
+</PreferenceScreen>

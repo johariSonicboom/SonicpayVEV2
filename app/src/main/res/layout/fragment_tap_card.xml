@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".TapCardFragment">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_height="270dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@drawable/dotted_container">
+            <pl.droidsonroids.gif.GifImageView
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:layout_marginTop="10dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/hand_tap_yborder"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:layout_marginLeft="16dp"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/tapHereMsg"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="@string/tap_here"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:textSize="36dp"/>
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_marginTop="3dp"
+                    android:layout_height="50sp"
+                    android:layout_marginHorizontal="8dp"
+                    android:src="@drawable/paywave_logo"
+                    android:scaleType="fitCenter"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/tapcard_amountLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="center_horizontal">
+                <TextView
+                    android:id="@+id/tapCard_totalAmountCurrency"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="8dp"
+                    android:gravity="top"
+                    android:textAllCaps="true"
+                    android:textSize="28sp"
+                    android:fontFamily="@font/poppins_medium"
+                    android:text="MYR "/>
+                <TextView
+                    android:id="@+id/tapCard_totalAmount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textAllCaps="true"
+                    android:textSize="48sp"
+                    android:textStyle="bold"
+                    android:text="10.00"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/qrUserScan"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+
+            android:layout_marginBottom="20dp"
+            android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/gifTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:layout_marginTop="20dp"
+                    android:textSize="28dp"
+                    android:text="We Accept"/>
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <ImageView
+                        android:id="@+id/tapCard"
+                        android:layout_width="wrap_content"
+                        android:layout_height="160dp"
+                        android:layout_centerInParent="true"
+                        android:scaleType="fitCenter" />
+
+<!--                    <pl.droidsonroids.gif.GifImageView-->
+<!--                        android:id="@+id/tapCard"-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="160dp"-->
+<!--                        android:layout_centerInParent="true"-->
+<!--                        android:scaleType="fitCenter"-->
+<!--                        android:src="@drawable/scheme" />-->
+
+                    <android.widget.Button
+                        android:id="@+id/moreQROptions"
+                        android:layout_width="38dp"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="20dp"
+                        android:layout_toEndOf="@id/tapCard"
+                        android:paddingStart="23dp"
+                        android:background="@drawable/more_qr_button"
+                        android:drawableStart="@drawable/chevron_right"
+                        android:elevation="16sp"
+                        android:visibility="gone" />
+
+                </RelativeLayout>
+
+                <TextView
+                    android:id="@+id/qrTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:visibility="gone"
+                    android:textSize="20sp"/>
+
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/qrMerchantScan"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_marginBottom="8dp"
+            android:orientation="vertical">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="16dp"
+                android:gravity="center">
+
+                <FrameLayout
+                    android:id="@+id/cameraPreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    >
+                    <SurfaceView
+                        android:id="@+id/camera_stream"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/rounded_corner">
+                    </SurfaceView>
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/scanQRInstruction"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_centerHorizontal="true"
+                    android:layout_alignParentTop="true"
+                    android:background="@drawable/rounded_corner_with_bg"
+                    android:textAlignment="center"
+                    android:textSize="22dp"
+                    android:textColor="@color/white"
+                    android:text=" Scan at bottom right ">
+                </TextView>
+
+                <FrameLayout
+                    android:layout_below="@+id/scanQRInstruction"
+                    android:layout_width="200dp"
+                    android:layout_height="200dp"
+                    android:layout_marginVertical="8dp"
+                    android:layout_centerVertical="true"
+                    android:layout_centerHorizontal="true"
+                    android:background="@drawable/qr_code_reader_square"/>
+
+            </RelativeLayout>
+
+
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:paddingHorizontal="16sp">
+
+                <LinearLayout
+                    android:id="@+id/visa_layout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:layout_weight="1" >
+                    <ImageView
+                        android:layout_width="50dp"
+                        android:layout_height="40dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/visa_logo" />
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/master_layout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:layout_weight="1" >
+                    <ImageView
+                        android:layout_width="50dp"
+                        android:layout_height="40dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/mastercard_logo" />
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"/>
+                </LinearLayout>
+                <LinearLayout
+                    android:id="@+id/mydebit_layout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:layout_weight="1" >
+                    <ImageView
+                        android:layout_width="100dp"
+                        android:layout_height="40dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/mydebit_logo"/>
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"/>
+                </LinearLayout>
+                <LinearLayout
+                    android:id="@+id/amex_layout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:layout_weight="1" >
+                    <ImageView
+                        android:layout_width="50dp"
+                        android:layout_height="40dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/amex_crop_logo" />
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="0dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/unionpay_layout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:layout_weight="1" >
+                    <ImageView
+                        android:layout_width="50dp"
+                        android:layout_height="40dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/unionpay_logo" />
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="0dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tng_layout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:layout_weight="1" >
+
+                    <ImageView
+                        android:layout_width="50dp"
+                        android:layout_height="40dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/tng_logo" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

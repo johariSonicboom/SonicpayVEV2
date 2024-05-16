@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory android:title="General">
+        <Preference
+            android:title="Download Settings"
+            android:key="@string/DownloadSettings"/>
+        <Preference
+            android:title="Download CAPK"
+            android:key="@string/DownloadCAPK"/>
+        <Preference
+            android:title="Upload Data"
+            android:key="@string/UploadData"/>
+
+        <Preference
+            android:title="Upload File"
+            android:key="@string/UploadFile"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Remote Key Loading" android:key="cRemoteKey">
+        <Preference android:title="Visa/Mastercard" android:key="@string/RKLVisaMaster"/>
+        <Preference android:title="American Express" android:key="@string/RKLAmex"/>
+        <Preference android:title="MyDebit" android:key="@string/RKLMCCS"/>
+        <Preference android:title="UnionPay" android:key="@string/RKLUP"/>
+        <Preference android:title="Initial Key Loading" android:key="@string/RKLMGATE"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Key Loading" android:key="cKeyLoading">
+        <Preference android:title="Key Loading" android:key="@string/PBBKL"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Perform Settlement" android:key="cSettlement">
+        <Preference android:title="Visa/Mastercard"
+            android:key="@string/SettlementVisaMaster"/>
+        <Preference android:title="Visa"
+            android:key="@string/SettlementVisa"/>
+        <Preference android:title="Mastercard"
+            android:key="@string/SettlementMaster"/>
+        <Preference android:title="American Express" android:key="@string/SettlementAmex"/>
+        <Preference android:title="MyDebit" android:key="@string/SettlementMCCS"/>
+        <Preference android:title="UnionPay" android:key="@string/SettlementUPI"/>
+        <Preference android:title="Visa Debt Recovery" android:key="@string/SettlementVisaDR"/>
+        <Preference android:title="Master Debt Recovery" android:key="@string/SettlementMasterDR"/>
+        <Preference android:title="Touch'n Go" android:key="@string/SettlementTNG"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="TouchNGo Parameter" android:key="cTNGParam">
+        <Preference android:title="Download Param"
+            android:key="@string/TNGDownloadParam"/>
+        <Preference android:title="Remove Param"
+            android:key="@string/TNGRemoveParam"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Advanced">
+        <Preference
+            android:title="Advanced Operation"
+            app:fragment="com.sonicboom.sonicpayvui.config.fragment.AdvancedConfigLoginFragment"/>
+    </PreferenceCategory>
+</PreferenceScreen>

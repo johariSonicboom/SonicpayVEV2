@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- About -->
+    <string name="ip_address">IPAddress</string>
+    <string name="serial_number">SerialNo</string>
+    <string name="ui_app_version">UIAppVersion</string>
+    <string name="service_app_version">ServiceAppVersion</string>
+    <string name="firmware_version">FirmwareVersion</string>
+    <string name="PackageList">PackageList</string>
+
+    <!-- SP UI Config -->
+    <!-- General Configuration -->
+    <string name="client_code">ClientCode</string>
+    <string name="fare_mode">FareMode</string>
+    <string name="server_url">ServerURL</string>
+    <string name="monitoring_url">MonitoringURL</string>
+    <string name="app_update_server_url">AppUpdateServerURL</string>
+    <string name="enable_nav_bar">EnableNavBar</string>
+    <string name="enable_status_bar">EnableStatusBar</string>
+    <string name="enable_auto_request_qr">EnableAutoRequestQR</string>
+
+    <!-- TCP Configuration -->
+    <string name="enable_tcp">EnableTCP</string>
+    <string name="tcp_listener_port">TCPListenerPort</string>
+    <string name="tcp_listener_receive_timeout">TCPListenerReceiveTimeout</string>
+    <string name="tcp_controller_ip">TCPControllerIP</string>
+    <string name="tcp_controller_port">TCPControllerPort</string>
+    <string name="tcp_controller_receive_timeout">TCPControllerReceiveTimeout</string>
+    <string name="tcp_controller_send_timeout">TCPControllerSendTimeout</string>
+
+    <!-- SP5 Service Config -->
+    <!-- Terminal Preference -->
+    <string name="CardInterface">CardInterface</string>
+    <string name="CardInsertTimeout">CardInsertTimeout</string>
+
+    <!-- Network Preference -->
+    <string name="ServerIP">ServerIP</string>
+    <string name="ServerPort">ServerPort</string>
+    <string name="TMSWSURL">TMSWSURL</string>
+    <string name="MasterTerminalIP">MasterTerminalIP</string>
+    <string name="MasterTerminalPort">MasterTerminalPort</string>
+    <string name="BankHostIP">BankHostIP</string>
+    <string name="SecondaryBankHostIP">SecondaryBankHostIP</string>
+    <string name="BankHostPort">BankHostPort</string>
+    <string name="BankHostPort2">BankHostPort2</string>
+    <string name="BankHostReceiveTimeout">BankHostReceiveTimeout</string>
+    <string name="EnableHostSSL">EnableHostSSL</string>
+    <string name="BankHostSSLCertname">BankHostSSLCertName</string>
+
+    <!-- Configuration Preference -->
+    <string name="IsVisaEnabled">IsVisaEnabled</string>
+    <string name="IsMasterEnabled">IsMasterEnabled</string>
+    <string name="IsAmexEnabled">IsAmexEnabled</string>
+    <string name="IsMCCSEnabled">IsMCCSEnabled</string>
+    <string name="IsUPIEEnabled">IsUPIEEnabled</string>
+    <string name="IsTngEnabled">IsTNGEnabled</string>
+    <string name="IsMifareEnabled">IsMifareEnabled</string>
+    <string name="IsQRUserScanEnabled">IsQRUserScanEnabled</string>
+    <string name="IsQRMerchantScanEnabled">IsQRMerchantScanEnabled</string>
+    <string name="EnableAutoSettlement">EnableAutoSettlement</string>
+    <string name="AutoSettlementTime">AutoSettlementTime</string>
+    <string name="EnableAutoReboot">EnableAutoReboot</string>
+    <string name="AutoRebootTime">AutoRebootTime</string>
+
+    <!-- TNG Setting Preference -->
+    <string name="OperationType">OperationType</string>
+    <string name="ParamStatusLimit">ParamStatusLimit</string>
+    <string name="LastParamTime">LastParamTime</string>
+    <string name="LastFNNo">LastFNNo</string>
+    <string name="LastBLNo">LastBLNo</string>
+    <string name="ParamDownloadEnable">ParamDownloadEnable</string>
+    <string name="TNGORTHandling">TNGORTHandling</string>
+    <string name="ParamScheduleTime">ParamScheduleTime</string>
+    <string name="SAMID">SAMID</string>
+    <string name="SAMKey">SAMKey</string>
+    <string name="HostAuthEnable">HostAuthEnable</string>
+    <string name="HostAuthIP">HostAuthIP</string>
+    <string name="NRTHostIP">NRTHostIP</string>
+    <string name="NRTHostPort">NRTHostPort</string>
+    <string name="PayDirectEnable">PayDirectEnable</string>
+    <string name="PayDirectServerAddress">PayDirectServerAddress</string>
+    <string name="PayDirectClientId">PayDirectClientId</string>
+    <string name="PayDirectPrivateKey">PayDirectPrivateKey</string>
+    <string name="PayDirectTimeout">PayDirectTimeout</string>
+
+    <!-- EMV Setting -->
+    <string name="AcquirerBank">AcquirerBank</string>
+    <string name="EmvOptIn">EmvOptIn</string>
+    <string name="VisaMasterBatchNo">VisaMasterBatchNo</string>
+    <string name="VisaBatchNo">VisaBatchNo</string>
+    <string name="MasterBatchNo">MasterBatchNo</string>
+    <string name="AmexBatchNo">AmexBatchNo</string>
+    <string name="MCCSBatchNo">MCCSBatchNo</string>
+    <string name="UPIBatchNo">UPIBatchNo</string>
+    <string name="VisaDRBatchNo">VisaDRBatchNo</string>
+    <string name="MasterDRBatchNo">MasterDRBatchNo</string>
+    <string name="TNGBatchNo">TNGBatchNo</string>
+    <string name="EnablePreAuth">EnablePreAuth</string>
+    <string name="VisaMasterMID">VisaMasterMID</string>
+    <string name="VisaMasterTID">VisaMasterTID</string>
+    <string name="VisaMID">VisaMID</string>
+    <string name="VisaTID">VisaTID</string>
+    <string name="MasterMID">MasterMID</string>
+    <string name="MasterTID">MasterTID</string>
+    <string name="AmexMID">AmexMID</string>
+    <string name="AmexTID">AmexTID</string>
+    <string name="MCCSMID">MCCSMID</string>
+    <string name="MCCSTID">MCCSTID</string>
+    <string name="UPIMID">UPIMID</string>
+    <string name="UPITID">UPITID</string>
+    <string name="VisaMIDDR">VisaMIDDR</string>
+    <string name="VisaTIDDR">VisaTIDDR</string>
+    <string name="MasterMIDDR">MasterMIDDR</string>
+    <string name="MasterTIDDR">MasterTIDDR</string>
+    <string name="TPDUNII">TPDUNII</string>
+    <string name="VisaTPDUNII">VisaTPDUNII</string>
+    <string name="MasterTPDUNII">MasterTPDUNII</string>
+    <string name="MCCSTPDUNII">MCCSTPDUNII</string>
+    <string name="VisaMasterNII">VisaMasterNII</string>
+    <string name="VisaNII">VisaNII</string>
+    <string name="MasterNII">MasterNII</string>
+    <string name="AmexNII">AmexNII</string>
+    <string name="MCCSNII">MCCSNII</string>
+    <string name="UPINII">UPINII</string>
+
+    <!-- QR Setting -->
+    <string name="QRServerIP">QRServerIP</string>
+    <string name="QRServerPort">QRServerPort</string>
+
+    <!-- Operation -->
+    <string name="DownloadSettings">DownloadSettings</string>
+    <string name="DownloadCAPK">DownloadCAPK</string>
+    <string name="UploadData">UploadData</string>
+    <string name="UploadFile">UploadFile</string>
+    <string name="RKLVisaMaster">RKLVisaMaster</string>
+    <string name="RKLAmex">RKLAmex</string>
+    <string name="RKLMCCS">RKLMCCS</string>
+    <string name="RKLUP">RKLUP</string>
+    <string name="RKLMGATE">RKLMGATE</string>
+    <string name="PBBKL">PBBKL</string>
+    <string name="SettlementVisaMaster">SettlementVisaMaster</string>
+    <string name="SettlementVisa">SettlementVisa</string>
+    <string name="SettlementMaster">SettlementMaster</string>
+    <string name="SettlementAmex">SettlementAmex</string>
+    <string name="SettlementMCCS">SettlementMCCS</string>
+    <string name="SettlementUPI">SettlementUPI</string>
+    <string name="SettlementVisaDR">SettlementVisaDR</string>
+    <string name="SettlementMasterDR">SettlementMasterDR</string>
+    <string name="SettlementTNG">SettlementTNG</string>
+    <string name="TNGDownloadParam">TNGDownloadParam</string>
+    <string name="TNGRemoveParam">TNGRemoveParam</string>
+
+    <!-- Advanced Operation -->
+    <string name="RenewTEPin">RenewTEPin</string>
+    <string name="DbDiagnostic">DbDiagnostic</string>
+    <string name="BackupDB">BackupDB</string>
+    <string name="RestoreDB">RestoreDB</string>
+    <string name="DownloadData">DownloadData</string>
+    <string name="ResetEMVConfigFile">ResetEMVConfigFile</string>
+    <string name="ResetConfig">ResetConfig</string>
+    <string name="ResetDB">ResetDB</string>
+    <string name="ResetNRT">ResetNRT</string>
+    <string name="ClearReversal">ClearReversal</string>
+    <string name="ClearSettlement">ClearSettlement</string>
+
+    <!-- Log File -->
+    <string name="LogFileRetentionDay">LogFileRetentionDay</string>
+
+</resources>

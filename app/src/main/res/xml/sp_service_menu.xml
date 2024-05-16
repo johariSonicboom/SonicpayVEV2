@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+    <Preference
+        app:title="Terminal"
+        app:fragment="com.sonicboom.sonicpayvui.config.fragment.SPServiceConfigFragment$TerminalFragment"/>
+    <Preference app:title="Network"
+        app:fragment="com.sonicboom.sonicpayvui.config.fragment.SPServiceConfigFragment$NetworkFragment"/>
+    <Preference app:title="Configuration"
+        app:fragment="com.sonicboom.sonicpayvui.config.fragment.SPServiceConfigFragment$ConfigurationFragment"/>
+    <Preference app:title="EMV Setting"
+        app:fragment="com.sonicboom.sonicpayvui.config.fragment.SPServiceConfigFragment$EMVSettingFragment"
+        />
+    <Preference app:title="TouchNGo Setting"
+        app:fragment="com.sonicboom.sonicpayvui.config.fragment.SPServiceConfigFragment$TNGSettingFragment" />
+    <Preference app:title="QR Setting"
+        app:fragment="com.sonicboom.sonicpayvui.config.fragment.SPServiceConfigFragment$QRSettingFragment"/>
+    <Preference app:title="Operation"
+        app:fragment="com.sonicboom.sonicpayvui.config.fragment.SPServiceConfigFragment$OperationFragment"/>
+
+</PreferenceScreen>
