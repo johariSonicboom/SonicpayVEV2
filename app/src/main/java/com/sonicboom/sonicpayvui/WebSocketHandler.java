@@ -346,7 +346,7 @@ public class WebSocketHandler {
                     new Date().getTime();
                     SimpleDateFormat format2 = new SimpleDateFormat("yyyyMMddHHmmss");
                     String formattedDate = format2.format(new Date());
-                    mainActivity.StartCharging(formattedDate);
+//                    mainActivity.StartCharging(formattedDate);
                     break;
                 case "available":
                     break;
@@ -400,7 +400,7 @@ public class WebSocketHandler {
                     new Date().getTime();
                     SimpleDateFormat format2 = new SimpleDateFormat("yyyyMMddHHmmss");
                     String formattedDate = format2.format(new Date());
-                    mainActivity.StartCharging(formattedDate);
+//                    mainActivity.StartCharging(formattedDate);
                 case "charging":
                     if (!notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description.isEmpty()) {
                         //charging fragment
