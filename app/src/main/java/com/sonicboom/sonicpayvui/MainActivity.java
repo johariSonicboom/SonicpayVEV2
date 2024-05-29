@@ -1748,10 +1748,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         btnStartCharge.setText("Disconnected");
                         btnStartCharge.setClickable(false);
                         btnStartCharge.setVisibility(View.VISIBLE);
-                        getSupportFragmentManager().beginTransaction()
-                                .setReorderingAllowed(true)
-                                .add(R.id.fragmentContainer, WelcomeFragment.class, null)
-                                .commit();
+//                        getSupportFragmentManager().beginTransaction()
+//                                .setReorderingAllowed(true)
+//                                .add(R.id.fragmentContainer, WelcomeFragment.class, null)
+//                                .commit();
                         GeneralVariable.Status = "Disconnected";
                         break;
                     case Charging:
@@ -2157,6 +2157,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         for (int i = 0; i < componentList.length; i++) {
             if (componentList[i].ComponentId == newComponent.ComponentId) { // Assuming getId() returns a unique identifier for each component
                 componentList[i] = newComponent; // Replace the component with the new one
+                break; // Exit the loop since we found and replaced the component
+            }
+        }
+        return componentList;
+    }
+
+    public Component[] replaceComponentConnectors(Component[] componentList, String componentCode, List<Connector> newConnectors) {
+        for (int i = 0; i < componentList.length; i++) {
+            if (componentList[i].ComponentCode.equals(componentCode)) { // Assuming getId() returns a unique identifier for each component
+                componentList[i].Connectors = newConnectors; // Replace the component with the new one
                 break; // Exit the loop since we found and replaced the component
             }
         }

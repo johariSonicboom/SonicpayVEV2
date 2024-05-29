@@ -10,6 +10,7 @@ import com.sbs.aidl.Class.SalesResult;
 import com.sonicboom.sonicpayvui.EVModels.Component;
 import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
 import com.sonicboom.sonicpayvui.EVModels.GetCharPointStatusRequest;
+import com.sonicboom.sonicpayvui.EVModels.GetStatusNotificationResponse;
 import com.sonicboom.sonicpayvui.EVModels.GetStatusResponse;
 import com.sonicboom.sonicpayvui.EVModels.SharedResource;
 import com.sonicboom.sonicpayvui.EVModels.StartSales;
@@ -77,6 +78,8 @@ public class WebSocketHandler {
                 String[] Received = message.split("\\|");
                 switch (Received[1]) {
                     case "StatusNotification":
+                        StatusNotificationReceived(Received[2]);
+                        break;
                     case "GetCharPointStatus":
                         NotificationReceived(Received[2]);
                         sharedResource.setCondition();
@@ -206,7 +209,7 @@ public class WebSocketHandler {
 
         String GetChargePointMessage = String.format("%s|%s|%s", uniqId, "GetCharPointStatus", gson.toJson(charPointStatusRequest));
         //new Thread(() -> {
-        sharedResource=new SharedResource();
+        sharedResource = new SharedResource();
         webSocketClient.send(GetChargePointMessage);
         sharedResource.waitForCondition();
         LogUtils.e("GetStatus ", GetChargePointMessage);
@@ -217,6 +220,7 @@ public class WebSocketHandler {
     int Txid = 0;
 
     public String startTransactionTrace;
+
     StartSales SalesResultResponse(SalesResult PreAuthResponse, String PhoneNumber) {
         String uniqId = RandomString(16);
         StartTransaction startTransaction = new StartTransaction();
@@ -300,6 +304,67 @@ public class WebSocketHandler {
     static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     static SecureRandom rnd = new SecureRandom();
 
+    public void StatusNotificationReceived(String statusNotificationResponseMsg) {
+        if (!statusNotificationResponseMsg.isEmpty()) {
+
+            GetStatusNotificationResponse statusNotificationResponse = new Gson().fromJson(statusNotificationResponseMsg, GetStatusNotificationResponse.class);
+            Log.d("Status Notification Response", statusNotificationResponse.toString());
+            Component component = mainActivity.GetSelectedComponentbyComponentCode(statusNotificationResponse.ComponentCode, componentList);
+            Log.d("Notification Response", "GetStatusResponse");
+
+            String connectorStatus;
+            Component component2 = mainActivity.GetSelectedComponentbyComponentCode(mainActivity.SelectedChargingStationComponent.ComponentCode, componentList);
+
+            if (component2.Status == null) {
+                connectorStatus = "Offline";
+            } else {
+                connectorStatus = statusNotificationResponse.Status;
+            }
+
+            switch (connectorStatus.toLowerCase(Locale.ROOT)) {
+                case "preparing":
+
+                    break;
+                case "startcharge":
+                    Component selectedComponent = mainActivity.GetSelectedComponentbyComponentCode(mainActivity.SelectedChargingStationComponent.ComponentCode, componentList);
+//                        mainActivity.UpdateAllConnectorStatus(notificationResponse.Status, selectedComponent);
+
+                case "charging":
+                    if (!statusNotificationResponse.Description.isEmpty()) {
+
+//                            mainActivity.StartCharging(notificationResponse.Description);
+                        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
+
+                        try {
+                            mainActivity.SelectedChargingStationComponent.StartChargeTime = format.parse(statusNotificationResponse.Description);
+                        } catch (Exception ex) {
+                            LogUtils.e("NotificationReceived ", ex);
+                        }
+                    } else if (mainActivity.SelectedChargingStationComponent.StartChargeTime != null) {
+                        mainActivity.UpdateChargePointStatus(eChargePointStatus.Charging);
+                    }
+                    new Date().getTime();
+                    SimpleDateFormat format2 = new SimpleDateFormat("yyyyMMddHHmmss");
+                    String formattedDate = format2.format(new Date());
+                    mainActivity.StartCharging(formattedDate);
+                    break;
+                case "available":
+                    break;
+                case "offline":
+                    break;
+            }
+
+            mainActivity.UpdateStatus(statusNotificationResponse.Status);
+            GeneralVariable.ChargePointStatus = statusNotificationResponse.Status;
+
+            mainActivity.UpdateConnectorStatus(statusNotificationResponse.Status, component2, statusNotificationResponse.ConnectorId);
+            mainActivity.SelectedChargingStationComponent.Status = statusNotificationResponse.Status;
+            mainActivity.replaceComponent(componentList, mainActivity.SelectedChargingStationComponent);
+
+        }
+
+    }
+
     public void NotificationReceived(String notificationResponseMsg) {
         if (!notificationResponseMsg.isEmpty()) {
             GetStatusResponse notificationResponse = new Gson().fromJson(notificationResponseMsg, GetStatusResponse.class);
@@ -307,121 +372,63 @@ public class WebSocketHandler {
 
             Component component = mainActivity.GetSelectedComponentbyComponentCode(notificationResponse.ComponentCode, componentList);
 
-            if (notificationResponse != null && notificationResponse.Connectors != null && !notificationResponse.Connectors.isEmpty()) {
-                mainActivity.UpdateConnectorStatus(notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Status, component, notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).ConnectorId);
+            mainActivity.replaceComponentConnectors(componentList, notificationResponse.ComponentCode, notificationResponse.Connectors);
+//            mainActivity.UpdateConnectorStatus(component.Connectors.get(component.SelectedConnector).Status, component, notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).ConnectorId);
 //                String connectorStatus = notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Status;
 
-                String connectorStatus;
+//            mainActivity.replaceComponent(componentList, component);
+            String connectorStatus;
 
-                if (component.Connectors.isEmpty()) {
-                    connectorStatus = "Offline";
-                } else {
-                    connectorStatus = notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Status;
-                }
-
-                component.FareChargeText = notificationResponse.FareChargeText;
-                component.FareChargeDescription = notificationResponse.DescriptionText;
-                mainActivity.replaceComponent(componentList, component);
-
-                switch (connectorStatus.toLowerCase(Locale.ROOT)) {
-//                switch (notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Status.toLowerCase(Locale.ROOT)) {
-                    case "preparing":
-
-                        break;
-                    case "startcharge":
-                        Component selectedComponent = mainActivity.GetSelectedComponentbyComponentCode(notificationResponse.ComponentCode, componentList);
-//                        mainActivity.UpdateAllConnectorStatus(notificationResponse.Status, selectedComponent);
-                        new Date().getTime();
-                        SimpleDateFormat format2 = new SimpleDateFormat("yyyyMMddHHmmss");
-                        String formattedDate = format2.format(new Date());
-                        mainActivity.StartCharging(formattedDate);
-                    case "charging":
-                        if (!notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description.isEmpty()) {
-                            //charging fragment
-//                            mainActivity.StartCharging(notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description);
-                            SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
-
-
-                            try {
-                                mainActivity.SelectedChargingStationComponent = mainActivity.GetSelectedComponentbyComponentCode(notificationResponse.ComponentCode, componentList);
-                                mainActivity.SelectedChargingStationComponent.StartChargeTime = format.parse(notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description);
-                                mainActivity.replaceComponent(componentList, mainActivity.SelectedChargingStationComponent);
-                            } catch (Exception ex) {
-                                LogUtils.e(ex);
-                            }
-                        } else if (mainActivity.SelectedChargingStationComponent.StartChargeTime != null) {
-                            mainActivity.UpdateChargePointStatus(eChargePointStatus.Charging);
-                        }
-
-                        break;
-                    case "available":
-//                        mainActivity.UpdateChargePointStatus(eChargePointStatus.Idle);
-                        component.FareChargeText = notificationResponse.FareChargeText;
-                        component.FareChargeDescription = notificationResponse.DescriptionText;
-                        mainActivity.replaceComponent(componentList, component);
-                        break;
-                    case "offline":
-//                        mainActivity.UpdateChargePointStatus(eChargePointStatus.Disconnected);
-                        break;
-                }
-                mainActivity.UpdateStatus(notificationResponse.Status);
-                GeneralVariable.ChargePointStatus = notificationResponse.Status;
-
+            if (component.Connectors.isEmpty()) {
+                connectorStatus = "Offline";
             } else {
-                Log.d("Notification Response", "GetStatusResponse");
+                connectorStatus = notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Status;
+            }
 
-                String connectorStatus;
-                Component component2 = mainActivity.GetSelectedComponentbyComponentCode(mainActivity.SelectedChargingStationComponent.ComponentCode, componentList);
+            component.FareChargeText = notificationResponse.FareChargeText;
+            component.FareChargeDescription = notificationResponse.DescriptionText;
+            mainActivity.replaceComponent(componentList, component);
 
-                if (component2.Status == null) {
-                    connectorStatus = "Offline";
-                } else {
-                    connectorStatus = notificationResponse.Status;
-                }
+            switch (connectorStatus.toLowerCase(Locale.ROOT)) {
+//                switch (notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Status.toLowerCase(Locale.ROOT)) {
+                case "preparing":
 
-                switch (connectorStatus.toLowerCase(Locale.ROOT)) {
-                    case "preparing":
-
-                        break;
-                    case "startcharge":
-                        Component selectedComponent = mainActivity.GetSelectedComponentbyComponentCode(mainActivity.SelectedChargingStationComponent.ComponentCode, componentList);
+                    break;
+                case "startcharge":
+                    Component selectedComponent = mainActivity.GetSelectedComponentbyComponentCode(notificationResponse.ComponentCode, componentList);
 //                        mainActivity.UpdateAllConnectorStatus(notificationResponse.Status, selectedComponent);
+                    new Date().getTime();
+                    SimpleDateFormat format2 = new SimpleDateFormat("yyyyMMddHHmmss");
+                    String formattedDate = format2.format(new Date());
+                    mainActivity.StartCharging(formattedDate);
+                case "charging":
+                    if (!notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description.isEmpty()) {
+                        //charging fragment
+//                            mainActivity.StartCharging(notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description);
+                        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
 
-                    case "charging":
-                        if (!notificationResponse.Description.isEmpty()) {
 
-//                            mainActivity.StartCharging(notificationResponse.Description);
-                            SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
-
-                            try {
-                                mainActivity.SelectedChargingStationComponent.StartChargeTime = format.parse(notificationResponse.Description);
-                            } catch (Exception ex) {
-                                LogUtils.e("NotificationReceived ", ex);
-                            }
-                        } else if (mainActivity.SelectedChargingStationComponent.StartChargeTime != null) {
-                            mainActivity.UpdateChargePointStatus(eChargePointStatus.Charging);
+                        try {
+                            mainActivity.SelectedChargingStationComponent = mainActivity.GetSelectedComponentbyComponentCode(notificationResponse.ComponentCode, componentList);
+                            mainActivity.SelectedChargingStationComponent.StartChargeTime = format.parse(notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description);
+                            mainActivity.replaceComponent(componentList, mainActivity.SelectedChargingStationComponent);
+                        } catch (Exception ex) {
+                            LogUtils.e(ex);
                         }
-                        new Date().getTime();
-                        SimpleDateFormat format2 = new SimpleDateFormat("yyyyMMddHHmmss");
-                        String formattedDate = format2.format(new Date());
-                        mainActivity.StartCharging(formattedDate);
-                        break;
-                    case "available":
+                    } else if (mainActivity.SelectedChargingStationComponent.StartChargeTime != null) {
+                        mainActivity.UpdateChargePointStatus(eChargePointStatus.Charging);
+                    }
+
+                    break;
+                case "available":
 //                        mainActivity.UpdateChargePointStatus(eChargePointStatus.Idle);
-                        component2.FareChargeText = notificationResponse.FareChargeText;
-                        component2.FareChargeDescription = notificationResponse.DescriptionText;
-                        mainActivity.replaceComponent(componentList, component2);
-                        break;
-                    case "offline":
-                        break;
-                }
-
-                mainActivity.UpdateStatus(notificationResponse.Status);
-                GeneralVariable.ChargePointStatus = notificationResponse.Status;
-
-                mainActivity.UpdateConnectorStatus(notificationResponse.Status, component2, notificationResponse.ConnectorId);
-                mainActivity.SelectedChargingStationComponent.Status = notificationResponse.Status;
-                mainActivity.replaceComponent(componentList, mainActivity.SelectedChargingStationComponent);
+                    component.FareChargeText = notificationResponse.FareChargeText;
+                    component.FareChargeDescription = notificationResponse.DescriptionText;
+                    mainActivity.replaceComponent(componentList, component);
+                    break;
+                case "offline":
+//                        mainActivity.UpdateChargePointStatus(eChargePointStatus.Disconnected);
+                    break;
             }
         }
     }
