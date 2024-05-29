@@ -1,44 +1,40 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="360dp">
-    <!-- GridLayout for cards -->
-    <GridLayout
-        android:id="@+id/cardContainer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:columnCount="2"
-        >
+        <!-- GridLayout for cards -->
+        <GridLayout
+            android:id="@+id/cardContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:columnCount="2">
 
-        <!-- Your card views here -->
+            <!-- Your card views here -->
 
 
-    </GridLayout>
+        </GridLayout>
     </ScrollView>
 
-    <com.google.android.material.button.MaterialButton
+
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btnBack"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
-        android:backgroundTint="@android:color/white"
-        android:elevation="16sp"
+        android:layout_width="fill_parent"
+        android:layout_height="70dp"
+        android:layout_gravity="bottom"
+        android:layout_margin="10dp"
+        android:background="@drawable/rounded_corner_with_bg_yellow"
+        android:fontFamily="@font/poppins"
+        android:gravity="center"
         android:onClick="onClick"
-        android:text="Back"
-        android:textColor="@color/btn_blue"
+        android:padding="10dp"
+        android:text="BACK"
         android:textSize="30sp"
-        app:icon="@drawable/chevron_left"
-        app:iconGravity="textStart"
-        app:iconTint="@color/btn_blue"
-        app:strokeColor="@color/btn_blue"
-        app:strokeWidth="2dp" />
-</RelativeLayout>
+        android:textStyle="bold" />
+
+</FrameLayout>

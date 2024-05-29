@@ -4,55 +4,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".EVFragments.ChargingRateFragment">
+    tools:context=".EVFragments.ChargingRateFragment"
+    >
 
     <LinearLayout
         android:id="@+id/rateLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <TextView
-            android:id="@+id/textView3"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Fare"
-            android:textSize="24dp"
-            android:fontFamily="@font/poppins_semibold"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="10dp"/>
-
-<!--        <LinearLayout-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="170dp"-->
-<!--            android:layout_marginStart="16dp"-->
-<!--            android:layout_marginEnd="16dp"-->
-<!--            android:layout_marginBottom="16dp"-->
-<!--            android:layout_marginTop="0dp"-->
-<!--            android:background="@drawable/rounded_corner"-->
-<!--            android:backgroundTint="#BCC0F5"-->
-<!--            android:orientation="vertical"-->
-<!--            android:gravity="center">>-->
-
-<!--            <TextView-->
-<!--                android:id="@+id/chargingRate"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_margin="10dp"-->
-<!--                android:fontFamily="@font/poppins_semibold"-->
-<!--                android:gravity="left"-->
-<!--                android:text="RM6.50 per hour"-->
-<!--                android:textSize="16sp" />-->
-
-<!--        </LinearLayout>-->
+        android:orientation="vertical"
+        android:layout_gravity="top">
 
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="170dp"
+            android:layout_height="150dp"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="16dp"
-            android:layout_marginTop="0dp"
+            android:layout_marginTop="16dp"
             android:background="@drawable/rounded_corner"
             android:backgroundTint="#BCC0F5"
             android:orientation="vertical"
@@ -79,19 +47,9 @@
 
         </ScrollView>
 
-
-        <TextView
-            android:id="@+id/textView2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Description"
-            android:textSize="24dp"
-            android:fontFamily="@font/poppins_semibold"
-            android:layout_marginStart="16dp"/>
-
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="190dp"
+            android:layout_height="170dp"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="16dp"
@@ -117,63 +75,56 @@
             </LinearLayout>
         </ScrollView>
 
+    </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="bottom"
+        android:padding="16dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnRateBack"
-                android:layout_width="150dp"
-                android:layout_height="60dp"
-                android:layout_alignParentBottom="true"
-                android:layout_marginStart="16dp"
-                android:layout_marginEnd="16dp"
-                android:layout_marginBottom="16dp"
-                android:backgroundTint="@android:color/white"
-                android:elevation="16sp"
-                android:onClick="onClick"
-                android:text="Back"
-                android:textColor="@color/btn_blue"
-                android:textSize="24sp"
-                app:icon="@drawable/chevron_left"
-                app:iconGravity="textStart"
-                app:iconTint="@color/btn_blue"
-                app:strokeColor="@color/btn_blue"
-                app:strokeWidth="2dp" />
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnRateBack"
+            android:layout_width="150dp"
+            android:layout_height="70dp"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/rounded_corner_with_bg_yellow"
+            android:elevation="16sp"
+            android:onClick="onClick"
+            android:text="Back"
+            android:textColor="@color/black"
+            android:textSize="30sp"
+            android:fontFamily="@font/poppins"
+            android:textStyle="bold"
+            app:icon="@drawable/chevron_left"
+            app:iconGravity="textStart"
+            app:iconTint="@color/black"
+            android:strokeColor="@color/black"
+            android:layout_gravity="left"
+            android:layout_weight="1"/>
 
-<!--            <android.widget.Button-->
-<!--                android:id="@+id/btnNextChargingRate"-->
-<!--                android:layout_width="150dp"-->
-<!--                android:layout_height="60dp"-->
-<!--                android:layout_marginHorizontal="12dp"-->
-<!--                android:onClick="onClick"-->
-<!--                android:text="@string/confirm"-->
-<!--                android:textColor="@color/white" />-->
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnNextChargingRate"
-                android:layout_width="170dp"
-                android:layout_height="60dp"
-                android:layout_alignParentBottom="true"
-                android:layout_marginStart="16dp"
-                android:layout_marginEnd="16dp"
-                android:layout_marginBottom="16dp"
-                android:backgroundTint="@color/btn_blue"
-                android:onClick="onClick"
-                android:text="Confirm"
-                android:textColor="@color/white"
-                android:textSize="24sp"
-                 />
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
 
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/textView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="TextView" />
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnNextChargingRate"
+            android:layout_width="170dp"
+            android:layout_height="70dp"
+            android:background="@drawable/rounded_corner_with_bg_yellow"
+            android:elevation="16sp"
+            android:onClick="onClick"
+            android:text="Confirm"
+            android:textColor="@color/black"
+            android:textSize="30sp"
+            android:fontFamily="@font/poppins"
+            android:textStyle="bold"
+            android:strokeColor="@color/black"
+            android:layout_gravity="right"
+            android:layout_weight="1"/>
 
     </LinearLayout>
 
