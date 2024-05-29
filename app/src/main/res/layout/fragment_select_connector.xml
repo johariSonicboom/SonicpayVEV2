@@ -1,4 +1,4 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -21,24 +21,18 @@
         </GridLayout>
     </ScrollView>
 
-    <com.google.android.material.button.MaterialButton
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btnBackConnector"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
-        android:backgroundTint="@android:color/white"
-        android:elevation="16sp"
-        android:onClick="onClick"
-        android:text="Back"
-        android:textColor="@color/btn_blue"
+        android:layout_width="fill_parent"
+        android:layout_height="70dp"
+        android:layout_gravity="bottom"
+        android:layout_margin="10dp"
+        android:background="@drawable/rounded_corner_with_bg_yellow"
+        android:fontFamily="@font/poppins"
+        android:gravity="center"
+        android:padding="10dp"
+        android:text="BACK"
         android:textSize="30sp"
-        app:icon="@drawable/chevron_left"
-        app:iconGravity="textStart"
-        app:iconTint="@color/btn_blue"
-        app:strokeColor="@color/btn_blue"
-        app:strokeWidth="2dp" />
-</RelativeLayout>
+        android:textStyle="bold"
+        android:onClick="onClick" />
+</FrameLayout>

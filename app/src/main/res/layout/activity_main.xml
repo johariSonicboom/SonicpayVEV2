@@ -32,14 +32,15 @@
         android:layout_gravity="center"
         android:src="@drawable/family_hub_icon"/>
     <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnStartCharge"
+        android:text="@string/start_charge"
         android:layout_width="fill_parent"
         android:layout_height="70dp"
         android:layout_margin="10dp"
         android:fontFamily="@font/poppins"
+        android:textStyle="bold"
         android:background="@drawable/rounded_corner_with_bg_yellow"
         android:padding="10dp"
-        android:id="@+id/btnStartCharge"
-        android:text="@string/start_charge"
         android:textSize="30sp"
         android:gravity="center" />
     <LinearLayout

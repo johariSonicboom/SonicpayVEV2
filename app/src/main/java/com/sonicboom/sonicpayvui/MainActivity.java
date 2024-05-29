@@ -9,6 +9,7 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -94,6 +95,8 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import pl.droidsonroids.gif.GifImageView;
 
@@ -618,30 +621,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .addToBackStack(null)
                         .commit();
             } else {
-                    Bundle bundle = new Bundle();
-                    boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
-                    bundle.putBoolean("IsSuccess", isSuccess);
-                    bundle.putString("Title", isSuccess ? "Successful" : "Unsuccessful");
-                    bundle.putString("Message", isSuccess ? SalesCompletionResult : "Sales completion failed");
-                    bundle.putString("Amount", String.format("%.2f", (double) TotalAmountCharges / 100f));
-                    Log.i(TAG, "SalesCompletionCallback: " + String.format("%.2f", (double) TotalAmountCharges / 100f));
-                    LogUtils.i("IsSkipSalesCompletionResultFragment", "Set to False");
-                    if (!isSuccess)
-                        bundle.putString("Message", "Error " + " : " + result.StatusCode);
+                Bundle bundle = new Bundle();
+                boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
+                bundle.putBoolean("IsSuccess", isSuccess);
+                bundle.putString("Title", isSuccess ? "Successful" : "Unsuccessful");
+                bundle.putString("Message", isSuccess ? SalesCompletionResult : "Sales completion failed");
+                bundle.putString("Amount", String.format("%.2f", (double) TotalAmountCharges / 100f));
+                Log.i(TAG, "SalesCompletionCallback: " + String.format("%.2f", (double) TotalAmountCharges / 100f));
+                LogUtils.i("IsSkipSalesCompletionResultFragment", "Set to False");
+                if (!isSuccess)
+                    bundle.putString("Message", "Error " + " : " + result.StatusCode);
 
 
-                    if(IsSkipSalesCompletionResultFragment == false){
+                if (IsSkipSalesCompletionResultFragment == false) {
                     getSupportFragmentManager().beginTransaction()
                             .setReorderingAllowed(true)
                             .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
                             .addToBackStack(null)
                             .commit();
-                    }
-                IsSkipSalesCompletionResultFragment = false;
-                    if (isSuccess) {
-                        wbs.SalesCompletionResultResponse(result);
-                    }
                 }
+                IsSkipSalesCompletionResultFragment = false;
+                if (isSuccess) {
+                    wbs.SalesCompletionResultResponse(result);
+                }
+            }
         }
 
         @Override
@@ -1196,132 +1199,219 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
         Log.i(TAG, "onClick: " + view.getId());
-        SelectChargerFragment SelectChargerFragment = new SelectChargerFragment(wbs.componentList, selectedConnectorIndex);
+        SelectChargerFragment selectChargerFragment = new SelectChargerFragment(wbs.componentList, selectedConnectorIndex);
         SelectConnectorFragment selectConnectorFragment = new SelectConnectorFragment(SelectedChargingStationComponent);
-//        SelectChargerFragment SelectChargerFragment = null;
-//        SharedResource sharedResource = new SharedResource();
+
+
         Bundle bundle = new Bundle();
         switch (view.getId()) {
+//            case R.id.btnStartCharge:
+//                // handle button A click;
+//                selectedConnectorIndex = 0;
+//
+//                UpdateTitle("Loading");
+//                getSupportFragmentManager().beginTransaction()
+//                        .setReorderingAllowed(true)
+//                        .replace(R.id.fragmentContainer, LoadingFragment.class, null)
+//                        .addToBackStack(null)
+//                        .commit();
+//
+//                try {
+//                    for (Component component : wbs.componentList) {
+//                        wbs.GetStatus(component.ComponentCode);
+//                        LogUtils.i("Start Component Status :" + component.ComponentCode, component.Connectors.get(0).Status);
+//                    }
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//
+//                try {
+//
+//                    //Only one charge station
+//                    if (wbs.componentList.length == 1) {
+//                        SelectedChargingStationComponent = wbs.componentList[0];
+//                        SelectedChargingStation = SelectedChargingStationComponent.ComponentName;
+//
+//                        if (SelectedChargingStationComponent.Connectors.get(0).Status.toUpperCase(Locale.ROOT).equals("BLOCKED")) {
+//                            Toast.makeText(this, "Please unplug charger", Toast.LENGTH_SHORT).show();
+//                        } else {
+//                            btnStartCharge.setVisibility(View.GONE);
+//
+//                            if (SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("STARTCHARGE") || SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("CHARGING")) {
+//                                try {
+//                                    boolean result = sonicInterface.ReadCard(true, callbackInterface);
+//
+//                                    IsStopChargeTapCard = true;
+//
+//                                    if (result) {
+//
+//                                        Log.d("startChargeTime : ", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
+//                                        bundle.putString("startChargeTime", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
+//                                        StopChargeTapCardFragment fargment = new StopChargeTapCardFragment(this);
+//
+//                                        getSupportFragmentManager().beginTransaction()
+//                                                .setReorderingAllowed(true)
+//                                                .replace(R.id.fragmentContainer, fargment)
+//                                                .addToBackStack(null)
+//                                                .commit();
+//                                    }
+//                                } catch (RemoteException e) {
+//                                    LogUtils.e(TAG, "ReadCard Exception: " + Log.getStackTraceString(e));
+//                                }
+//
+//                            } else {
+//
+//                                IsStopChargeTapCard = false;
+//                                IsCharging = true;
+//                                isOneConnector = true;
+//
+//                                UpdateTitle("Fare Rate");
+//                                bundle.putString("FareChargeText", SelectedChargingStationComponent.FareChargeText);
+//                                bundle.putString("FareChargeDescription", SelectedChargingStationComponent.FareChargeDescription);
+//                                getSupportFragmentManager().beginTransaction()
+//                                        .setReorderingAllowed(true)
+//                                        .replace(R.id.fragmentContainer, ChargingRateFragment.class, bundle)
+//                                        .addToBackStack(null)
+//                                        .commit();
+//                            }
+//                        }
+//
+//                    } else {
+//                        //Check if only one connector, if only one, then skip select connector fragment
+//                        if (SelectedChargingStationComponent.Connectors.size() < 2) {
+//                            selectedConnectorIndex = 0;
+//                            btnStartCharge.setVisibility(View.GONE);
+//                            UpdateTitle("Select Charger");
+//                            getSupportFragmentManager().beginTransaction()
+//                                    .setReorderingAllowed(true)
+//                                    .replace(R.id.fragmentContainer, SelectChargerFragment)
+//                                    .addToBackStack(null)
+//                                    .commit();
+//
+//                        } else {
+//                            btnStartCharge.setVisibility(View.GONE);
+//                            UpdateTitle("Connectors");
+//                            getSupportFragmentManager().beginTransaction()
+//                                    .setReorderingAllowed(true)
+//                                    .replace(R.id.fragmentContainer, selectConnectorFragment)
+//                                    .addToBackStack(null)
+//                                    .commit();
+//                        }
+//                    }
+//                } catch (Exception e) {
+//                    LogUtils.e("ConditionError", e);
+//                }
+//                break;
             case R.id.btnStartCharge:
                 // handle button A click;
                 selectedConnectorIndex = 0;
 
                 UpdateTitle("Loading");
+                btnStartCharge.setVisibility(View.GONE);
                 getSupportFragmentManager().beginTransaction()
                         .setReorderingAllowed(true)
                         .replace(R.id.fragmentContainer, LoadingFragment.class, null)
                         .addToBackStack(null)
                         .commit();
 
-//                Even if one charge point, go through the select Charger fragment
-//                for (Component component : wbs.componentList) {
-//                    wbs.GetStatus(component.ComponentCode);
-//                }
-//                for (Component component : wbs.componentList) {
-//                    try {
-//                        wbs.GetStatus(component.ComponentCode);
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//
-//                SelectChargerFragment selectChargerFragment = new SelectChargerFragment(wbs.componentList, selectedConnectorIndex);
-//                UpdateTitle("Select Charger");
-//                btnStartCharge.setVisibility(View.GONE);
-//                getSupportFragmentManager().beginTransaction()
-//                        .setReorderingAllowed(true)
-//                        .replace(R.id.fragmentContainer, selectChargerFragment)
-//                        .addToBackStack(null)
-//                        .commit();
+                ExecutorService executor = Executors.newSingleThreadExecutor();
+                Handler handler = new Handler(Looper.getMainLooper());
 
-                try {
-                    for (Component component : wbs.componentList) {
-                        wbs.GetStatus(component.ComponentCode);
-                        LogUtils.i("Start Component Status :" + component.ComponentCode, component.Connectors.get(0).Status);
-                  }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-
-
-                try {
-
-                    //Only one charge station
-                    if (wbs.componentList.length == 1) {
-                        SelectedChargingStationComponent = wbs.componentList[0];
-                        SelectedChargingStation = SelectedChargingStationComponent.ComponentName;
-//                    String test = SelectedChargingStationComponent.Connectors.get(0).Status.toUpperCase(Locale.ROOT);
-                        if (SelectedChargingStationComponent.Connectors.get(0).Status.toUpperCase(Locale.ROOT).equals("BLOCKED")) {
-                            Toast.makeText(this, "Please unplug charger", Toast.LENGTH_SHORT).show();
-                        } else {
-                            btnStartCharge.setVisibility(View.GONE);
-//                        if (IsStopChargeTapCard) {
-
-
-                            if (SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("STARTCHARGE") || SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("CHARGING")) {
-                                try {
-                                    boolean result = sonicInterface.ReadCard(true, callbackInterface);
-
-                                    IsStopChargeTapCard = true;
-
-                                    if (result) {
-
-                                        Log.d("startChargeTime : ", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
-                                        bundle.putString("startChargeTime", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
-                                        StopChargeTapCardFragment fargment = new StopChargeTapCardFragment(this);
-
-                                        getSupportFragmentManager().beginTransaction()
-                                                .setReorderingAllowed(true)
-                                                .replace(R.id.fragmentContainer, fargment)
-                                                .addToBackStack(null)
-                                                .commit();
-                                    }
-                                } catch (RemoteException e) {
-                                    LogUtils.e(TAG, "ReadCard Exception: " + Log.getStackTraceString(e));
-                                }
-
-                            } else {
-
-                                IsStopChargeTapCard = false;
-                                IsCharging = true;
-                                isOneConnector = true;
-                                ShowHideTitle(false);
-                                bundle.putString("FareChargeText", SelectedChargingStationComponent.FareChargeText);
-                                bundle.putString("FareChargeDescription", SelectedChargingStationComponent.FareChargeDescription);
-                                getSupportFragmentManager().beginTransaction()
-                                        .setReorderingAllowed(true)
-                                        .replace(R.id.fragmentContainer, ChargingRateFragment.class, bundle)
-                                        .addToBackStack(null)
-                                        .commit();
+                SelectConnectorFragment finalSelectConnectorFragment = selectConnectorFragment;
+                SelectChargerFragment finalSelectChargerFragment = selectChargerFragment;
+                executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            for (Component component : wbs.componentList) {
+                                wbs.GetStatus(component.ComponentCode);
+                                LogUtils.i("Start Component Status :" + component.ComponentCode, component.Connectors.get(0).Status);
                             }
-                        }
 
-                    } else {
-                        //Check if only one connector, if only one, then skip select connector fragment
-                        if (SelectedChargingStationComponent.Connectors.size() < 2) {
-                            selectedConnectorIndex = 0;
-                            btnStartCharge.setVisibility(View.GONE);
-                            UpdateTitle("Select Charger");
-                            getSupportFragmentManager().beginTransaction()
-                                    .setReorderingAllowed(true)
-                                    .replace(R.id.fragmentContainer, SelectChargerFragment)
-                                    .addToBackStack(null)
-                                    .commit();
+                            // After fetching statuses, handle the UI update on the main thread
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        // Only one charge station
+                                        if (wbs.componentList.length == 1) {
+                                            SelectedChargingStationComponent = wbs.componentList[0];
+                                            SelectedChargingStation = SelectedChargingStationComponent.ComponentName;
 
-                        } else {
-                            btnStartCharge.setVisibility(View.GONE);
-                            UpdateTitle("Connectors");
-                            getSupportFragmentManager().beginTransaction()
-                                    .setReorderingAllowed(true)
-                                    .replace(R.id.fragmentContainer, selectConnectorFragment)
-                                    .addToBackStack(null)
-                                    .commit();
+                                            if (SelectedChargingStationComponent.Connectors.get(0).Status.toUpperCase(Locale.ROOT).equals("BLOCKED")) {
+                                                Toast.makeText(MainActivity.this, "Please unplug charger", Toast.LENGTH_SHORT).show();
+                                            } else {
+                                                btnStartCharge.setVisibility(View.GONE);
+
+                                                if (SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("STARTCHARGE") || SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("CHARGING")) {
+                                                    try {
+                                                        boolean result = sonicInterface.ReadCard(true, callbackInterface);
+                                                        IsStopChargeTapCard = true;
+
+                                                        if (result) {
+                                                            Log.d("startChargeTime : ", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
+                                                            bundle.putString("startChargeTime", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
+                                                            StopChargeTapCardFragment fragment = new StopChargeTapCardFragment(MainActivity.this);
+
+                                                            getSupportFragmentManager().beginTransaction()
+                                                                    .setReorderingAllowed(true)
+                                                                    .replace(R.id.fragmentContainer, fragment)
+                                                                    .addToBackStack(null)
+                                                                    .commit();
+                                                        }
+                                                    } catch (RemoteException e) {
+                                                        LogUtils.e(TAG, "ReadCard Exception: " + Log.getStackTraceString(e));
+                                                    }
+
+                                                } else {
+                                                    IsStopChargeTapCard = false;
+                                                    IsCharging = true;
+                                                    isOneConnector = true;
+
+                                                    UpdateTitle("Fare Rate");
+                                                    bundle.putString("FareChargeText", SelectedChargingStationComponent.FareChargeText);
+                                                    bundle.putString("FareChargeDescription", SelectedChargingStationComponent.FareChargeDescription);
+                                                    getSupportFragmentManager().beginTransaction()
+                                                            .setReorderingAllowed(true)
+                                                            .replace(R.id.fragmentContainer, ChargingRateFragment.class, bundle)
+                                                            .addToBackStack(null)
+                                                            .commit();
+                                                }
+                                            }
+
+                                        } else {
+                                            // Check if only one connector, if only one, then skip select connector fragment
+                                            if (SelectedChargingStationComponent.Connectors.size() < 2) {
+                                                selectedConnectorIndex = 0;
+                                                btnStartCharge.setVisibility(View.GONE);
+                                                UpdateTitle("Select Charger");
+                                                getSupportFragmentManager().beginTransaction()
+                                                        .setReorderingAllowed(true)
+                                                        .replace(R.id.fragmentContainer, finalSelectChargerFragment, null)
+                                                        .addToBackStack(null)
+                                                        .commit();
+
+                                            } else {
+                                                btnStartCharge.setVisibility(View.GONE);
+                                                UpdateTitle("Connectors");
+                                                getSupportFragmentManager().beginTransaction()
+                                                        .setReorderingAllowed(true)
+                                                        .replace(R.id.fragmentContainer, finalSelectConnectorFragment, null)
+                                                        .addToBackStack(null)
+                                                        .commit();
+                                            }
+                                        }
+                                    } catch (Exception e) {
+                                        LogUtils.e("ConditionError", e);
+                                    }
+                                }
+                            });
+
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
                         }
                     }
-                } catch (Exception e) {
-                    LogUtils.e("ConditionError", e);
-                }
+                });
                 break;
             case R.id.btnPhoneNumber:
 
@@ -1362,7 +1452,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btnCancel:
                 selectedConnectorIndex = 0;
                 btnStartCharge.setVisibility(View.GONE);
-                ShowHideTitle(false);
+
+                UpdateTitle("Fare Rate");
                 bundle.putString("FareChargeText", SelectedChargingStationComponent.FareChargeText);
                 bundle.putString("FareChargeDescription", SelectedChargingStationComponent.FareChargeDescription);
                 getSupportFragmentManager().beginTransaction()
@@ -1400,7 +1491,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if (SelectedChargingStationComponent.Connectors.size() < 2) {
                         selectedConnectorIndex = 0;
                         btnStartCharge.setVisibility(View.GONE);
-                        ShowHideTitle(false);
+
+                        UpdateTitle("Fare Rate");
                         bundle.putString("FareChargeText", SelectedChargingStationComponent.FareChargeText);
                         bundle.putString("FareChargeDescription", SelectedChargingStationComponent.FareChargeDescription);
                         getSupportFragmentManager().beginTransaction()
@@ -1506,7 +1598,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     replaceComponent(wbs.componentList, SelectedChargingStationComponent);
 
                     btnStartCharge.setVisibility(View.GONE);
-                    ShowHideTitle(false);
+
+                    UpdateTitle("Fare Rate");
                     bundle.putString("FareChargeText", SelectedChargingStationComponent.FareChargeText);
                     bundle.putString("FareChargeDescription", SelectedChargingStationComponent.FareChargeDescription);
                     getSupportFragmentManager().beginTransaction()
@@ -1546,12 +1639,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 .addToBackStack(null)
                                 .commit();
                     } else {
-                        SelectChargerFragment = new SelectChargerFragment(wbs.componentList, selectedConnectorIndex);
+//                        selectChargerFragment = new SelectChargerFragment(wbs.componentList, selectedConnectorIndex);
                         ShowHideTitle(true);
                         UpdateTitle("Select Charger");
                         getSupportFragmentManager().beginTransaction()
                                 .setReorderingAllowed(true)
-                                .replace(R.id.fragmentContainer, SelectChargerFragment)
+                                .replace(R.id.fragmentContainer, selectChargerFragment)
                                 .addToBackStack(null)
                                 .commit();
                     }
@@ -1573,12 +1666,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             .replace(R.id.fragmentContainer, WelcomeFragment.class, null)
                             .addToBackStack(null)
                             .commit();
-                }else{
+                } else {
                     ShowHideTitle(true);
                     UpdateTitle("Select Charger");
                     getSupportFragmentManager().beginTransaction()
                             .setReorderingAllowed(true)
-                            .replace(R.id.fragmentContainer, SelectChargerFragment)
+                            .replace(R.id.fragmentContainer, selectChargerFragment)
                             .addToBackStack(null)
                             .commit();
                 }
@@ -1595,11 +1688,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             .commit();
                     btnStartCharge.setVisibility(View.VISIBLE);
                 } else {
-                    SelectChargerFragment = new SelectChargerFragment(wbs.componentList, selectedConnectorIndex);
+//                    selectChargerFragment = new SelectChargerFragment(wbs.componentList, selectedConnectorIndex);
                     UpdateTitle("Select Charger");
                     getSupportFragmentManager().beginTransaction()
                             .setReorderingAllowed(true)
-                            .replace(R.id.fragmentContainer, SelectChargerFragment)
+                            .replace(R.id.fragmentContainer, selectChargerFragment)
                             .addToBackStack(null)
                             .commit();
                 }
@@ -1914,7 +2007,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             TotalAmountCharges = (int) (amount * 100);
             SalesCompletionResult = TimeUse;
             boolean SalesCompletionIsSuceess = sonicInterface.SalesCompletion((int) (amount * 100), TransactionTrace, callbackInterface);
-       LogUtils.i("SalesCompletion Success", SalesCompletionIsSuceess);
+            LogUtils.i("SalesCompletion Success", SalesCompletionIsSuceess);
 
         } catch (RemoteException e) {
             e.printStackTrace();

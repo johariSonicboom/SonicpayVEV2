@@ -90,7 +90,7 @@ public class ResultFragment extends Fragment {
 
             if(mMsg != null){
                 errMsg.setText(mMsg);
-                errMsg.setTextColor(ContextCompat.getColor(requireActivity(), R.color.success_green));
+                errMsg.setTextColor(ContextCompat.getColor(requireActivity(), R.color.black));
             }
             else
                 errMsg.setVisibility(View.GONE);

@@ -102,9 +102,11 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:textSize="40sp"
-        android:textColor="@color/fail_red"
+        android:textColor="@color/black"
         android:paddingBottom="32dp"
-        android:text="[error message]"/>
+        android:text="[error message]"
+        android:background="@drawable/rounded_corner"
+        android:backgroundTint="#BCC0F5"/>
     <ImageView
         android:id="@+id/resultIcon"
         android:layout_width="250dp"

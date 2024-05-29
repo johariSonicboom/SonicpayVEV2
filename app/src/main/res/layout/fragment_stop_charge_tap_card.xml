@@ -92,26 +92,19 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnStopChargeTapCardBack"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginEnd="16dp"
-                android:layout_marginBottom="16dp"
-                android:backgroundTint="@android:color/white"
-                android:elevation="16sp"
-                android:onClick="onClick"
-                android:text="Back"
-                android:textColor="@color/btn_blue"
+                android:text="BACK"
+                android:layout_width="fill_parent"
+                android:layout_height="70dp"
+                android:layout_margin="10dp"
+                android:fontFamily="@font/poppins"
+                android:textStyle="bold"
+                android:background="@drawable/rounded_corner_with_bg_yellow"
+                android:padding="10dp"
                 android:textSize="30sp"
-                app:icon="@drawable/chevron_left"
-                app:iconGravity="textStart"
-                app:iconTint="@color/btn_blue"
-                app:strokeColor="@color/btn_blue"
-                app:strokeWidth="2dp" />
+                android:gravity="center"
+                android:onClick="onClick" />
 
 <!--            <LinearLayout-->
 <!--                android:layout_width="match_parent"-->
