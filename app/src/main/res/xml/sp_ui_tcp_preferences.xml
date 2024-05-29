@@ -2,47 +2,29 @@
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <SwitchPreference
-        android:title="Enable TCP"
-        android:defaultValue="false"
-        android:key="@string/enable_tcp"/>
-    <PreferenceCategory android:title="TCP Listener">
+    <PreferenceCategory android:title="OCPP Service">
         <EditTextPreference
-            android:title="Port"
-            android:key="@string/tcp_listener_port"
-            android:inputType="number"
-            app:useSimpleSummaryProvider="true"
-            android:defaultValue="9000"/>
+            android:defaultValue="SBS01"
+            android:inputType="text"
+            android:key="@string/ComponentCode"
+            android:title="Segment"
+            app:useSimpleSummaryProvider="true" />
         <EditTextPreference
-            android:title="Receive timeout (ms)"
-            android:key="@string/tcp_listener_receive_timeout"
-            android:inputType="number"
+            android:title="Client Code"
+            android:key="@string/client_code"
+            android:inputType="text"
             app:useSimpleSummaryProvider="true"
-            android:defaultValue="5000"/>
+            android:defaultValue=""/>
+        <EditTextPreference
+            android:title="OCPP Server"
+            android:key="@string/WebSocketURL"
+            android:inputType="text"
+            app:useSimpleSummaryProvider="true"
+            android:defaultValue="ws://magnetoapp.southeastasia.cloudapp.azure.com:60001/magnetoev/vAgent"/>
+
+        <SwitchPreference android:title="Skip Charging Rate Screen"
+            android:key="@string/IsSkipFare"
+            android:defaultValue="false" />
     </PreferenceCategory>
-    <PreferenceCategory android:title="Controller">
-        <EditTextPreference
-            android:title="IP"
-            android:key="@string/tcp_controller_ip"
-            app:useSimpleSummaryProvider="true"
-            android:defaultValue="192.168.0.129" />
-        <EditTextPreference
-            android:title="Port"
-            android:key="@string/tcp_controller_port"
-            android:inputType="number"
-            app:useSimpleSummaryProvider="true"
-            android:defaultValue="9000"/>
-        <EditTextPreference
-            android:title="Send timeout (ms)"
-            android:key="@string/tcp_controller_send_timeout"
-            android:inputType="number"
-            app:useSimpleSummaryProvider="true"
-            android:defaultValue="2000"/>
-        <EditTextPreference
-            android:title="Receive timeout (ms)"
-            android:key="@string/tcp_controller_receive_timeout"
-            android:inputType="number"
-            app:useSimpleSummaryProvider="true"
-            android:defaultValue="5000"/>
-    </PreferenceCategory>
+
 </PreferenceScreen>

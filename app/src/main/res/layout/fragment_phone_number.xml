@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp">>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:background="@drawable/rounded_corner"
+            android:backgroundTint="#D9E0FC"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginTop="8dp"
+                android:text="Phone Number"
+                android:textSize="28sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <EditText
+                    android:id="@+id/phone_noCountryCode"
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"
+                    android:hint=""
+                    android:inputType="phone"
+                    android:maxLength="3"
+                    android:text="+60"
+                    android:textSize="24sp"
+                    android:background="@android:drawable/edit_text"
+                    android:backgroundTint="#e4e9ff"/>
+
+                <EditText
+                    android:id="@+id/phone_no"
+                    android:layout_width="250dp"
+                    android:layout_height="wrap_content"
+                    android:hint="123456789"
+                    android:inputType="phone"
+                    android:maxLength="15"
+                    android:textSize="24sp"
+                    android:background="@android:drawable/edit_text"
+                    android:backgroundTint="#e4e9ff"
+                    />
+
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="170dp"
+            android:background="@drawable/rounded_corner"
+            android:backgroundTint="#D9E0FC"
+            android:orientation="vertical"
+            android:layout_marginTop="20dp">
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Description"
+            android:textSize="24dp"
+            android:fontFamily="@font/poppins_semibold"
+            android:layout_marginTop="12dp"
+            android:layout_marginStart="16dp"/>
+
+        <TextView
+            android:id="@+id/textView3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Enter your mobile number to receive SMS when fully charged and view your recipt"
+            android:textSize="18dp"
+            android:fontFamily="@font/poppins"
+            android:layout_marginStart="16dp"/>
+
+    </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="370dp"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp">
+
+
+            <!--            <com.google.android.material.button.MaterialButton-->
+            <!--                android:id="@+id/btnCancel"-->
+            <!--                android:layout_width="150dp"-->
+            <!--                android:layout_height="60dp"-->
+            <!--                android:layout_alignParentBottom="true"-->
+            <!--                android:layout_marginStart="16dp"-->
+            <!--                android:layout_marginEnd="16dp"-->
+            <!--                android:layout_marginBottom="16dp"-->
+            <!--                android:backgroundTint="#E02828"-->
+            <!--                android:elevation="16sp"-->
+            <!--                android:onClick="onClick"-->
+            <!--                android:text="@string/cancel"-->
+            <!--                android:textColor="@color/white"-->
+            <!--                android:textSize="18sp"-->
+            <!--                />-->
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCancel"
+                android:layout_width="150dp"
+                android:layout_height="60dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="#E02828"
+                android:elevation="16sp"
+                android:onClick="onClick"
+                android:text="@string/cancel"
+                android:textColor="@color/white"
+                android:textSize="24sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPhoneNumber"
+                android:layout_width="160dp"
+                android:layout_height="60dp"
+                android:layout_marginStart="26dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="@color/btn_blue"
+                android:onClick="onClick"
+                android:text="Confirm"
+                android:textColor="@color/white"
+                android:textSize="24sp" />
+
+        </LinearLayout>
+    </LinearLayout>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

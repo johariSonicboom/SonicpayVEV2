@@ -78,6 +78,7 @@ public class ResultFragment extends Fragment {
 
         ((MainActivity) requireActivity()).UpdateTitle(mTitle == null ? "Error" : mTitle);
         ((MainActivity)requireActivity()).ShowFooter(true);
+        ((MainActivity) requireActivity()).btnStartCharge.setVisibility(View.GONE);
 
         TextView errMsg = view.findViewById(R.id.resultMessage);
         LinearLayout resultSummary = view.findViewById(R.id.resultSummary);

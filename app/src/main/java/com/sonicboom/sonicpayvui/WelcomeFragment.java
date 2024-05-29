@@ -1,19 +1,16 @@
 package com.sonicboom.sonicpayvui;
 
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-import androidx.viewpager.widget.ViewPager;
-
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.TranslateAnimation;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.fragment.app.Fragment;
+import androidx.viewpager.widget.ViewPager;
 
 import com.sonicboom.sonicpayvui.utils.LogUtils;
 
@@ -65,6 +62,8 @@ public class WelcomeFragment extends Fragment {
             StartBanner(view);
             ((MainActivity)requireActivity()).UpdateTitle(getString(R.string.welcome));
             ((MainActivity) requireActivity()).UpdateTitleColor(R.color.main_blue);
+            ((MainActivity)requireActivity()).ShowHideTitle(true);
+            requireActivity().findViewById(R.id.btnStartCharge).setVisibility(View.VISIBLE);
             requireActivity().findViewById(R.id.footer).setVisibility(View.VISIBLE);
         } catch (RemoteException e) {
             LogUtils.e(TAG, "onCreateView Exception: " + Log.getStackTraceString(e));
@@ -98,7 +97,6 @@ public class WelcomeFragment extends Fragment {
         mContentBanner.setAutoPlayInterval(1500);
         mContentBanner.setAllowUserScrollable(false);
         mContentBanner.setIndicatorVisibility(false);
-        mContentBanner.setAutoPlayAble(true);
 
         mContentBanner.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
@@ -108,13 +106,6 @@ public class WelcomeFragment extends Fragment {
                     textView.setText("TAP TO PAY");
                 else
                     textView.setText("We Accept");
-
-                // used to adjust visible duration for certain page
-//                if (position == 0) {
-//                    mContentBanner.setAutoPlayInterval(3000);
-//                } else {
-//                    mContentBanner.setAutoPlayInterval(1500);
-//                }
             }
 
             @Override
@@ -127,8 +118,7 @@ public class WelcomeFragment extends Fragment {
             }
 
             @Override
-            public void onPageScrollStateChanged(int state) {
-            }
+            public void onPageScrollStateChanged(int state) {}
         });
 
     }

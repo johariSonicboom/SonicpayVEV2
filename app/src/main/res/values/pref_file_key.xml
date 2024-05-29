@@ -166,4 +166,9 @@
     <!-- Log File -->
     <string name="LogFileRetentionDay">LogFileRetentionDay</string>
 
+    <!-- EV -->
+    <string name="ComponentCode">ComponentCode</string>
+    <string name="WebSocketURL">WebSocketURL</string>
+    <string name="IsSkipFare">IsSkipFare</string>
+
 </resources>

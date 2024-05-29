@@ -1,26 +1,18 @@
 package com.sonicboom.sonicpayvui;
 
 import android.annotation.SuppressLint;
-import android.graphics.Bitmap;
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-import androidx.viewpager.widget.ViewPager;
-
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AccelerateInterpolator;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
-import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.fragment.app.Fragment;
 
 import com.google.gson.Gson;
 import com.sbs.aidl.Class.QRResponse;
@@ -29,14 +21,8 @@ import com.sonicboom.sonicpayvui.utils.LogUtils;
 import com.sonicboom.sonicpayvui.utils.ScannerUtils;
 import com.sonicboom.sonicpayvui.utils.Utils;
 
-import org.w3c.dom.Text;
-
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
-import cn.bingoogolapple.bgabanner.BGABanner;
-import cn.bingoogolapple.bgabanner.BGALocalImageSize;
 import pl.droidsonroids.gif.GifImageView;
 
 public class TapCardFragment extends Fragment {
@@ -50,8 +36,7 @@ public class TapCardFragment extends Fragment {
     public String mQRContentType;
     private String mSalesRequest;
     private String mTapCardMsg;
-
-    private boolean stopAutoPlay = false;
+    private String mSelectedChargingStation;
 
     public TapCardFragment() {
         // Required empty public constructor
@@ -74,6 +59,8 @@ public class TapCardFragment extends Fragment {
             mAmount = getArguments().getString(Amount);
             mSalesRequest = getArguments().getString(SalesRequest);
             mTapCardMsg = getArguments().getString(TapCardMsg);
+            mSelectedChargingStation = getArguments().getString("chargingStation");
+
         }
     }
 
@@ -90,9 +77,11 @@ public class TapCardFragment extends Fragment {
         TextView qrTitle = view.findViewById(R.id.qrTitle);
         TextView moreQR = view.findViewById(R.id.moreQROptions);
         //Button btnQRPayment = view.findViewById(R.id.btnQRPayment);
-//        GifImageView imageView = view.findViewById(R.id.tapCard);
-        ImageView imageView = view.findViewById(R.id.tapCard);
+        GifImageView imageView = view.findViewById(R.id.tapCard);
         TextView amount = view.findViewById(R.id.tapCard_totalAmount);
+
+        TextView chargingStation = view.findViewById(R.id.selectedChargingStation);
+        chargingStation.setText("Charger: " + mSelectedChargingStation);
 
         if(mAmount != null)
             amount.setText(mAmount);
@@ -148,8 +137,6 @@ public class TapCardFragment extends Fragment {
                     .commit();
         });
 
-        ShowSchemeLogo(view);
-
         if(!new SharedPrefUI(requireActivity()).ReadSharedPrefBoolean(getString(R.string.IsMCCSEnabled))){
             LinearLayout myDebitImg = view.findViewById(R.id.mydebit_layout);
             myDebitImg.setVisibility(View.GONE);
@@ -187,89 +174,6 @@ public class TapCardFragment extends Fragment {
         return view;
     }
 
-    public void ShowSchemeLogo(final View view) {
-        try {
-            ImageView imageView = view.findViewById(R.id.tapCard);
-            imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-
-            List<Integer> myList = new ArrayList<>();
-
-            if(((MainActivity)requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsMCCSEnabled)))
-                myList.add(R.drawable.mydebit_logo);
-            if(((MainActivity)requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsVisaEnabled)))
-                myList.add(R.drawable.visa_logo);
-            if(((MainActivity)requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsMasterEnabled)))
-                myList.add(R.drawable.mastercard_logo);
-            if(((MainActivity)requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsAmexEnabled)))
-                myList.add(R.drawable.amex_crop_logo);
-            if(((MainActivity)requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsUPIEEnabled)))
-                myList.add(R.drawable.unionpay_logo);
-            if(((MainActivity)requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsTngEnabled)))
-                myList.add(R.drawable.tng_logo);
-
-            stopAutoPlay = false;
-            StartSchemeLogoAutoPlay(imageView, myList.toArray(new Integer[0]), 0, true);
-
-        } catch (Exception e) {
-            LogUtils.e(TAG, "ShowSchemeLogo Error: " + Log.getStackTraceString(e));
-        }
-    }
-
-    public void StopSchemeLogoAutoPlay() {
-        stopAutoPlay = true;
-    }
-
-    public void StartSchemeLogoAutoPlay(final ImageView imageView, final Integer images[], final int imageIndex, final boolean forever) {
-
-        if (stopAutoPlay)
-            return; // stop animation
-
-        int fadeInDuration = 50; // Configure time values here
-        int timeBetween = 1500;
-        int fadeOutDuration = 50;
-
-        //imageView.setVisibility(View.VISIBLE);    //Visible or invisible by default - this will apply when the animation ends
-        imageView.setImageResource(images[imageIndex]);
-
-        // disable animation if only has 1 image
-        if (images.length == 1)
-            return;
-
-        Animation fadeIn = new AlphaAnimation(0, 1);
-        fadeIn.setInterpolator(new DecelerateInterpolator()); // add this
-        fadeIn.setDuration(fadeInDuration);
-
-        Animation fadeOut = new AlphaAnimation(1, 0);
-        fadeOut.setInterpolator(new AccelerateInterpolator()); // and this
-        fadeOut.setStartOffset(fadeInDuration + timeBetween);
-        fadeOut.setDuration(fadeOutDuration);
-
-        AnimationSet animation = new AnimationSet(false); // change to false
-        animation.addAnimation(fadeIn);
-        animation.addAnimation(fadeOut);
-        animation.setRepeatCount(1);
-        imageView.setAnimation(animation);
-
-        animation.setAnimationListener(new Animation.AnimationListener() {
-            public void onAnimationEnd(Animation animation) {
-                if (images.length - 1 > imageIndex) {
-                    StartSchemeLogoAutoPlay(imageView, images, imageIndex + 1, forever); //Calls itself until it gets to the end of the array
-                }
-                else {
-                    if (forever){
-                        StartSchemeLogoAutoPlay(imageView, images, 0, forever);  //Calls itself to start the animation all over again in a loop if forever = true
-                    }
-                }
-            }
-            public void onAnimationRepeat(Animation animation) {
-                // Auto-generated method stub
-            }
-            public void onAnimationStart(Animation animation) {
-                // Auto-generated method stub
-            }
-        });
-    }
-
     @Override
     public void onResume() {
         super.onResume();
@@ -281,7 +185,7 @@ public class TapCardFragment extends Fragment {
             View view = currentFragment.getView();
             assert view != null;
             if(((MainActivity) requireActivity()).mStr != null) {
-                ImageView imageView = view.findViewById(R.id.tapCard);
+                GifImageView imageView = view.findViewById(R.id.tapCard);
 
                 QRResponse qrResponse = new Gson().fromJson(((MainActivity) requireActivity()).mStr, QRResponse.class);
                 if(!qrResponse.QRCode.isEmpty()) {
@@ -294,33 +198,17 @@ public class TapCardFragment extends Fragment {
                 qrTitle.setVisibility(View.VISIBLE);
                 qrTitle.setText(qrResponse.QRName);
 
-                StopSchemeLogoAutoPlay();
-
-                boolean isQRAvailable = false;
                 if (qrResponse.QRCode.startsWith("http")) {
-                    boolean isImage = false;
-                    if (mQRContentType == null) {
-                        isImage = qrResponse.QRCode.endsWith(".png") ||qrResponse.QRCode.endsWith(".jpg") ||qrResponse.QRCode.endsWith(".jpeg");
-                    } else {
-                        isImage = mQRContentType.equals("image");
-                    }
+                    boolean isImage = mQRContentType.equals("image");
                     if (isImage)
                         new Utils.DownloadImageTask(imageView).execute(qrResponse.QRCode);
                     else
-                        imageView.setImageBitmap(Utils.generateQRfromStr(requireActivity(), qrResponse.QRCode, qrResponse.QRType == eQRType.DuitNow.getValue() || qrResponse.QRType == eQRType.MaybankPay.getValue()));
-
-                    isQRAvailable = true;
+                        imageView.setImageBitmap(Utils.generateQRfromStr(requireActivity(), qrResponse.QRCode, qrResponse.QRType == eQRType.DuitNow.getValue()));
                 } else {
-                    if(!qrResponse.QRCode.equals("")) {
-                        imageView.setImageBitmap(Utils.generateQRfromStr(requireActivity(), qrResponse.QRCode, qrResponse.QRType == eQRType.DuitNow.getValue() || qrResponse.QRType == eQRType.MaybankPay.getValue()));
-                        isQRAvailable = true;
-                    }
+                    if(!qrResponse.QRCode.equals(""))
+                        imageView.setImageBitmap(Utils.generateQRfromStr(requireActivity(), qrResponse.QRCode, qrResponse.QRType == eQRType.DuitNow.getValue()));
                 }
-
-                if (!isQRAvailable)
-                    ShowSchemeLogo(view);
-
-                if(qrResponse.qrList.length > 1){
+                if(qrResponse.qrList.length > 0){
                     TextView moreQR = view.findViewById(R.id.moreQROptions);
                     moreQR.setVisibility(View.VISIBLE);
                 }

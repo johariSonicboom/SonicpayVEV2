@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".EVFragments.PlugInToStartFragment">
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical">
+
+
+        <pl.droidsonroids.gif.GifImageView
+            android:id="@+id/tapCard"
+            android:layout_marginTop="16sp"
+            android:layout_gravity="center"
+            android:layout_width="250dp"
+            android:layout_height="250dp"
+            android:scaleType="fitStart"
+            android:src="@drawable/car" />
+        <TextView
+            android:id="@+id/chargeTime_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Please disconnect charger"
+            android:textSize="36sp"
+            android:gravity="center"/>
+
+    </LinearLayout>
+</FrameLayout>

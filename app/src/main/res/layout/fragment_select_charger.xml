@@ -1,0 +1,44 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="360dp">
+    <!-- GridLayout for cards -->
+    <GridLayout
+        android:id="@+id/cardContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:columnCount="2"
+        >
+
+        <!-- Your card views here -->
+
+
+    </GridLayout>
+    </ScrollView>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnBack"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:backgroundTint="@android:color/white"
+        android:elevation="16sp"
+        android:onClick="onClick"
+        android:text="Back"
+        android:textColor="@color/btn_blue"
+        android:textSize="30sp"
+        app:icon="@drawable/chevron_left"
+        app:iconGravity="textStart"
+        app:iconTint="@color/btn_blue"
+        app:strokeColor="@color/btn_blue"
+        app:strokeWidth="2dp" />
+</RelativeLayout>

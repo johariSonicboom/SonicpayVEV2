@@ -8,11 +8,11 @@ android {
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.sonicboom.sonicpayvui"
+        applicationId "com.sonicboom.sonicpayvev"
         minSdk 25
         targetSdk 33
-        versionCode 11
-        versionName "1.0.10" + "_" + releaseTime()
+        versionCode 25
+        versionName "1.1.1" + "_" + releaseTime()
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -33,7 +33,7 @@ android {
                     type = "_debug"
                 }
 
-                def fileName = "SonicpayVUI_v${defaultConfig.versionName}${type}.apk"
+                def fileName = "SonicpayVEV_v${defaultConfig.versionName}${type}.apk"
                 outputFileName = fileName
             }
         }
@@ -73,6 +73,7 @@ dependencies {
     implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
     implementation 'com.squareup.okhttp3:okhttp:4.9.1'
     implementation 'com.squareup.okhttp3:logging-interceptor:4.9.1'
+    implementation 'dev.gustavoavila:java-android-websocket-client:2.0.2'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'

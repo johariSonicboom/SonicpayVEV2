@@ -7,7 +7,7 @@
         android:color="#000000"
         android:dashWidth="10dp"
         android:dashGap="3dp"/>
-    <padding android:left="7dp" android:top="12dp"
-        android:right="7dp" android:bottom="6dp" />
+<!--    <padding android:left="7dp" android:top="12dp"-->
+<!--        android:right="7dp" android:bottom="6dp" />-->
     <corners android:radius="16dp" />
 </shape>

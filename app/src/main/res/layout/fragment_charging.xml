@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".EVFragments.ChargingFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical">
+
+
+    <pl.droidsonroids.gif.GifImageView
+        android:id="@+id/tapCard"
+        android:layout_marginTop="16sp"
+        android:layout_gravity="center"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:scaleType="fitStart"
+        android:src="@drawable/charging1" />
+        <TextView
+            android:id="@+id/chargeTime_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Charging Time 00:00"
+            android:textSize="36sp"
+            android:gravity="center"/>
+
+<!--        <com.google.android.material.button.MaterialButton-->
+<!--            android:id="@+id/btnStopCharge"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:layout_alignParentBottom="true"-->
+<!--            android:layout_marginStart="16dp"-->
+<!--            android:layout_marginEnd="16dp"-->
+<!--            android:layout_marginBottom="16dp"-->
+<!--            android:backgroundTint="#E02828"-->
+<!--            android:elevation="16sp"-->
+<!--            android:onClick="onClick"-->
+<!--            android:text="STOP CHARGING"-->
+<!--            android:textColor="@color/white"-->
+<!--            android:textSize="18sp"-->
+<!--            />-->
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnStopCharge"
+            android:layout_width="fill_parent"
+            android:layout_height="70dp"
+            android:layout_marginTop="34dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="#E02828"
+            android:elevation="16sp"
+            android:onClick="onClick"
+            android:text="Stop Charging"
+            android:textColor="@color/white"
+            android:textSize="24sp" />
+
+
+
+
+    </LinearLayout>
+</FrameLayout>

@@ -11,18 +11,18 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.ColorRes;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -41,7 +41,6 @@ import com.sbs.aidl.Class.ParkingExitResult;
 import com.sbs.aidl.Class.QRResponse;
 import com.sbs.aidl.Class.QRTransactionResult;
 import com.sbs.aidl.Class.ReadCardResult;
-import com.sbs.aidl.Class.RefundResult;
 import com.sbs.aidl.Class.SalesCompletionResult;
 import com.sbs.aidl.Class.SalesResult;
 import com.sbs.aidl.Class.SettlementResult;
@@ -50,36 +49,55 @@ import com.sbs.aidl.Class.eCreditCardType;
 import com.sbs.aidl.Class.eTerminalState;
 import com.sbs.aidl.IAIDLCardCallbackInterface;
 import com.sbs.aidl.IAIDLSonicpayInterface;
-import com.sonicboom.sonicpayvui.models.GetStatus;
+import com.sonicboom.sonicpayvui.EVFragments.ChargingFragment;
+import com.sonicboom.sonicpayvui.EVFragments.ChargingRateFragment;
+import com.sonicboom.sonicpayvui.EVFragments.DisconnectChargerFragment;
+import com.sonicboom.sonicpayvui.EVFragments.PhoneNumberFragment;
+import com.sonicboom.sonicpayvui.EVFragments.PlugInToStartFragment;
+import com.sonicboom.sonicpayvui.EVFragments.SelectChargerFragment;
+import com.sonicboom.sonicpayvui.EVFragments.SelectConnectorFragment;
+import com.sonicboom.sonicpayvui.EVFragments.StopChargeTapCardFragment;
+import com.sonicboom.sonicpayvui.EVModels.Component;
+import com.sonicboom.sonicpayvui.EVModels.Connector;
+import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
+import com.sonicboom.sonicpayvui.EVModels.SharedResource;
+import com.sonicboom.sonicpayvui.EVModels.StartSales;
+import com.sonicboom.sonicpayvui.EVModels.StopChargeTapCardError;
+import com.sonicboom.sonicpayvui.EVModels.eChargePointStatus;
 import com.sonicboom.sonicpayvui.models.DisplayInfo;
-import com.sonicboom.sonicpayvui.models.SaleP1P2;
-import com.sonicboom.sonicpayvui.models.Void;
+import com.sonicboom.sonicpayvui.models.GetStatus;
 import com.sonicboom.sonicpayvui.models.ParkingEntry;
 import com.sonicboom.sonicpayvui.models.ParkingExit;
 import com.sonicboom.sonicpayvui.models.PreAuth;
-import com.sonicboom.sonicpayvui.models.ReadCard.ReadCardResponse;
-import com.sonicboom.sonicpayvui.models.eQRType;
-import com.sonicboom.sonicpayvui.models.eResult;
 import com.sonicboom.sonicpayvui.models.Sale;
+import com.sonicboom.sonicpayvui.models.SaleP1P2;
 import com.sonicboom.sonicpayvui.models.SalesCompletion;
 import com.sonicboom.sonicpayvui.models.Settlement;
-import com.sonicboom.sonicpayvui.models.eStatusCode;
+import com.sonicboom.sonicpayvui.EVModels.StopChargeTapCard;
 import com.sonicboom.sonicpayvui.models.TCPGeneralMessage;
+import com.sonicboom.sonicpayvui.models.Void;
+import com.sonicboom.sonicpayvui.models.eQRType;
+import com.sonicboom.sonicpayvui.models.eResult;
+import com.sonicboom.sonicpayvui.models.eStatusCode;
 import com.sonicboom.sonicpayvui.models.eTngStatusCode;
 import com.sonicboom.sonicpayvui.utils.LogUtils;
 import com.sonicboom.sonicpayvui.utils.ScannerUtils;
 import com.sonicboom.sonicpayvui.utils.Utils;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.Timer;
+import java.util.TimerTask;
 
-import javax.xml.transform.Result;
-
-import cn.bingoogolapple.bgabanner.BGABanner;
 import pl.droidsonroids.gif.GifImageView;
 
-@RouterUri(path= {RouterConst.MAIN})
+@RouterUri(path = {RouterConst.MAIN})
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private final String TAG = "MainActivity";
@@ -87,56 +105,63 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public Handler handler;
     public String mStr;
     public IAIDLSonicpayInterface sonicInterface;
-    private GLTCPServer tcpServer;
+
     public ScannerUtils scannerUtils;
     private MQTT mqtt;
-
+    private String phNumber;
     private int TotalAmountCharges;
     private boolean IsInSalesP1 = false;
+    private boolean IsStopChargeTapCard;
+    private String SelectedChargingStation;
+    public Component SelectedChargingStationComponent;
+    public int selectedConnectorIndex;
+    public boolean isOneConnector;
 
+    public boolean IsCharging;
+    TextView txtStatus;
     public final IAIDLCardCallbackInterface callbackInterface = new IAIDLCardCallbackInterface.Stub() {
 
         @Override
         public void ReadCardCallback(ReadCardResult result) {
             LogUtils.i(TAG, "ReadCardCallback:" + new Gson().toJson(result));
 
-            if(new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))){
-                TCPGeneralMessage response = new TCPGeneralMessage();
-                if(IsInSalesP1){
-                    response.Command = "SaleP1";
 
-                    SaleP1P2.SaleP1Response saleP1Response = new SaleP1P2().new SaleP1Response();
-                    saleP1Response.IsValidCard = true;
-                    ReadCardResponse readCardResp = new ReadCardResponse();
-                    readCardResp.CardNo = result.CardNo;
-                    readCardResp.CardType = result.CardType.getValue();
-                    readCardResp.HashedPAN = result.Token;
-                    readCardResp.CardStatus = result.CardStatus;
-                    readCardResp.CardUID = result.CardUID;
+            if (!result.CardType.name().equals("Unknown")) {
+                if (IsStopChargeTapCard) {
 
-                    saleP1Response.ReadCardResult =  readCardResp;
+                    StopChargeTapCard stopChargeTapCardResponse = new StopChargeTapCard();
+                    stopChargeTapCardResponse.CardNo = result.CardNo;
+                    stopChargeTapCardResponse.HashedPAN = result.Token;
+                    stopChargeTapCardResponse.ComponentCode = SelectedChargingStationComponent.ComponentCode;
 
-                    response.Data = saleP1Response;
-                    IsInSalesP1 = false;
+//
+                    stopChargeTapCardResponse.ConnectorId = getConnectorIDByIndex(SelectedChargingStationComponent, SelectedChargingStationComponent.SelectedConnector);
+                    wbs.StopChargeTapCardResultResponse(stopChargeTapCardResponse);
+
+                    UpdateTitle("Stop Charge");
+                    getSupportFragmentManager().beginTransaction()
+                            .setReorderingAllowed(true)
+                            .replace(R.id.fragmentContainer, DisconnectChargerFragment.class, null)
+                            .addToBackStack(null)
+                            .commit();
+
                 }
-                else {
-                    response.Command = "ReadCard";
+            } else {
+                Bundle bundle = new Bundle();
+                boolean isSuccess = false;
+                bundle.putBoolean("IsSuccess", isSuccess);
+                bundle.putString("Title", "Unknown Card");
+                bundle.putBoolean("IsTng", result.CardType == eCreditCardType.TNGCard);
+                bundle.putString("Message", "Error: Unknown Card Type. Try Tapping The Card Again");
 
-                    ReadCardResponse readCardResp = new ReadCardResponse();
-                    readCardResp.CardNo = result.CardNo;
-                    readCardResp.CardType = result.CardType.getValue();
-                    readCardResp.HashedPAN = result.Token;
-                    readCardResp.CardStatus = result.CardStatus;
-                    readCardResp.CardUID = result.CardUID;
 
-                    response.Data = readCardResp;
-                }
-                response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
-
-                String controllerIP = new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip)) == null ? "192.168.1.1" : new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip));
-                GLTCPClient tcpClient = new GLTCPClient(getApplicationContext(), controllerIP, new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port)) == null ? 9000 :Integer.parseInt(new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port))));
-                tcpClient.SendMessage(new Gson().toJson(response));
+                getSupportFragmentManager().beginTransaction()
+                        .setReorderingAllowed(true)
+                        .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
+                        .addToBackStack(null)
+                        .commit();
             }
+
         }
 
         @SuppressLint("DefaultLocale")
@@ -144,7 +169,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public void ParkingEntryCallback(ParkingEntryResult result) {
             LogUtils.i(TAG, "ParkingEntryCallback:" + new Gson().toJson(result));
 
-            if(new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
+            if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
                 TCPGeneralMessage response = new TCPGeneralMessage();
                 response.Command = "ParkingEntry";
 
@@ -159,19 +184,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 response.Data = parkingEntryResponse;
                 response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
 
-                String controllerIP = new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip)) == null ? "192.168.1.1" : new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip));
 
-                GLTCPClient tcpClient = new GLTCPClient(getApplicationContext(), controllerIP, new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port)) == null ? 9000 : Integer.parseInt(new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port))));
-                tcpClient.SendMessage(new Gson().toJson(response));
             }
             Bundle bundle = new Bundle();
             boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
             bundle.putBoolean("IsSuccess", isSuccess);
             bundle.putString("Title", isSuccess ? "Card Accepted" : "Unsuccessful");
             bundle.putBoolean("IsTng", result.CardType == eCreditCardType.TNGCard);
-            if(!isSuccess)
-                bundle.putString("Message", "Error " + (result.CardType == eCreditCardType.TNGCard ? eTngStatusCode.fromCode(String.valueOf(result.StatusCode)) != null ? (Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getCode() + " " + Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getDesc()) : ": Unknown error" :result.StatusCode ));
-            bundle.putString("Balance", result.tnginfo != null ? String.format("%.2f", ((double)result.tnginfo.CardBalance/100f)) : "0.00");
+            if (!isSuccess)
+                bundle.putString("Message", "Error " + (result.CardType == eCreditCardType.TNGCard ? eTngStatusCode.fromCode(String.valueOf(result.StatusCode)) != null ? (Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getCode() + " " + Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getDesc()) : ": Unknown error" : result.StatusCode));
+            bundle.putString("Balance", result.tnginfo != null ? String.format("%.2f", ((double) result.tnginfo.CardBalance / 100f)) : "0.00");
 
             getSupportFragmentManager().beginTransaction()
                     .setReorderingAllowed(true)
@@ -184,7 +206,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void ParkingExitCallback(ParkingExitResult result) {
             LogUtils.i(TAG, "ParkingExitCallback:" + new Gson().toJson(result));
-            if(new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
+            if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
                 TCPGeneralMessage response = new TCPGeneralMessage();
                 response.Command = "ParkingExit";
 
@@ -200,19 +222,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 response.Data = parkingExitResponse;
                 response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
 
-                String controllerIP = new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip)) == null ? "192.168.1.1" : new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip));
-                GLTCPClient tcpClient = new GLTCPClient(getApplicationContext(), controllerIP, new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port)) == null ? 9000 : Integer.parseInt(new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port))));
-                tcpClient.SendMessage(new Gson().toJson(response));
             }
             Bundle bundle = new Bundle();
             boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
             bundle.putBoolean("IsSuccess", isSuccess);
             bundle.putString("Title", isSuccess ? "Successful" : "Card Declined");
             bundle.putBoolean("IsTng", result.CardType == eCreditCardType.TNGCard);
-            if(!isSuccess)
-                bundle.putString("Message", "Error " + (result.CardType == eCreditCardType.TNGCard ? eTngStatusCode.fromCode(String.valueOf(result.StatusCode)) != null ? (Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getCode() + " " + Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getDesc()) : " : Unknown error" :result.StatusCode ));
-            bundle.putString("Balance", result.tnginfo != null ? String.format("%.2f", ((double)result.tnginfo.CardBalance/100f)) : "0.00");
-            bundle.putString("Amount", String.format("%.2f", (double)TotalAmountCharges/100f));
+            if (!isSuccess)
+                bundle.putString("Message", "Error " + (result.CardType == eCreditCardType.TNGCard ? eTngStatusCode.fromCode(String.valueOf(result.StatusCode)) != null ? (Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getCode() + " " + Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getDesc()) : " : Unknown error" : result.StatusCode));
+            bundle.putString("Balance", result.tnginfo != null ? String.format("%.2f", ((double) result.tnginfo.CardBalance / 100f)) : "0.00");
+            bundle.putString("Amount", String.format("%.2f", (double) TotalAmountCharges / 100f));
 
             getSupportFragmentManager().beginTransaction()
                     .setReorderingAllowed(true)
@@ -227,73 +246,44 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             LogUtils.i(TAG, "SalesCallback:" + new Gson().toJson(result));
 
             try {
-                boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
-                EBeepMode beepMode = isSuccess ? EBeepMode.FREQUENCE_LEVEL_3 : EBeepMode.FREQUENCE_LEVEL_5;
-                App.dal.getSys().beep(beepMode, 100);
-
-                if(scannerUtils != null)
+                App.dal.getSys().beep(EBeepMode.FREQUENCE_LEVEL_3, 100);
+                if (scannerUtils != null)
                     scannerUtils.releaseRes();
-                if(new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
+                if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
                     TCPGeneralMessage response = new TCPGeneralMessage();
+                    response.Command = "Sale";
 
-                    if (tcpServer.IsParkingExit) {
-                        tcpServer.IsParkingExit = false;
-                        String operationType = sonicInterface.ReadSharedPref(getString(R.string.OperationType));
-                        operationType = operationType == null || operationType.length() == 0 ? "Parking" : operationType;
+                    Sale.SaleResponse saleResponse = new Sale.SaleResponse();
+                    saleResponse.CardNo = result.CardNo;
+                    saleResponse.HashedPAN = result.Token;
+                    saleResponse.PaymentType = String.valueOf(result.CardType.getValue());
+                    saleResponse.StatusCode = result.StatusCode;
+                    saleResponse.SystemId = result.SystemId;
+                    saleResponse.EMVInfo = result.emvInfo;
+                    saleResponse.TNGInfo = result.tnginfo;
+                    saleResponse.QRInfo = result.qrInfo;
 
-                        response.Command = operationType + "Exit";
+                    response.Data = saleResponse;
+                    response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
 
-                        LogUtils.i(TAG, "SalesCallback: ParkingExit response");
-                        ParkingExit.ParkingExitResponse parkingExitResponse = new ParkingExit.ParkingExitResponse();
-                        parkingExitResponse.SystemId = result.SystemId;
-                        parkingExitResponse.CardNo = result.CardNo;
-                        parkingExitResponse.HashedPAN = result.Token;
-                        parkingExitResponse.CardType = result.CardType.getValue();
-                        parkingExitResponse.StatusCode = result.StatusCode;
-                        parkingExitResponse.TNGInfo = result.tnginfo;
-                        parkingExitResponse.EMVInfo = result.emvInfo;
 
-                        response.Data = parkingExitResponse;
-                        response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
-
-                    } else {
-                        response.Command = "Sale";
-
-                        Sale.SaleResponse saleResponse = new Sale.SaleResponse();
-                        saleResponse.CardNo = result.CardNo;
-                        saleResponse.HashedPAN = result.Token;
-                        saleResponse.PaymentType = String.valueOf(result.CardType.getValue());
-                        saleResponse.StatusCode = result.StatusCode;
-                        saleResponse.SystemId = result.SystemId;
-                        saleResponse.EMVInfo = result.emvInfo;
-                        saleResponse.TNGInfo = result.tnginfo;
-                        saleResponse.QRInfo = result.qrInfo;
-
-                        response.Data = saleResponse;
-                        response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
-                    }
-
-                    String controllerIP = new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip)) == null ? "192.168.1.1" : new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip));
-                    GLTCPClient tcpClient = new GLTCPClient(getApplicationContext(), controllerIP, new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port)) == null ? 9000 : Integer.parseInt(new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port))));
-                    tcpClient.SendMessage(new Gson().toJson(response));
                 }
                 Bundle bundle = new Bundle();
-                //boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
+                boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
                 bundle.putBoolean("IsSuccess", isSuccess);
                 bundle.putString("Title", isSuccess ? "Successful" : "Card Declined");
                 bundle.putBoolean("IsTng", result.CardType == eCreditCardType.TNGCard);
-                if(!isSuccess)
-                    bundle.putString("Message", "Error: " + (result.CardType == eCreditCardType.TNGCard ? eTngStatusCode.fromCode(String.valueOf(result.StatusCode)) != null ? (Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getCode() + " " + Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getDesc()) : " : Unknown error" :eStatusCode.getDescFromCode(result.StatusCode)));
-                bundle.putString("Balance", result.tnginfo != null ? String.format("%.2f", ((double)result.tnginfo.CardBalance/100f)) : "0.00");
-                bundle.putString("Amount", String.format("%.2f", (double)TotalAmountCharges/100f));
+                if (!isSuccess)
+                    bundle.putString("Message", "Error: " + (result.CardType == eCreditCardType.TNGCard ? eTngStatusCode.fromCode(String.valueOf(result.StatusCode)) != null ? (Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getCode() + " " + Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getDesc()) : " : Unknown error" : eStatusCode.getDescFromCode(result.StatusCode)));
+                bundle.putString("Balance", result.tnginfo != null ? String.format("%.2f", ((double) result.tnginfo.CardBalance / 100f)) : "0.00");
+                bundle.putString("Amount", String.format("%.2f", (double) TotalAmountCharges / 100f));
 
                 getSupportFragmentManager().beginTransaction()
                         .setReorderingAllowed(true)
                         .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
                         .addToBackStack(null)
                         .commit();
-            }
-            catch (Exception e){
+            } catch (Exception e) {
                 LogUtils.e(TAG, "SalesCallback Exception: " + Log.getStackTraceString(e));
             }
         }
@@ -301,19 +291,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @SuppressLint("DefaultLocale")
         @Override
         public void StatusCallback(eTerminalState state, boolean cardPresent) {
-            LogUtils.i(TAG, "StatusCallback:" + state + "("  + state.getValue() + ")" + " Card Present: " + cardPresent);
+            LogUtils.i(TAG, "StatusCallback:" + state + "(" + state.getValue() + ")" + " Card Present: " + cardPresent);
 
-            // TODO: is GC and BC handle for SeePhone and Tap Again?
-            if(state == eTerminalState.SeePhone || state == eTerminalState.TapAgain || state == eTerminalState.PresentOneCard){
+            if (state == eTerminalState.SeePhone || state == eTerminalState.TapAgain || state == eTerminalState.PresentOneCard) {
                 Bundle bundle = new Bundle();
-                bundle.putString("Amount", String.format("%.2f", (double)TotalAmountCharges/100f));
+                bundle.putString("Amount", String.format("%.2f", (double) TotalAmountCharges / 100f));
                 bundle.putString("SalesRequest", new Gson().toJson(mStr));
                 String message = "";
-                if(state == eTerminalState.SeePhone)
+                if (state == eTerminalState.SeePhone)
                     message = "See Phone";
-                if(state == eTerminalState.TapAgain)
+                if (state == eTerminalState.TapAgain)
                     message = "Tap Again";
-                if(state == eTerminalState.PresentOneCard)
+                if (state == eTerminalState.PresentOneCard)
                     message = "Present 1 Card";
                 bundle.putString("TapCardMsg", message);
 
@@ -327,7 +316,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (state == eTerminalState.PINEntering) {
                 Bundle bundle = new Bundle();
                 bundle.putString("StatusText", "Processing...");
-                bundle.putString("TitleText", "Enter PIN\r\nMYR " + String.format("%.2f", (double)TotalAmountCharges/100f));
+                bundle.putString("TitleText", "Enter PIN\r\nMYR " + String.format("%.2f", (double) TotalAmountCharges / 100f));
 
                 getSupportFragmentManager().beginTransaction()
                         .setReorderingAllowed(true)
@@ -336,9 +325,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .commit();
             }
 
-            if(state == eTerminalState.HostConnecting || state == eTerminalState.ChipCardReading || state == eTerminalState.ContactlessCardReading){
+            if (state == eTerminalState.HostConnecting || state == eTerminalState.ChipCardReading || state == eTerminalState.ContactlessCardReading) {
                 Bundle bundle = new Bundle();
-                bundle.putString("StatusText", state == eTerminalState.HostConnecting ? "Connecting host...": "Processing...");
+                bundle.putString("StatusText", state == eTerminalState.HostConnecting ? "Connecting host..." : "Processing...");
 
                 getSupportFragmentManager().beginTransaction()
                         .setReorderingAllowed(true)
@@ -347,7 +336,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .commit();
             }
 
-            if(new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
+            if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
                 TCPGeneralMessage response = new TCPGeneralMessage();
                 response.Command = "GetStatus";
 
@@ -358,9 +347,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 response.Data = getStatus;
                 response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
 
-                String controllerIP = new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip)) == null ? "192.168.1.1" : new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip));
-                GLTCPClient tcpClient = new GLTCPClient(getApplicationContext(), controllerIP, new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port)) == null ? 9000 : Integer.parseInt(new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port))));
-                tcpClient.SendMessage(new Gson().toJson(response));
+
             }
         }
 
@@ -370,12 +357,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             boolean isSuccess = true;
             String errorCode = "SF";
 
-            if(new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
+            if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
                 TCPGeneralMessage response = new TCPGeneralMessage();
                 response.Command = "Settlement";
 
                 List<Settlement.SettlementResponse> settlementResponses = new ArrayList<>();
-                for(SettlementResult hostResult : result){
+                for (SettlementResult hostResult : result) {
                     Settlement.SettlementResponse settlementResponse = new Settlement.SettlementResponse();
                     settlementResponse.BatchNo = hostResult.BatchNo;
                     settlementResponse.StatusCode = hostResult.StatusCode;
@@ -385,7 +372,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     settlementResponse.RefundCount = hostResult.RefundCount;
                     settlementResponse.RefundAmount = hostResult.RefundAmount;
                     settlementResponses.add(settlementResponse);
-                    if(!hostResult.StatusCode.equals(eStatusCode.Approved.getCode()) || !hostResult.StatusCode.equals(eTngStatusCode.No_Error.getCode())) {
+                    if (!hostResult.StatusCode.equals(eStatusCode.Approved.getCode()) || !hostResult.StatusCode.equals(eTngStatusCode.No_Error.getCode())) {
                         isSuccess = false;
                         errorCode = hostResult.StatusCode;
                     }
@@ -394,9 +381,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 response.Data = settlementResponses;
                 response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
 
-                String controllerIP = new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip)) == null ? "192.168.1.1" : new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip));
-                GLTCPClient tcpClient = new GLTCPClient(getApplicationContext(), controllerIP, new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port)) == null ? 9000 : Integer.parseInt(new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port))));
-                tcpClient.SendMessage(new Gson().toJson(response));
             }
             Bundle bundle = new Bundle();
             bundle.putBoolean("IsSuccess", isSuccess);
@@ -415,7 +399,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public void QRTransactionCallback(QRTransactionResult result) {
             LogUtils.i(TAG, "QRTransactionCallback:" + new Gson().toJson(result));
 
-            if(new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
+            if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
                 TCPGeneralMessage response = new TCPGeneralMessage();
                 response.Command = "Sale";
 
@@ -432,18 +416,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 response.Data = saleResponse;
                 response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
 
-                String controllerIP = new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip)) == null ? "192.168.1.1" : new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip));
-                GLTCPClient tcpClient = new GLTCPClient(getApplicationContext(), controllerIP, new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port)) == null ? 9000 : Integer.parseInt(new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port))));
-                tcpClient.SendMessage(new Gson().toJson(response));
+
             }
             Bundle bundle = new Bundle();
             boolean isSuccess = result.Status.equals("00");
             bundle.putBoolean("IsSuccess", isSuccess);
             bundle.putString("Title", isSuccess ? "Successful" : "Unsuccessful");
             bundle.putBoolean("IsTng", false);
-            if(!isSuccess)
-                bundle.putString("Message", "Error " + result.Status  + ": Transaction failed" );
-            bundle.putString("Amount", String.format("%.2f", (double)TotalAmountCharges/100f));
+            if (!isSuccess)
+                bundle.putString("Message", "Error " + result.Status + ": Transaction failed");
+            bundle.putString("Amount", String.format("%.2f", (double) TotalAmountCharges / 100f));
 
             getSupportFragmentManager().beginTransaction()
                     .setReorderingAllowed(true)
@@ -455,15 +437,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void SalesP1Callback(SalesResult result) throws RemoteException {
             LogUtils.i(TAG, "SalesP1Callback:" + new Gson().toJson(result));
-
-            boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
-            EBeepMode beepMode = isSuccess ? EBeepMode.FREQUENCE_LEVEL_3 : EBeepMode.FREQUENCE_LEVEL_5;
-            App.dal.getSys().beep(beepMode, 100);
-
-            if(scannerUtils != null)
+            App.dal.getSys().beep(EBeepMode.FREQUENCE_LEVEL_3, 100);
+            if (scannerUtils != null)
                 scannerUtils.releaseRes();
 
-            if(new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
+            if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
                 TCPGeneralMessage response = new TCPGeneralMessage();
                 SaleP1P2.SaleP1Response saleP1Response = new SaleP1P2().new SaleP1Response();
                 if (IsInSalesP1) {
@@ -483,8 +461,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     response.Data = saleP1Response;
                     IsInSalesP1 = false;
-                }
-                else {
+                } else {
                     response.Command = "SaleP2";
                     Sale.SaleResponse saleResponse = new Sale.SaleResponse();
                     saleResponse.SystemId = result.SystemId;
@@ -501,20 +478,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
 
-                String controllerIP = new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip)) == null ? "192.168.1.1" : new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip));
-                GLTCPClient tcpClient = new GLTCPClient(getApplicationContext(), controllerIP, new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port)) == null ? 9000 :Integer.parseInt(new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port))));
-                tcpClient.SendMessage(new Gson().toJson(response));
+
             }
 
             Bundle bundle = new Bundle();
-            //boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
+            boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
             bundle.putBoolean("IsSuccess", isSuccess);
             bundle.putString("Title", isSuccess ? "Successful" : "Card Declined");
             bundle.putBoolean("IsTng", result.CardType == eCreditCardType.TNGCard);
-            if(!isSuccess)
+            if (!isSuccess)
                 bundle.putString("Message", "Error: " + (result.CardType == eCreditCardType.TNGCard ? eTngStatusCode.fromCode(String.valueOf(result.StatusCode)) != null ? (Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getCode() + " " + Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getDesc()) : " : Unknown error" : eStatusCode.getDescFromCode(result.StatusCode)));
-            bundle.putString("Balance", result.tnginfo != null ? String.format("%.2f", ((double)result.tnginfo.CardBalance/100f)) : "0.00");
-            bundle.putString("Amount", String.format("%.2f", (double)TotalAmountCharges/100f));
+            bundle.putString("Balance", result.tnginfo != null ? String.format("%.2f", ((double) result.tnginfo.CardBalance / 100f)) : "0.00");
+            bundle.putString("Amount", String.format("%.2f", (double) TotalAmountCharges / 100f));
 
             getSupportFragmentManager().beginTransaction()
                     .setReorderingAllowed(true)
@@ -533,67 +508,82 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             LogUtils.i(TAG, "SalesP3DebtRecoveryCallback:" + new Gson().toJson(result) + ", OriSysId: " + orinSystemID);
         }
 
+        //Used to skip the Result Fragment if the SalesCompletion returns error to avoid showing two result fragments.
+        public boolean IsSkipSalesCompletionResultFragment;
+
+
         @SuppressLint("DefaultLocale")
         @Override
         public void PreAuthCallback(SalesResult result) throws RemoteException {
             LogUtils.i(TAG, "PreAuthCallback:" + new Gson().toJson(result));
 
-            boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
-            EBeepMode beepMode = isSuccess ? EBeepMode.FREQUENCE_LEVEL_3 : EBeepMode.FREQUENCE_LEVEL_5;
-            App.dal.getSys().beep(beepMode, 100);
-
-            if(new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
-                TCPGeneralMessage response = new TCPGeneralMessage();
-                response.Command = "PreAuth";
-
-                PreAuth.PreAuthResponse preAuthResponse = new PreAuth.PreAuthResponse();
-                preAuthResponse.StatusCode = result.StatusCode;
-                preAuthResponse.SystemId = result.SystemId;
-                preAuthResponse.CardNo = result.CardNo;
-                preAuthResponse.HashedPAN = result.Token;
-                preAuthResponse.ApprovalCode = result.emvInfo.ApprovalCode;
-                preAuthResponse.RRN = result.emvInfo.RRN;
-                preAuthResponse.TransactionTrace = result.emvInfo.TransactionTrace;
-                preAuthResponse.BatchNo = result.emvInfo.BatchNo;
-                preAuthResponse.HostNo = result.emvInfo.HostNo;
-                preAuthResponse.TerminalId = result.emvInfo.TerminalId;
-                preAuthResponse.MerchantId = result.emvInfo.MerchantId;
-                preAuthResponse.AID = result.emvInfo.AID;
-                preAuthResponse.TC = result.emvInfo.TC;
-                preAuthResponse.CardHolderName = result.emvInfo.CardHolderName;
-                preAuthResponse.CardType = String.valueOf(result.CardType.getValue());
-                preAuthResponse.CardLabel = result.emvInfo.CardLabel;
-                preAuthResponse.InvoiceNo = result.emvInfo.InvoiceNo;
-                preAuthResponse.TVR = result.emvInfo.TVR;
-
-                response.Data = preAuthResponse;
-                response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
-
-                String controllerIP = new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip)) == null ? "192.168.1.1" : new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip));
-                GLTCPClient tcpClient = new GLTCPClient(getApplicationContext(), controllerIP, new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port)) == null ? 9000 : Integer.parseInt(new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port))));
-                tcpClient.SendMessage(new Gson().toJson(response));
-            }
-
             Bundle bundle = new Bundle();
-            //boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
+            boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
             bundle.putBoolean("IsSuccess", isSuccess);
             bundle.putString("Title", isSuccess ? "Successful" : "Card Declined");
             bundle.putBoolean("IsTng", result.CardType == eCreditCardType.TNGCard);
-            if(!isSuccess)
-                bundle.putString("Message", "Error " + (result.CardType == eCreditCardType.TNGCard ? eTngStatusCode.fromCode(String.valueOf(result.StatusCode)) != null ? (Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getCode() + " " + Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getDesc()) : " : Unknown error" :result.StatusCode ));
-            bundle.putString("Amount", String.format("%.2f", (double)TotalAmountCharges/100f));
+            if (!isSuccess)
+                bundle.putString("Message", "Error " + (result.CardType == eCreditCardType.TNGCard ? eTngStatusCode.fromCode(String.valueOf(result.StatusCode)) != null ? (Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getCode() + " " + Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getDesc()) : " : Unknown error" : result.StatusCode));
+            bundle.putString("Amount", String.format("%.2f", (double) TotalAmountCharges / 100f));
 
             getSupportFragmentManager().beginTransaction()
                     .setReorderingAllowed(true)
                     .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
                     .addToBackStack(null)
                     .commit();
+
+
+            if (isSuccess) {
+                StartSales startSales = wbs.SalesResultResponse(result, phNumber);
+                new Date().getTime();
+                SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
+                String formattedDate = format.format(new Date());
+
+                LogUtils.i("startSales in PreAuth", startSales.isSuccess);
+                if (startSales.isSuccess) {
+                    try {
+                        Thread.sleep(3000);
+                        ShowHideTitle(true);
+                        UpdateTitle("Charging");
+                        StartCharging(formattedDate);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    new Thread(() -> {
+                        try {
+                            Thread.sleep(3000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        SalesCompletion(0, wbs.startTransactionTrace, String.format("Total Charging time %02d Hours %02d Minutes", 0, 0));
+                    }).start();
+
+                    bundle = new Bundle();
+                    isSuccess = false;
+                    bundle.putBoolean("IsSuccess", false);
+                    bundle.putString("Title", "ERROR");
+                    bundle.putString("Message", startSales.CustomError);
+
+                    IsSkipSalesCompletionResultFragment = true;
+                    LogUtils.i("IsSkipSalesCompletionResultFragment", "Set to True");
+
+
+//                    LogUtils.i("StopChargeTapCardErrorReceived", "StopChargeTapCardErrorReceived");
+                    getSupportFragmentManager().beginTransaction()
+                            .setReorderingAllowed(true)
+                            .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
+                            .addToBackStack(null)
+                            .commit();
+                }
+            }
+
         }
 
         @Override
         public void SalesCompletionCallback(SalesCompletionResult result) throws RemoteException {
             LogUtils.i(TAG, "SalesCompletionCallback:" + new Gson().toJson(result));
-            if(new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
+            if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
                 TCPGeneralMessage response = new TCPGeneralMessage();
                 response.Command = "SaleCompletion";
 
@@ -611,29 +601,53 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 response.Data = salesCompletionResponse;
                 response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
 
-                String controllerIP = new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip)) == null ? "192.168.1.1" : new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip));
-                GLTCPClient tcpClient = new GLTCPClient(getApplicationContext(), controllerIP, new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port)) == null ? 9000 : Integer.parseInt(new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port))));
-                tcpClient.SendMessage(new Gson().toJson(response));
-            }
-            Bundle bundle = new Bundle();
-            boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
-            bundle.putBoolean("IsSuccess", isSuccess);
-            bundle.putString("Title", isSuccess ? "Successful" : "Unsuccessful");
-            bundle.putString("Message", isSuccess ? "Sales completion successful": "Sales completion failed");
-            if(!isSuccess)
-                bundle.putString("Message", "Error " +  " : " + result.StatusCode);
 
-            getSupportFragmentManager().beginTransaction()
-                    .setReorderingAllowed(true)
-                    .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
-                    .addToBackStack(null)
-                    .commit();
+            }
+            if (wbs.salesCompletionResult.CustumErrorMessage != null) {
+                Bundle bundle = new Bundle();
+                boolean isSuccess = false;
+                bundle.putBoolean("IsSuccess", false);
+                bundle.putString("Title", "Invalid Card");
+                bundle.putString("Message", wbs.salesCompletionResult.CustumErrorMessage);
+
+
+//                LogUtils.i("StopChargeTapCardErrorReceived", "StopChargeTapCardErrorReceived");
+                getSupportFragmentManager().beginTransaction()
+                        .setReorderingAllowed(true)
+                        .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
+                        .addToBackStack(null)
+                        .commit();
+            } else {
+                    Bundle bundle = new Bundle();
+                    boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
+                    bundle.putBoolean("IsSuccess", isSuccess);
+                    bundle.putString("Title", isSuccess ? "Successful" : "Unsuccessful");
+                    bundle.putString("Message", isSuccess ? SalesCompletionResult : "Sales completion failed");
+                    bundle.putString("Amount", String.format("%.2f", (double) TotalAmountCharges / 100f));
+                    Log.i(TAG, "SalesCompletionCallback: " + String.format("%.2f", (double) TotalAmountCharges / 100f));
+                    LogUtils.i("IsSkipSalesCompletionResultFragment", "Set to False");
+                    if (!isSuccess)
+                        bundle.putString("Message", "Error " + " : " + result.StatusCode);
+
+
+                    if(IsSkipSalesCompletionResultFragment == false){
+                    getSupportFragmentManager().beginTransaction()
+                            .setReorderingAllowed(true)
+                            .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
+                            .addToBackStack(null)
+                            .commit();
+                    }
+                IsSkipSalesCompletionResultFragment = false;
+                    if (isSuccess) {
+                        wbs.SalesCompletionResultResponse(result);
+                    }
+                }
         }
 
         @Override
         public void VoidCallback(VoidResult result) throws RemoteException {
             LogUtils.i(TAG, "VoidCallback:" + new Gson().toJson(result));
-            if(new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
+            if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
                 TCPGeneralMessage response = new TCPGeneralMessage();
                 response.Command = "Void";
 
@@ -648,18 +662,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 response.Data = voidResponse;
                 response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
 
-                String controllerIP = new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip)) == null ? "192.168.1.1" : new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip));
-                GLTCPClient tcpClient = new GLTCPClient(getApplicationContext(), controllerIP, new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port)) == null ? 9000 : Integer.parseInt(new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port))));
-                tcpClient.SendMessage(new Gson().toJson(response));
+
             }
 
             Bundle bundle = new Bundle();
             boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
             bundle.putBoolean("IsSuccess", isSuccess);
             bundle.putString("Title", isSuccess ? "Successful" : "Unsuccessful");
-            bundle.putString("Message", isSuccess ? "Transaction is voided successfully": "Transaction fail to void");
-            if(!isSuccess)
-                bundle.putString("Message", "Error " +  " : " + result.StatusCode);
+            bundle.putString("Message", isSuccess ? "Transaction is voided successfully" : "Transaction fail to void");
+            if (!isSuccess)
+                bundle.putString("Message", "Error " + " : " + result.StatusCode);
 
             getSupportFragmentManager().beginTransaction()
                     .setReorderingAllowed(true)
@@ -690,7 +702,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void RefundCallback(SalesResult result) throws RemoteException {
             LogUtils.i(TAG, "RefundResult:" + new Gson().toJson(result));
-            if(new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
+            if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
                 TCPGeneralMessage response = new TCPGeneralMessage();
                 response.Command = "Refund";
 
@@ -707,18 +719,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 response.Data = saleResponse;
                 response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
 
-                String controllerIP = new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip)) == null ? "192.168.1.1" : new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip));
-                GLTCPClient tcpClient = new GLTCPClient(getApplicationContext(), controllerIP, new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port)) == null ? 9000 : Integer.parseInt(new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port))));
-                tcpClient.SendMessage(new Gson().toJson(response));
+
             }
 
             Bundle bundle = new Bundle();
             boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
             bundle.putBoolean("IsSuccess", isSuccess);
             bundle.putString("Title", isSuccess ? "Successful" : "Unsuccessful");
-            bundle.putString("Message", isSuccess ? "Transaction is refunded successfully": "Transaction fail to refund");
-            if(!isSuccess)
-                bundle.putString("Message", "Error " +  " : " + result.StatusCode);
+            bundle.putString("Message", isSuccess ? "Transaction is refunded successfully" : "Transaction fail to refund");
+            if (!isSuccess)
+                bundle.putString("Message", "Error " + " : " + result.StatusCode);
 
             getSupportFragmentManager().beginTransaction()
                     .setReorderingAllowed(true)
@@ -731,11 +741,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public void FareBasedEntryCallback(FareBasedEntryResult result) throws RemoteException {
             LogUtils.i(TAG, "FareBasedEntryCallback:" + new Gson().toJson(result));
 
-            boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
-            EBeepMode beepMode = isSuccess ? EBeepMode.FREQUENCE_LEVEL_3 : EBeepMode.FREQUENCE_LEVEL_5;
-            App.dal.getSys().beep(beepMode, 100);
-
-            if(new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
+            if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
                 TCPGeneralMessage response = new TCPGeneralMessage();
 
                 String operationType = sonicInterface.ReadSharedPref(getString(R.string.OperationType));
@@ -756,158 +762,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 String controllerIP = new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip)) == null ? "192.168.1.1" : new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip));
 
-                GLTCPClient tcpClient = new GLTCPClient(getApplicationContext(), controllerIP, new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port)) == null ? 9000 : Integer.parseInt(new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port))));
-                tcpClient.SendMessage(new Gson().toJson(response));
             }
             Bundle bundle = new Bundle();
-            //boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
+            boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
             bundle.putBoolean("IsSuccess", isSuccess);
             bundle.putString("Title", isSuccess ? "Card Accepted" : "Unsuccessful");
             bundle.putBoolean("IsTng", result.CardType == eCreditCardType.TNGCard);
-            if(!isSuccess)
-                bundle.putString("Message", "Error " + (result.CardType == eCreditCardType.TNGCard ? eTngStatusCode.fromCode(String.valueOf(result.StatusCode)) != null ? (Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getCode() + " " + Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getDesc()) : ": Unknown error" :result.StatusCode ));
-            bundle.putString("Balance", result.tnginfo != null ? String.format("%.2f", ((double)result.tnginfo.CardBalance/100f)) : "0.00");
+            if (!isSuccess)
+                bundle.putString("Message", "Error " + (result.CardType == eCreditCardType.TNGCard ? eTngStatusCode.fromCode(String.valueOf(result.StatusCode)) != null ? (Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getCode() + " " + Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getDesc()) : ": Unknown error" : result.StatusCode));
+            bundle.putString("Balance", result.tnginfo != null ? String.format("%.2f", ((double) result.tnginfo.CardBalance / 100f)) : "0.00");
 
             getSupportFragmentManager().beginTransaction()
                     .setReorderingAllowed(true)
                     .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
                     .addToBackStack(null)
                     .commit();
-        }
-
-        private void FareBasedExitReply(FareBasedExitResult result) throws RemoteException {
-            TCPGeneralMessage response = new TCPGeneralMessage();
-
-            String operationType = sonicInterface.ReadSharedPref(getString(R.string.OperationType));
-            operationType = operationType == null || operationType.length() == 0 ? "Parking" : operationType;
-
-            response.Command = operationType + "Exit";
-
-            ParkingExit.ParkingExitResponse parkingExitResponse = new ParkingExit.ParkingExitResponse();
-            parkingExitResponse.SystemId = result.SystemId;
-            parkingExitResponse.CardNo = result.CardNo;
-            parkingExitResponse.HashedPAN = result.Token;
-            parkingExitResponse.CardType = result.CardType.getValue();
-            parkingExitResponse.StatusCode = result.StatusCode;
-            parkingExitResponse.TNGInfo = result.tnginfo;
-            parkingExitResponse.EMVInfo = result.emvInfo;
-
-            response.Data = parkingExitResponse;
-            response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
-
-            String controllerIP = new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip)) == null ? "192.168.1.1" : new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip));
-            GLTCPClient tcpClient = new GLTCPClient(getApplicationContext(), controllerIP, new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port)) == null ? 9000 : Integer.parseInt(new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port))));
-            tcpClient.SendMessage(new Gson().toJson(response));
         }
 
         @Override
         public void FareBasedExitCallback(FareBasedExitResult result) throws RemoteException {
             LogUtils.i(TAG, "FareBasedExitCallback:" + new Gson().toJson(result));
-            boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
-            EBeepMode beepMode = isSuccess ? EBeepMode.FREQUENCE_LEVEL_3 : EBeepMode.FREQUENCE_LEVEL_5;
-            App.dal.getSys().beep(beepMode, 100);
-            if(new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
-                if (isSuccess)
-                    FareBasedExitReply(result);
-            }
-            Bundle bundle = new Bundle();
-            //boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
-            bundle.putBoolean("IsSuccess", isSuccess);
-            bundle.putString("Title", isSuccess ? "Successful" : "Card Declined");
-            bundle.putBoolean("IsTng", result.CardType == eCreditCardType.TNGCard);
-            if(!isSuccess)
-                bundle.putString("Message", "Error " + (result.CardType == eCreditCardType.TNGCard ? eTngStatusCode.fromCode(String.valueOf(result.StatusCode)) != null ? (Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getCode() + " " + Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getDesc()) : " : Unknown error" :result.StatusCode ));
-            bundle.putString("Balance", result.tnginfo != null ? String.format("%.2f", ((double)result.tnginfo.CardBalance/100f)) : "0.00");
-            bundle.putString("Amount", String.format("%.2f", (double)TotalAmountCharges/100f));
-
-            getSupportFragmentManager().beginTransaction()
-                    .setReorderingAllowed(true)
-                    .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
-                    .addToBackStack(null)
-                    .commit();
-
-            // no swap card for status TA
-            if(!isSuccess && !result.StatusCode.equals(eStatusCode.Transaction_Aborted.getCode())) {
-                // allow swap card if first payment declined
-                LogUtils.i(TAG, "ParkingExit Swap Card");
-                new Thread(() -> {
-                    try {
-                        int waitingDuration = 0;
-                        boolean ready = false;
-                        do {
-                            Thread.sleep(500);
-                            LogUtils.i(TAG, "GetStatus...");
-                            GetStatusResult status = tcpServer.GetStatus();
-                            LogUtils.i(TAG, "GetStatus done");
-                            if (status != null && status.TerminalState == eTerminalState.Idle)
-                                ready = true;
-
-                            waitingDuration += 500;
-                            if (waitingDuration == 1500)
-                                break;
-
-                        } while (!ready);
-
-                        if (ready) {
-                            tcpServer.IsParkingExit = true;
-                            tcpServer.Sale();
-                        } else {
-                            FareBasedExitReply(result);
-                        }
-
-                    } catch (Exception e) {}
-                }).start();
-            }
-        }
-
-        @Override
-        public void MaxChargedEntryCallback(MaxChargedEntryResult result) throws RemoteException {
-            LogUtils.i(TAG, "MaxChargedEntryCallback:" + new Gson().toJson(result));
-
-            if(new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
-                TCPGeneralMessage response = new TCPGeneralMessage();
-
-                String operationType = sonicInterface.ReadSharedPref(getString(R.string.OperationType));
-                operationType = operationType == null || operationType.length() == 0 ? "Parking" : operationType;
-
-                response.Command = operationType + "Entry";
-
-                ParkingEntry.ParkingEntryResponse parkingEntryResponse = new ParkingEntry.ParkingEntryResponse();
-                parkingEntryResponse.CardNo = result.CardNo;
-                parkingEntryResponse.HashedPAN = result.Token;
-                parkingEntryResponse.CardType = result.CardType.getValue();
-                parkingEntryResponse.StatusCode = result.StatusCode;
-                parkingEntryResponse.TNGInfo = result.tnginfo;
-                parkingEntryResponse.EMVInfo = result.emvInfo;
-
-                response.Data = parkingEntryResponse;
-                response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
-
-                String controllerIP = new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip)) == null ? "192.168.1.1" : new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip));
-
-                GLTCPClient tcpClient = new GLTCPClient(getApplicationContext(), controllerIP, new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port)) == null ? 9000 : Integer.parseInt(new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port))));
-                tcpClient.SendMessage(new Gson().toJson(response));
-            }
-            Bundle bundle = new Bundle();
-            boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
-            bundle.putBoolean("IsSuccess", isSuccess);
-            bundle.putString("Title", isSuccess ? "Card Accepted" : "Unsuccessful");
-            bundle.putBoolean("IsTng", result.CardType == eCreditCardType.TNGCard);
-            if(!isSuccess)
-                bundle.putString("Message", "Error " + (result.CardType == eCreditCardType.TNGCard ? eTngStatusCode.fromCode(String.valueOf(result.StatusCode)) != null ? (Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getCode() + " " + Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getDesc()) : ": Unknown error" :result.StatusCode ));
-            bundle.putString("Balance", result.tnginfo != null ? String.format("%.2f", ((double)result.tnginfo.CardBalance/100f)) : "0.00");
-
-            getSupportFragmentManager().beginTransaction()
-                    .setReorderingAllowed(true)
-                    .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
-                    .addToBackStack(null)
-                    .commit();
-        }
-
-        @Override
-        public void MaxChargedExitCallback(MaxChargedExitResult result) throws RemoteException {
-            LogUtils.i(TAG, "MaxChargedExitCallback:" + new Gson().toJson(result));
-            if(new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
+            if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
                 TCPGeneralMessage response = new TCPGeneralMessage();
 
                 String operationType = sonicInterface.ReadSharedPref(getString(R.string.OperationType));
@@ -927,19 +802,100 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 response.Data = parkingExitResponse;
                 response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
 
-                String controllerIP = new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip)) == null ? "192.168.1.1" : new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_ip));
-                GLTCPClient tcpClient = new GLTCPClient(getApplicationContext(), controllerIP, new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port)) == null ? 9000 : Integer.parseInt(new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_controller_port))));
-                tcpClient.SendMessage(new Gson().toJson(response));
+
             }
             Bundle bundle = new Bundle();
             boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
             bundle.putBoolean("IsSuccess", isSuccess);
             bundle.putString("Title", isSuccess ? "Successful" : "Card Declined");
             bundle.putBoolean("IsTng", result.CardType == eCreditCardType.TNGCard);
-            if(!isSuccess)
-                bundle.putString("Message", "Error " + (result.CardType == eCreditCardType.TNGCard ? eTngStatusCode.fromCode(String.valueOf(result.StatusCode)) != null ? (Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getCode() + " " + Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getDesc()) : " : Unknown error" :result.StatusCode ));
-            bundle.putString("Balance", result.tnginfo != null ? String.format("%.2f", ((double)result.tnginfo.CardBalance/100f)) : "0.00");
-            bundle.putString("Amount", String.format("%.2f", (double)TotalAmountCharges/100f));
+            if (!isSuccess)
+                bundle.putString("Message", "Error " + (result.CardType == eCreditCardType.TNGCard ? eTngStatusCode.fromCode(String.valueOf(result.StatusCode)) != null ? (Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getCode() + " " + Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getDesc()) : " : Unknown error" : result.StatusCode));
+            bundle.putString("Balance", result.tnginfo != null ? String.format("%.2f", ((double) result.tnginfo.CardBalance / 100f)) : "0.00");
+            bundle.putString("Amount", String.format("%.2f", (double) TotalAmountCharges / 100f));
+
+            getSupportFragmentManager().beginTransaction()
+                    .setReorderingAllowed(true)
+                    .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
+                    .addToBackStack(null)
+                    .commit();
+        }
+
+        @Override
+        public void MaxChargedEntryCallback(MaxChargedEntryResult result) throws RemoteException {
+            LogUtils.i(TAG, "MaxChargedEntryCallback:" + new Gson().toJson(result));
+
+            if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
+                TCPGeneralMessage response = new TCPGeneralMessage();
+
+                String operationType = sonicInterface.ReadSharedPref(getString(R.string.OperationType));
+                operationType = operationType == null || operationType.length() == 0 ? "Parking" : operationType;
+
+                response.Command = operationType + "Entry";
+
+                ParkingEntry.ParkingEntryResponse parkingEntryResponse = new ParkingEntry.ParkingEntryResponse();
+                parkingEntryResponse.CardNo = result.CardNo;
+                parkingEntryResponse.HashedPAN = result.Token;
+                parkingEntryResponse.CardType = result.CardType.getValue();
+                parkingEntryResponse.StatusCode = result.StatusCode;
+                parkingEntryResponse.TNGInfo = result.tnginfo;
+                parkingEntryResponse.EMVInfo = result.emvInfo;
+
+                response.Data = parkingEntryResponse;
+                response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
+
+
+            }
+            Bundle bundle = new Bundle();
+            boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
+            bundle.putBoolean("IsSuccess", isSuccess);
+            bundle.putString("Title", isSuccess ? "Card Accepted" : "Unsuccessful");
+            bundle.putBoolean("IsTng", result.CardType == eCreditCardType.TNGCard);
+            if (!isSuccess)
+                bundle.putString("Message", "Error " + (result.CardType == eCreditCardType.TNGCard ? eTngStatusCode.fromCode(String.valueOf(result.StatusCode)) != null ? (Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getCode() + " " + Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getDesc()) : ": Unknown error" : result.StatusCode));
+            bundle.putString("Balance", result.tnginfo != null ? String.format("%.2f", ((double) result.tnginfo.CardBalance / 100f)) : "0.00");
+
+            getSupportFragmentManager().beginTransaction()
+                    .setReorderingAllowed(true)
+                    .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
+                    .addToBackStack(null)
+                    .commit();
+        }
+
+        @Override
+        public void MaxChargedExitCallback(MaxChargedExitResult result) throws RemoteException {
+            LogUtils.i(TAG, "MaxChargedExitCallback:" + new Gson().toJson(result));
+            if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
+                TCPGeneralMessage response = new TCPGeneralMessage();
+
+                String operationType = sonicInterface.ReadSharedPref(getString(R.string.OperationType));
+                operationType = operationType == null || operationType.length() == 0 ? "Parking" : operationType;
+
+                response.Command = operationType + "Exit";
+
+                ParkingExit.ParkingExitResponse parkingExitResponse = new ParkingExit.ParkingExitResponse();
+                parkingExitResponse.SystemId = result.SystemId;
+                parkingExitResponse.CardNo = result.CardNo;
+                parkingExitResponse.HashedPAN = result.Token;
+                parkingExitResponse.CardType = result.CardType.getValue();
+                parkingExitResponse.StatusCode = result.StatusCode;
+                parkingExitResponse.TNGInfo = result.tnginfo;
+                parkingExitResponse.EMVInfo = result.emvInfo;
+
+                response.Data = parkingExitResponse;
+                response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
+
+
+            }
+            Bundle bundle = new Bundle();
+            boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
+            bundle.putBoolean("IsSuccess", isSuccess);
+            bundle.putString("Title", isSuccess ? "Successful" : "Card Declined");
+            bundle.putBoolean("IsTng", result.CardType == eCreditCardType.TNGCard);
+            if (!isSuccess)
+                bundle.putString("Message", "Error " + (result.CardType == eCreditCardType.TNGCard ? eTngStatusCode.fromCode(String.valueOf(result.StatusCode)) != null ? (Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getCode() + " " + Objects.requireNonNull(eTngStatusCode.fromCode(String.valueOf(result.StatusCode))).getDesc()) : " : Unknown error" : result.StatusCode));
+            bundle.putString("Balance", result.tnginfo != null ? String.format("%.2f", ((double) result.tnginfo.CardBalance / 100f)) : "0.00");
+            bundle.putString("Amount", String.format("%.2f", (double) TotalAmountCharges / 100f));
 
             getSupportFragmentManager().beginTransaction()
                     .setReorderingAllowed(true)
@@ -948,11 +904,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     .commit();
         }
     };
+    public AppCompatButton btnStartCharge;
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
     }
+
+    WebSocketHandler wbs = null;
 
     @SuppressLint("DefaultLocale")
     @Override
@@ -963,29 +922,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         findViewById(R.id.footer).setVisibility(View.VISIBLE);
 
-        Bundle bundleInit = new Bundle();
-        bundleInit.putString("TitleText", "Please Wait");
-        bundleInit.putString("StatusText", "System Init...");
-        getSupportFragmentManager().beginTransaction()
-                .setReorderingAllowed(true)
-                .add(R.id.fragmentContainer, ProgressFragment.class, bundleInit)
-                .addToBackStack(null)
-                .commit();
-
-        // v1.0.10 temporary fix to prevent screen off after certain period (wait til PAX release new firmware to handle this)
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
         ConnectService();
 
         handler = new Handler(message -> {
             String input = (String) message.obj;
 
-            if(Objects.equals(input, eResult.NAK.toString())){
+            if (Objects.equals(input, eResult.NAK.toString())) {
                 Bundle bundle = new Bundle();
                 bundle.putBoolean("IsSuccess", false);
                 bundle.putString("Title", "Cancelled");
                 bundle.putString("Message", "Transaction is aborted.");
 
+                LogUtils.i("onCreate", "onCreate");
                 getSupportFragmentManager().beginTransaction()
                         .setReorderingAllowed(true)
                         .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
@@ -999,16 +947,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             ResultFragment resultFragment = null;
             if (fragment.getClass() == ResultFragment.class && fragment != null && fragment.isVisible()) {
                 LogUtils.i(TAG, "Cancel ResultPage auto redirection to idle page timer");
-                resultFragment = (ResultFragment)fragment;
+                resultFragment = (ResultFragment) fragment;
                 resultFragment.stopAutoRedirectionToIdlePage();
             }
 
             boolean isCommandMatched = true;
 
             TCPGeneralMessage receiveMessage = new Gson().fromJson(input, TCPGeneralMessage.class);
-            switch(receiveMessage.Command){
+            switch (receiveMessage.Command) {
                 case "ReadCard":
-                    mStr = null;
                     getSupportFragmentManager().beginTransaction()
                             .setReorderingAllowed(true)
                             .replace(R.id.fragmentContainer, TapCardFragment.class, null)
@@ -1031,9 +978,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     TotalAmountCharges = preAuthRequest.Amount;
 
                     bundle = new Bundle();
-                    bundle.putString("Amount", String.format("%.2f", (double)preAuthRequest.Amount/100f));
+                    bundle.putString("Amount", String.format("%.2f", (double) preAuthRequest.Amount / 100f));
 
-                    mStr = null;
                     getSupportFragmentManager().beginTransaction()
                             .setReorderingAllowed(true)
                             .replace(R.id.fragmentContainer, TapCardFragment.class, bundle)
@@ -1043,19 +989,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 case "SaleP1":
                     IsInSalesP1 = true;
                 case "Sale":
-                //case "SaleCompletion": // now only for certification
+                case "SaleCompletion": // now only for certification
                     Sale.SaleRequest saleRequest = new Gson().fromJson(new Gson().toJson(receiveMessage.Data), Sale.SaleRequest.class);
                     TotalAmountCharges = saleRequest.Amount;
 
                     bundle = new Bundle();
-                    bundle.putString("Amount", String.format("%.2f", (double)saleRequest.Amount/100f));
+                    bundle.putString("Amount", String.format("%.2f", (double) saleRequest.Amount / 100f));
                     bundle.putString("SalesRequest", new Gson().toJson(saleRequest));
-
-                    if (tcpServer.IsParkingExit)
-                        bundle.putString("TapCardMsg", "Tap Other Card");
-
-                    // clear previous generated QR if any
-                    mStr = null;
                     getSupportFragmentManager().beginTransaction()
                             .setReorderingAllowed(true)
                             .replace(R.id.fragmentContainer, TapCardFragment.class, bundle)
@@ -1073,7 +1013,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             .addToBackStack(null)
                             .commit();
                     break;
-                case "SaleCompletion":
+                //case "SaleCompletion":
                 case "Void":
                 case "ParkingEntry":
                     bundle = new Bundle();
@@ -1091,9 +1031,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     bundle = new Bundle();
                     if (refundRequest.TransactionTrace == null || refundRequest.TransactionTrace.equalsIgnoreCase("")) {
-                        bundle.putString("Amount", String.format("%.2f", (double)refundRequest.Amount/100f));
+                        bundle.putString("Amount", String.format("%.2f", (double) refundRequest.Amount / 100f));
                         bundle.putString("SalesRequest", new Gson().toJson(refundRequest));
-                        mStr = null;
                         getSupportFragmentManager().beginTransaction()
                                 .setReorderingAllowed(true)
                                 .replace(R.id.fragmentContainer, TapCardFragment.class, bundle)
@@ -1113,11 +1052,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     TotalAmountCharges = parkingExitRequest.TotalAmount;
 
                     bundle = new Bundle();
-                    bundle.putString("Amount", String.format("%.2f", (double)TotalAmountCharges/100f));
+                    bundle.putString("StatusText", "Processing...");
 
                     getSupportFragmentManager().beginTransaction()
                             .setReorderingAllowed(true)
-                            .replace(R.id.fragmentContainer, TapCardFragment.class, bundle)
+                            .replace(R.id.fragmentContainer, ProgressFragment.class, bundle)
                             .addToBackStack(null)
                             .commit();
                     break;
@@ -1146,11 +1085,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         // Get the current fragment
                         Fragment currentFragment = fragmentManager.findFragmentById(R.id.fragmentContainer);
                         assert currentFragment != null;
-                        if(currentFragment.getClass() == TapCardFragment.class) {
+                        if (currentFragment.getClass() == TapCardFragment.class) {
 
                             View view = currentFragment.getView();
                             assert view != null;
-                            if(!qrResponse.QRCode.isEmpty()) {
+                            if (!qrResponse.QRCode.isEmpty()) {
                                 TextView gifTitle = view.findViewById(R.id.gifTitle);
                                 gifTitle.setText("Scan to pay");
                             }
@@ -1159,36 +1098,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             qrTitle.setVisibility(View.VISIBLE);
                             qrTitle.setText(qrResponse.QRName);
 
-                            //GifImageView imageView = view.findViewById(R.id.tapCard);
-                            ImageView imageView = view.findViewById(R.id.tapCard);
+                            GifImageView imageView = view.findViewById(R.id.tapCard);
                             imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-
-                            ((TapCardFragment)currentFragment).StopSchemeLogoAutoPlay();
-
-                            boolean isQRAvailable = false;
-                            if(qrResponse.QRCode.startsWith("http")){
-                                boolean isImage = qrResponse.QRCode.endsWith(".png") ||qrResponse.QRCode.endsWith(".jpg") ||qrResponse.QRCode.endsWith(".jpeg");
+                            if (qrResponse.QRCode.startsWith("http")) {
+                                boolean isImage = qrResponse.QRCode.endsWith(".png") || qrResponse.QRCode.endsWith(".jpg") || qrResponse.QRCode.endsWith(".jpeg");
                                 ((TapCardFragment) currentFragment).mQRContentType = isImage ? "image" : "";
-                                if(isImage)
+                                if (isImage)
                                     new Utils.DownloadImageTask(imageView).execute(qrResponse.QRCode);
                                 else
-                                    imageView.setImageBitmap(Utils.generateQRfromStr(this, qrResponse.QRCode, qrResponse.QRType == eQRType.DuitNow.getValue() || qrResponse.QRType == eQRType.MaybankPay.getValue()));
-
-                                isQRAvailable = true;
+                                    imageView.setImageBitmap(Utils.generateQRfromStr(this, qrResponse.QRCode, qrResponse.QRType == eQRType.DuitNow.getValue()));
+                            } else {
+                                if (!qrResponse.QRCode.equals(""))
+                                    imageView.setImageBitmap(Utils.generateQRfromStr(this, qrResponse.QRCode, qrResponse.QRType == eQRType.DuitNow.getValue()));
                             }
-                            else {
-                                if(!qrResponse.QRCode.equals("")) {
-                                    imageView.setImageBitmap(Utils.generateQRfromStr(this, qrResponse.QRCode, qrResponse.QRType == eQRType.DuitNow.getValue() || qrResponse.QRType == eQRType.MaybankPay.getValue()));
-                                    isQRAvailable = true;
-                                }
-                            }
-                            if(qrResponse.qrList != null && qrResponse.qrList.length > 1){
+                            if (qrResponse.qrList != null && qrResponse.qrList.length > 0) {
                                 TextView moreQR = view.findViewById(R.id.moreQROptions);
                                 moreQR.setVisibility(View.VISIBLE);
                             }
-
-                            if (!isQRAvailable)
-                                ((TapCardFragment)currentFragment).ShowSchemeLogo(view);
                         }
                     } catch (Exception e) {
                         LogUtils.e(TAG, "QR Display Exception: " + Log.getStackTraceString(e));
@@ -1212,7 +1138,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 case "TriggerMaintenance":
                     bundle = new Bundle();
                     bundle.putBoolean("IsSuccess", false);
-                    bundle.putString("Title","Maintenance");
+                    bundle.putString("Title", "Maintenance");
                     bundle.putString("Message", "Under maintenance");
                     bundle.putBoolean("StickPage", true);
 
@@ -1222,7 +1148,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         ComponentName componentName = activityManager.getRunningTasks(1).get(0).topActivity;
                         currentActivity = componentName.getClassName();
                     }
-                    if(currentActivity.equals("com.sonicboom.sonicpayvui.MainActivity")) {
+                    if (currentActivity.equals("com.sonicboom.sonicpayvui.MainActivity")) {
                         getSupportFragmentManager().beginTransaction()
                                 .setReorderingAllowed(true)
                                 .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
@@ -1249,19 +1175,463 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             return false;
         });
+        btnStartCharge = findViewById(R.id.btnStartCharge);
+        btnStartCharge.setText("");
+        btnStartCharge.setOnClickListener(this);
+        //findViewById(R.id.btnPhoneNumber).setOnClickListener(this);
+        txtStatus = findViewById(R.id.txtstatus);
+        wbs = new WebSocketHandler(this);
+
         LogUtils.d(TAG, "onCreate ended.");
     }
 
     @Override
-    protected void onDestroy(){
+    protected void onDestroy() {
         super.onDestroy();
         unbindService(mConnection);
         LogUtils.d(TAG, "onDestroy");
-        tcpServer.stop();
+
     }
 
     @Override
     public void onClick(View view) {
+        Log.i(TAG, "onClick: " + view.getId());
+        SelectChargerFragment SelectChargerFragment = new SelectChargerFragment(wbs.componentList, selectedConnectorIndex);
+        SelectConnectorFragment selectConnectorFragment = new SelectConnectorFragment(SelectedChargingStationComponent);
+//        SelectChargerFragment SelectChargerFragment = null;
+//        SharedResource sharedResource = new SharedResource();
+        Bundle bundle = new Bundle();
+        switch (view.getId()) {
+            case R.id.btnStartCharge:
+                // handle button A click;
+                selectedConnectorIndex = 0;
+
+                UpdateTitle("Loading");
+                getSupportFragmentManager().beginTransaction()
+                        .setReorderingAllowed(true)
+                        .replace(R.id.fragmentContainer, LoadingFragment.class, null)
+                        .addToBackStack(null)
+                        .commit();
+
+//                Even if one charge point, go through the select Charger fragment
+//                for (Component component : wbs.componentList) {
+//                    wbs.GetStatus(component.ComponentCode);
+//                }
+//                for (Component component : wbs.componentList) {
+//                    try {
+//                        wbs.GetStatus(component.ComponentCode);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//
+//                SelectChargerFragment selectChargerFragment = new SelectChargerFragment(wbs.componentList, selectedConnectorIndex);
+//                UpdateTitle("Select Charger");
+//                btnStartCharge.setVisibility(View.GONE);
+//                getSupportFragmentManager().beginTransaction()
+//                        .setReorderingAllowed(true)
+//                        .replace(R.id.fragmentContainer, selectChargerFragment)
+//                        .addToBackStack(null)
+//                        .commit();
+
+                try {
+                    for (Component component : wbs.componentList) {
+                        wbs.GetStatus(component.ComponentCode);
+                        LogUtils.i("Start Component Status :" + component.ComponentCode, component.Connectors.get(0).Status);
+                  }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+
+
+                try {
+
+                    //Only one charge station
+                    if (wbs.componentList.length == 1) {
+                        SelectedChargingStationComponent = wbs.componentList[0];
+                        SelectedChargingStation = SelectedChargingStationComponent.ComponentName;
+//                    String test = SelectedChargingStationComponent.Connectors.get(0).Status.toUpperCase(Locale.ROOT);
+                        if (SelectedChargingStationComponent.Connectors.get(0).Status.toUpperCase(Locale.ROOT).equals("BLOCKED")) {
+                            Toast.makeText(this, "Please unplug charger", Toast.LENGTH_SHORT).show();
+                        } else {
+                            btnStartCharge.setVisibility(View.GONE);
+//                        if (IsStopChargeTapCard) {
+
+
+                            if (SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("STARTCHARGE") || SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("CHARGING")) {
+                                try {
+                                    boolean result = sonicInterface.ReadCard(true, callbackInterface);
+
+                                    IsStopChargeTapCard = true;
+
+                                    if (result) {
+
+                                        Log.d("startChargeTime : ", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
+                                        bundle.putString("startChargeTime", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
+                                        StopChargeTapCardFragment fargment = new StopChargeTapCardFragment(this);
+
+                                        getSupportFragmentManager().beginTransaction()
+                                                .setReorderingAllowed(true)
+                                                .replace(R.id.fragmentContainer, fargment)
+                                                .addToBackStack(null)
+                                                .commit();
+                                    }
+                                } catch (RemoteException e) {
+                                    LogUtils.e(TAG, "ReadCard Exception: " + Log.getStackTraceString(e));
+                                }
+
+                            } else {
+
+                                IsStopChargeTapCard = false;
+                                IsCharging = true;
+                                isOneConnector = true;
+                                ShowHideTitle(false);
+                                bundle.putString("FareChargeText", SelectedChargingStationComponent.FareChargeText);
+                                bundle.putString("FareChargeDescription", SelectedChargingStationComponent.FareChargeDescription);
+                                getSupportFragmentManager().beginTransaction()
+                                        .setReorderingAllowed(true)
+                                        .replace(R.id.fragmentContainer, ChargingRateFragment.class, bundle)
+                                        .addToBackStack(null)
+                                        .commit();
+                            }
+                        }
+
+                    } else {
+                        //Check if only one connector, if only one, then skip select connector fragment
+                        if (SelectedChargingStationComponent.Connectors.size() < 2) {
+                            selectedConnectorIndex = 0;
+                            btnStartCharge.setVisibility(View.GONE);
+                            UpdateTitle("Select Charger");
+                            getSupportFragmentManager().beginTransaction()
+                                    .setReorderingAllowed(true)
+                                    .replace(R.id.fragmentContainer, SelectChargerFragment)
+                                    .addToBackStack(null)
+                                    .commit();
+
+                        } else {
+                            btnStartCharge.setVisibility(View.GONE);
+                            UpdateTitle("Connectors");
+                            getSupportFragmentManager().beginTransaction()
+                                    .setReorderingAllowed(true)
+                                    .replace(R.id.fragmentContainer, selectConnectorFragment)
+                                    .addToBackStack(null)
+                                    .commit();
+                        }
+                    }
+                } catch (Exception e) {
+                    LogUtils.e("ConditionError", e);
+                }
+                break;
+            case R.id.btnPhoneNumber:
+
+                phNumber = ((EditText) findViewById(R.id.phone_noCountryCode)).getText().toString() + ((EditText) findViewById(R.id.phone_no)).getText().toString();
+
+
+                try {
+                    IsStopChargeTapCard = false;
+
+
+                    btnStartCharge.setVisibility(View.GONE);
+                    PreAuth.PreAuthRequest preAuthRequest = new PreAuth.PreAuthRequest();
+                    preAuthRequest.Amount = ((int) SelectedChargingStationComponent.PreAuthAmount) * 100;
+                    boolean result = sonicInterface.PreAuth(preAuthRequest.Amount, callbackInterface);
+
+                    if (result) {
+//                        //Notify UI to change to Progress screen
+                        bundle.putString("Amount", String.format("%.2f", (double) preAuthRequest.Amount / 100f));
+
+                        bundle.putString("chargingStation", SelectedChargingStation);
+                        Log.d("Charging Station : ", SelectedChargingStation);
+
+
+                        TotalAmountCharges = preAuthRequest.Amount;
+
+                        getSupportFragmentManager().beginTransaction()
+                                .setReorderingAllowed(true)
+                                .replace(R.id.fragmentContainer, TapCardFragment.class, bundle)
+                                .addToBackStack(null)
+                                .commit();
+                    }
+                } catch (Exception e) {
+                    LogUtils.e(TAG, "PreAuth Exception: " + Log.getStackTraceString(e));
+                }
+
+                break;
+            //Phone Fragment Cancel Button
+            case R.id.btnCancel:
+                selectedConnectorIndex = 0;
+                btnStartCharge.setVisibility(View.GONE);
+                ShowHideTitle(false);
+                bundle.putString("FareChargeText", SelectedChargingStationComponent.FareChargeText);
+                bundle.putString("FareChargeDescription", SelectedChargingStationComponent.FareChargeDescription);
+                getSupportFragmentManager().beginTransaction()
+                        .setReorderingAllowed(true)
+                        .replace(R.id.fragmentContainer, ChargingRateFragment.class, bundle)
+                        .addToBackStack(null)
+                        .commit();
+                break;
+            //Select Charger Fragment Back button
+            case R.id.btnBack:
+                getSupportFragmentManager().beginTransaction()
+                        .setReorderingAllowed(true)
+                        .replace(R.id.fragmentContainer, WelcomeFragment.class, null)
+                        .addToBackStack(null)
+                        .commit();
+                btnStartCharge.setVisibility(View.VISIBLE);
+
+                break;
+
+            //Tapping the charger card
+            case R.id.chargingCard:
+
+                TextView chargingStation = view.findViewById(R.id.chargingStation);
+
+                TextView chargingStationStatus = view.findViewById(R.id.status);
+                SelectedChargingStation = chargingStation.getText().toString();
+
+                SelectedChargingStationComponent = GetSelectedComponent(SelectedChargingStation, wbs.componentList);
+                if (chargingStationStatus.getText().toString().equals("AVAILABLE") || chargingStationStatus.getText().toString().equals("PREPARING")) {
+                    IsStopChargeTapCard = false;
+
+                    selectConnectorFragment = new SelectConnectorFragment(SelectedChargingStationComponent);
+
+                    //Check of only one connector, then skip select connector fragment
+                    if (SelectedChargingStationComponent.Connectors.size() < 2) {
+                        selectedConnectorIndex = 0;
+                        btnStartCharge.setVisibility(View.GONE);
+                        ShowHideTitle(false);
+                        bundle.putString("FareChargeText", SelectedChargingStationComponent.FareChargeText);
+                        bundle.putString("FareChargeDescription", SelectedChargingStationComponent.FareChargeDescription);
+                        getSupportFragmentManager().beginTransaction()
+                                .setReorderingAllowed(true)
+                                .replace(R.id.fragmentContainer, ChargingRateFragment.class, bundle)
+                                .addToBackStack(null)
+                                .commit();
+                    } else {
+                        btnStartCharge.setVisibility(View.GONE);
+                        UpdateTitle("Connectors");
+                        getSupportFragmentManager().beginTransaction()
+                                .setReorderingAllowed(true)
+                                .replace(R.id.fragmentContainer, selectConnectorFragment)
+                                .addToBackStack(null)
+                                .commit();
+                    }
+                    //Used for skipping Select Connector
+//                    btnStartCharge.setVisibility(View.GONE);
+//                    UpdateTitle("Key in Phone No");
+//                    getSupportFragmentManager().beginTransaction()
+//                            .setReorderingAllowed(true)
+//                            .replace(R.id.fragmentContainer, PhoneNumberFragment.class, null)
+//                            .addToBackStack(null)
+//                            .commit();
+
+
+                } else if (chargingStationStatus.getText().toString().equals("CHARGING")) {
+                    try {
+                        boolean result = sonicInterface.ReadCard(true, callbackInterface);
+
+                        IsStopChargeTapCard = true;
+
+                        if (result) {
+
+                            Log.d("startChargeTime : ", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
+                            bundle.putString("startChargeTime", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
+                            StopChargeTapCardFragment fargment = new StopChargeTapCardFragment(this);
+
+                            getSupportFragmentManager().beginTransaction()
+                                    .setReorderingAllowed(true)
+                                    .replace(R.id.fragmentContainer, fargment)
+                                    .addToBackStack(null)
+                                    .commit();
+                        }
+                    } catch (RemoteException e) {
+                        LogUtils.e(TAG, "ReadCard Exception: " + Log.getStackTraceString(e));
+                    }
+                } else if (chargingStationStatus.getText().toString().equals("BLOCKED")) {
+                    Toast.makeText(this, "Please unplug charger", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Charging Station Not Available", Toast.LENGTH_SHORT).show();
+                }
+//                if (chargingStationStatus.getText().toString().equals("Available")) {
+//
+//                    IsStopChargeTapCard = false;
+//
+//
+//                    btnStartCharge.setVisibility(View.GONE);
+//                    UpdateTitle("Key in Phone No");
+//                    getSupportFragmentManager().beginTransaction()
+//                            .setReorderingAllowed(true)
+//                            .replace(R.id.fragmentContainer, PhoneNumberFragment.class, null)
+//                            .addToBackStack(null)
+//                            .commit();
+//
+//
+//                } else if (chargingStationStatus.getText().toString().equals("Charging")) {
+//                    try {
+//                        boolean result = sonicInterface.ReadCard(true, callbackInterface);
+//
+//                        IsStopChargeTapCard = true;
+//
+//                        if (result) {
+//
+//                            Log.d("startChargeTime : ", String.valueOf(wbs.component.StartChargeTime));
+//                            bundle.putString("startChargeTime", String.valueOf(wbs.component.StartChargeTime));
+//
+//                            getSupportFragmentManager().beginTransaction()
+//                                    .setReorderingAllowed(true)
+//                                    .replace(R.id.fragmentContainer, StopChargeTapCardFragment.class, bundle)
+//                                    .addToBackStack(null)
+//                                    .commit();
+//                        }
+//                    } catch (RemoteException e) {
+//                        LogUtils.e(TAG, "ReadCard Exception: " + Log.getStackTraceString(e));
+//                    }
+//                } else {
+//                    Toast.makeText(this, "Charging Station Not Available", Toast.LENGTH_LONG).show();
+//                }
+
+                break;
+            case R.id.connectorCard:
+                IsStopChargeTapCard = false;
+
+                TextView connector = view.findViewById(R.id.connector);
+
+                TextView connectorStatus = view.findViewById(R.id.status);
+                if (connectorStatus.getText().equals("AVAILABLE") || connectorStatus.getText().equals("PREPARING")) {
+                    selectedConnectorIndex = getConnectorIndexByID(SelectedChargingStationComponent, Integer.valueOf(connector.getText().toString()));
+//                selectedConnectorIndex = Integer.valueOf(connector.getText().toString()) - 1;
+
+                    SelectedChargingStationComponent.SelectedConnector = selectedConnectorIndex;
+                    replaceComponent(wbs.componentList, SelectedChargingStationComponent);
+
+                    btnStartCharge.setVisibility(View.GONE);
+                    ShowHideTitle(false);
+                    bundle.putString("FareChargeText", SelectedChargingStationComponent.FareChargeText);
+                    bundle.putString("FareChargeDescription", SelectedChargingStationComponent.FareChargeDescription);
+                    getSupportFragmentManager().beginTransaction()
+                            .setReorderingAllowed(true)
+                            .replace(R.id.fragmentContainer, ChargingRateFragment.class, bundle)
+                            .addToBackStack(null)
+                            .commit();
+                } else {
+                    Toast.makeText(this, "Connector Not Available", Toast.LENGTH_LONG).show();
+                }
+                break;
+            case R.id.btnNextChargingRate:
+                ShowHideTitle(true);
+                UpdateTitle("Key in Phone No");
+                getSupportFragmentManager().beginTransaction()
+                        .setReorderingAllowed(true)
+                        .replace(R.id.fragmentContainer, PhoneNumberFragment.class, null)
+                        .addToBackStack(null)
+                        .commit();
+                break;
+            case R.id.btnRateBack:
+                if (wbs.componentList.length == 1) {
+                    getSupportFragmentManager().beginTransaction()
+                            .setReorderingAllowed(true)
+                            .replace(R.id.fragmentContainer, WelcomeFragment.class, null)
+                            .addToBackStack(null)
+                            .commit();
+                    btnStartCharge.setVisibility(View.VISIBLE);
+                    ShowHideTitle(true);
+                } else {
+                    if (SelectedChargingStationComponent.Connectors.size() > 1) {
+                        btnStartCharge.setVisibility(View.GONE);
+                        UpdateTitle("Connectors");
+                        getSupportFragmentManager().beginTransaction()
+                                .setReorderingAllowed(true)
+                                .replace(R.id.fragmentContainer, selectConnectorFragment)
+                                .addToBackStack(null)
+                                .commit();
+                    } else {
+                        SelectChargerFragment = new SelectChargerFragment(wbs.componentList, selectedConnectorIndex);
+                        ShowHideTitle(true);
+                        UpdateTitle("Select Charger");
+                        getSupportFragmentManager().beginTransaction()
+                                .setReorderingAllowed(true)
+                                .replace(R.id.fragmentContainer, SelectChargerFragment)
+                                .addToBackStack(null)
+                                .commit();
+                    }
+                }
+
+
+                break;
+            case R.id.btnStopChargeTapCardBack:
+                try {
+                    boolean r = sonicInterface.Abort();
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+
+                if (wbs.componentList.length == 1) {
+                    ShowHideTitle(true);
+                    getSupportFragmentManager().beginTransaction()
+                            .setReorderingAllowed(true)
+                            .replace(R.id.fragmentContainer, WelcomeFragment.class, null)
+                            .addToBackStack(null)
+                            .commit();
+                }else{
+                    ShowHideTitle(true);
+                    UpdateTitle("Select Charger");
+                    getSupportFragmentManager().beginTransaction()
+                            .setReorderingAllowed(true)
+                            .replace(R.id.fragmentContainer, SelectChargerFragment)
+                            .addToBackStack(null)
+                            .commit();
+                }
+
+                break;
+
+            case R.id.btnBackConnector:
+//                selectedConnectorIndex = 0;
+                if (wbs.componentList.length == 1) {
+                    getSupportFragmentManager().beginTransaction()
+                            .setReorderingAllowed(true)
+                            .replace(R.id.fragmentContainer, WelcomeFragment.class, null)
+                            .addToBackStack(null)
+                            .commit();
+                    btnStartCharge.setVisibility(View.VISIBLE);
+                } else {
+                    SelectChargerFragment = new SelectChargerFragment(wbs.componentList, selectedConnectorIndex);
+                    UpdateTitle("Select Charger");
+                    getSupportFragmentManager().beginTransaction()
+                            .setReorderingAllowed(true)
+                            .replace(R.id.fragmentContainer, SelectChargerFragment)
+                            .addToBackStack(null)
+                            .commit();
+                }
+
+
+                break;
+
+            case R.id.btnStopCharge:
+                try {
+                    boolean result = sonicInterface.ReadCard(true, callbackInterface);
+
+                    IsStopChargeTapCard = true;
+
+                    if (result) {
+
+                        Log.d("startChargeTime : ", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
+                        bundle.putString("startChargeTime", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
+                        StopChargeTapCardFragment fragment = new StopChargeTapCardFragment(this);
+
+                        getSupportFragmentManager().beginTransaction()
+                                .setReorderingAllowed(true)
+                                .replace(R.id.fragmentContainer, fragment)
+                                .addToBackStack(null)
+                                .commit();
+                    }
+                } catch (RemoteException e) {
+                    LogUtils.e(TAG, "ReadCard Exception: " + Log.getStackTraceString(e));
+                }
+                break;
+            default:
+                throw new RuntimeException("Unknown button ID");
+        }
     }
 
     @Override
@@ -1269,7 +1639,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         LogUtils.d(TAG, "onKeyDown started...");
         LogUtils.d(TAG, "KeyCode: " + keyCode);
 
-        if(keyCode==KeyEvent.KEYCODE_F11 || keyCode==KeyEvent.KEYCODE_MOVE_HOME){ // KEYCODE_F11 is the key value of SERVICE, KEYCODE_MOVE_HOME is the key value of SERVICE for IM30 V2
+        if (keyCode == KeyEvent.KEYCODE_F11) { // KEYCODE_F11 is the key value of SERVICE
             Toast.makeText(this, "Back button is clicked", Toast.LENGTH_SHORT).show();
             Router.startUri(this, RouterConst.CONFIG_LOGIN);
         }
@@ -1279,13 +1649,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public void onResume(){
+    public void onResume() {
         super.onResume();
         LogUtils.d(TAG, "onResume");
         try {
-            if(sonicInterface != null){
+            if (sonicInterface != null) {
                 String SPServiceVersion = sonicInterface.GetSPServiceVersion();
-                if(Utils.compareVersionStr(Utils.getServiceMinVersion(), SPServiceVersion.split("_")[0].replace("v","")) > 0) {
+                if (Utils.compareVersionStr(Utils.getServiceMinVersion(), SPServiceVersion.split("_")[0].replace("v", "")) > 0) {
                     sonicInterface.SetMaintenanceMode(true, callbackInterface);
                     Bundle bundle = new Bundle();
                     bundle.putBoolean("IsSuccess", false);
@@ -1293,13 +1663,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     bundle.putString("Message", "Please update SonicpayVS version");
                     bundle.putBoolean("StickPage", true);
 
+                    LogUtils.i("onResume", "onResume");
                     getSupportFragmentManager().beginTransaction()
                             .setReorderingAllowed(true)
                             .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
                             .addToBackStack(null)
                             .commit();
-                }
-                else {
+                } else {
                     sonicInterface.SetMaintenanceMode(false, callbackInterface);
                     getSupportFragmentManager().beginTransaction()
                             .setReorderingAllowed(true)
@@ -1313,26 +1683,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    public void UpdateTitle(String title){
+    public void UpdateTitle(String title) {
         TextView textView = findViewById(R.id.header_title);
         textView.setText(title);
     }
 
-    public void ShowHideTitle(boolean isShow){
+    public void ShowHideTitle(boolean isShow) {
         TextView textView = findViewById(R.id.header_title);
         textView.setVisibility(isShow ? View.VISIBLE : View.GONE);
-        if(!isShow)
+        if (!isShow)
             textView.setText("");
     }
 
-    public void UpdateTitle(String title, int fontSize){
+    public void UpdateTitle(String title, int fontSize) {
         TextView textView = findViewById(R.id.header_title);
         textView.setTextSize(fontSize);
         if (title != null)
             textView.setText(title);
     }
 
-    public void UpdateTitleColor(@ColorRes int color){
+    public void UpdateTitleColor(@ColorRes int color) {
         TextView textView = findViewById(R.id.header_title);
         textView.setBackgroundColor(ContextCompat.getColor(this, color));
 
@@ -1341,14 +1711,68 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         window.setStatusBarColor(ContextCompat.getColor(this, color));
     }
 
-    public void ShowFooter (boolean show){
-        if(show)
+    public void ShowFooter(boolean show) {
+        if (show)
             findViewById(R.id.footer).setVisibility(View.VISIBLE);
         else
             findViewById(R.id.footer).setVisibility(View.GONE);
     }
 
-    protected void ConnectService(){
+    public void UpdateStatus(String status) {
+        Log.i(TAG, "UpdateStatus: ");
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                txtStatus.setText(status);
+            }
+        });
+    }
+
+    public void UpdateChargePointStatus(eChargePointStatus status) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                switch (status) {
+                    case Init:
+                        btnStartCharge.setText("Connecting");
+                        btnStartCharge.setClickable(false);
+                        GeneralVariable.Status = "Connecting";
+                        break;
+                    case Idle:
+                        btnStartCharge.setText("START");
+                        btnStartCharge.setClickable(true);
+                        btnStartCharge.setVisibility(View.VISIBLE);
+                        GeneralVariable.Status = "Connected";
+                        break;
+                    case Disconnected:
+                        btnStartCharge.setText("Disconnected");
+                        btnStartCharge.setClickable(false);
+                        btnStartCharge.setVisibility(View.VISIBLE);
+                        getSupportFragmentManager().beginTransaction()
+                                .setReorderingAllowed(true)
+                                .add(R.id.fragmentContainer, WelcomeFragment.class, null)
+                                .commit();
+                        GeneralVariable.Status = "Disconnected";
+                        break;
+                    case Charging:
+                        UpdateTitle("Charging");
+                        btnStartCharge.setVisibility(View.GONE);
+                        GeneralVariable.Status = "Charging";
+                        break;
+                    case NotFound:
+                        UpdateTitle("Component Not Found");
+                        btnStartCharge.setVisibility(View.VISIBLE);
+                        GeneralVariable.Status = "Not Found";
+                        break;
+
+                }
+            }
+        });
+
+
+    }
+
+    protected void ConnectService() {
         LogUtils.d(TAG, "ConnectService started...");
         Intent serviceIntent = new Intent();
         serviceIntent.setComponent(new ComponentName(Utils.getServiceAppCode(), Utils.getServiceClassName()));
@@ -1374,20 +1798,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 TextView spserviceVersion = findViewById(R.id.spservice_version);
                 spserviceVersion.setText("SonicpayVS v" + SPServiceVersion.split("_")[0]);
 
-                if(tcpServer == null && new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
-                    tcpServer = new GLTCPServer(getApplicationContext(), handler, sonicInterface, callbackInterface, Integer.parseInt(Objects.equals(new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_listener_port)), "") ? "9000" : new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.tcp_listener_port))));
-                    tcpServer.start();
-                }
-                else
-                    LogUtils.i(TAG, "TCP is not enabled");
 
                 new Thread(() -> {
                     try {
                         mqtt = new MQTT();
                         mqtt.Init(getApplicationContext(), handler);
                         mqtt.SetServiceCallback(sonicInterface, callbackInterface);
-                    }
-                    catch(Exception e){
+                    } catch (Exception e) {
                         LogUtils.e(TAG, "MQTT Exception: " + Log.getStackTraceString(e));
                     }
                 }).start();
@@ -1395,11 +1812,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (getSupportFragmentManager().findFragmentById(R.id.fragmentContainer) != null)
                     getSupportFragmentManager().popBackStack();
 
-                if(Utils.compareVersionStr(Utils.getServiceMinVersion(), SPServiceVersion.split("_")[0].replace("v","")) > 0){
+                if (Utils.compareVersionStr(Utils.getServiceMinVersion(), SPServiceVersion.split("_")[0].replace("v", "")) > 0) {
                     sonicInterface.SetMaintenanceMode(true, callbackInterface);
                     Bundle bundle = new Bundle();
                     bundle.putBoolean("IsSuccess", false);
-                    bundle.putString("Title","UPDATE REQUIRED");
+                    bundle.putString("Title", "UPDATE REQUIRED");
                     bundle.putString("Message", "Please update SonicpayVS version");
                     bundle.putBoolean("StickPage", true);
 
@@ -1407,13 +1824,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             .setReorderingAllowed(true)
                             .add(R.id.fragmentContainer, ResultFragment.class, bundle)
                             .commit();
-                }
-                else {
+                } else {
                     getSupportFragmentManager().beginTransaction()
                             .setReorderingAllowed(true)
                             .add(R.id.fragmentContainer, WelcomeFragment.class, null)
                             .commit();
                 }
+                AutoSettlementHandler();
+                new Thread(() -> {
+                    wbs.connect();
+                }).start();
             } catch (Exception e) {
                 LogUtils.e(TAG, "Exception: " + Log.getStackTraceString(e));
             }
@@ -1423,22 +1843,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public void onServiceDisconnected(ComponentName name) {
             LogUtils.d(TAG, "onServiceDisconnected: " + name.getClassName());
             unbindService(mConnection);
-            if(tcpServer != null) {
-                tcpServer.stop();
-                tcpServer = null;
-            }
+
 
             ConnectService();
 
             int i = 2;
-            while(i > 0) {
+            while (i > 0) {
                 try {
                     Thread.sleep(1000);
-                    if(!isServiceRunning())
+                    if (!isServiceRunning())
                         ConnectService();
                     i--;
                 } catch (Exception e) {
-                   LogUtils.e(TAG, "onServiceDisconnected Exception: " + Log.getStackTraceString(e));
+                    LogUtils.e(TAG, "onServiceDisconnected Exception: " + Log.getStackTraceString(e));
                 }
             }
         }
@@ -1450,11 +1867,367 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         for (ActivityManager.RunningServiceInfo serviceInfo : runningServices) {
             if ((serviceInfo.service.getClassName()).equals(Utils.getServiceClassName())) {
-                LogUtils.i(TAG, "IsServiceRunning: true" );
+                LogUtils.i(TAG, "IsServiceRunning: true");
                 return true;
             }
         }
-        LogUtils.i(TAG, "IsServiceRunning: false" );
+        LogUtils.i(TAG, "IsServiceRunning: false");
         return false;
+    }
+
+    public String StartChargeTime;
+
+    public void StartCharging(String time) {
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+//                UpdateTitle("Charging");
+                Bundle bundle = new Bundle();
+                bundle.putString("StartChargeTime", time);
+
+                StartChargeTime = time;
+                UpdateTitle("Charging");
+                UpdateTitleColor(R.color.main_blue);
+                ShowHideTitle(true);
+                btnStartCharge.setVisibility(View.GONE);
+                getSupportFragmentManager().beginTransaction()
+                        .setReorderingAllowed(true)
+                        .replace(R.id.fragmentContainer, PlugInToStartFragment.class, bundle)
+                        .addToBackStack(null)
+                        .commit();
+//                getSupportFragmentManager().beginTransaction()
+//                        .setReorderingAllowed(true)
+//                        .replace(R.id.fragmentContainer, ChargingFragment.class, bundle)
+//                        .addToBackStack(null)
+//                        .commit();
+
+            }
+        });
+
+    }
+
+    String SalesCompletionResult = "";
+
+    public void SalesCompletion(double amount, String TransactionTrace, String TimeUse) {
+        try {
+
+            TotalAmountCharges = (int) (amount * 100);
+            SalesCompletionResult = TimeUse;
+            boolean SalesCompletionIsSuceess = sonicInterface.SalesCompletion((int) (amount * 100), TransactionTrace, callbackInterface);
+       LogUtils.i("SalesCompletion Success", SalesCompletionIsSuceess);
+
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void AutoSettlementHandler() throws RemoteException {
+        try {
+            ArrayList<Date> settlementList = new ArrayList<>();
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMdd");
+            SimpleDateFormat datetimeFormat = new SimpleDateFormat("yyMMdd HHmmss");
+            if (sonicInterface.ReadSharedPrefBoolean(getString(R.string.EnableAutoSettlement))) {
+                String AutoSettlementTime = sonicInterface.ReadSharedPref(getString(R.string.AutoSettlementTime));
+                if (!AutoSettlementTime.isEmpty()) {
+                    String[] settlementTimeSchedule = AutoSettlementTime.split("\\|");
+                    for (String st : settlementTimeSchedule) {
+
+                        // check setting format validity
+                        if (st.isEmpty() || st.length() < 6) {
+                            // skip to next schedule setup
+                            continue;
+                        }
+
+                        Date currentTime = new Date();
+                        Date stTime = null;
+
+                        stTime = datetimeFormat.parse(dateFormat.format(currentTime) + " " + st);
+
+                        Calendar calSTTime = Calendar.getInstance();
+                        calSTTime.setTime(stTime);
+
+                        LogUtils.i(TAG, "[CheckSchedule] Settlement Setting: " + datetimeFormat.format(calSTTime.getTime()));
+
+                        // add 1 day if schedule time is earlier than current time
+                        if (calSTTime.getTime().compareTo(currentTime) < 0)
+                            calSTTime.add(Calendar.DATE, 1);
+
+                        LogUtils.i(TAG, "[CheckSchedule] Settlement Schedule: " + datetimeFormat.format(calSTTime.getTime()));
+
+                        settlementList.add(calSTTime.getTime());
+                        // only create the timer if not created yet
+
+
+                    }
+                }
+                Date NextSettlementTime = getSmallestDate(settlementList);
+                Timer settlementTimer = new Timer();
+//                Date date= new Date();
+//                date.setTime(date.getTime() + 10000);
+                LogUtils.i(TAG, "[CheckSchedule] Next Settlement Schedule: " + NextSettlementTime);
+                settlementTimer.schedule(new MyTimerTask(), NextSettlementTime);
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+    }
+
+    public boolean IsSettlementRunning = false;
+
+    public boolean TriggerSettlementHandler() {
+        try {
+
+
+            Date date = new Date();
+            date.setTime(date.getTime() + 2000);
+            Timer settlementTimer = new Timer();
+            LogUtils.i(TAG, "[CheckSchedule1] Next Settlement Schedule: " + date);
+
+            settlementTimer.schedule(new MyTimerTaskWithFixHost(), date);
+
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return true;
+    }
+
+    private Date getSmallestDate(List<Date> dateList) {
+        if (dateList.isEmpty()) {
+            throw new IllegalArgumentException("List of dates is empty");
+        }
+
+        Date smallestDate = dateList.get(0);
+
+        for (Date date : dateList) {
+            if (date.before(smallestDate)) {
+                smallestDate = date;
+            }
+        }
+
+        return smallestDate;
+    }
+
+    public class MyTimerTask extends TimerTask {
+        @Override
+        public void run() {
+            // Your task logic goes here
+
+            IsSettlementRunning = true;
+            LogUtils.i("SettlementTimer Running");
+            try {
+                GetStatusResult result = sonicInterface.getStatus();
+                if (result.TerminalState == eTerminalState.Idle || result.TerminalState == eTerminalState.WaitingForCard) {
+                    if (result.TerminalState == eTerminalState.WaitingForCard) {
+                        boolean r = sonicInterface.Abort();
+                    }
+                } else {
+                    StartSettlement();
+                }
+
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public class MyTimerTaskWithFixHost extends TimerTask {
+        @Override
+        public void run() {
+            // Your task logic goes here
+            IsSettlementRunning = true;
+            LogUtils.i("SettlementTimer Running");
+            try {
+                GetStatusResult result = sonicInterface.getStatus();
+                if (result.TerminalState == eTerminalState.Idle || result.TerminalState == eTerminalState.WaitingForCard) {
+                    if (result.TerminalState == eTerminalState.WaitingForCard) {
+                        boolean r = sonicInterface.Abort();
+                    }
+                } else {
+                    StartSettlement();
+                }
+
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+    public void StartSettlement() {
+
+        Thread thread = new Thread() {
+            public void run() {
+                try {
+                    Thread.sleep(1000);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Bundle bundle = new Bundle();
+                            bundle.putString("StatusText", "Settlement...");
+
+                            getSupportFragmentManager().beginTransaction()
+                                    .setReorderingAllowed(true)
+                                    .replace(R.id.fragmentContainer, ProgressFragment.class, bundle)
+                                    .addToBackStack(null)
+                                    .commit();
+                        }
+                    });
+
+                    sonicInterface.Settlement(0, callbackInterface);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Bundle bundle = new Bundle();
+                            bundle.putString("StatusText", "Settlement...");
+
+                            getSupportFragmentManager().beginTransaction()
+                                    .setReorderingAllowed(true)
+                                    .replace(R.id.fragmentContainer, ProgressFragment.class, bundle)
+                                    .addToBackStack(null)
+                                    .commit();
+                        }
+                    });
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        thread.start();
+
+
+    }
+
+    public void StopChargeTapCardErrorReceived(String StopChargeMsg) {
+        StopChargeTapCardError stopChargeTapCardError = new Gson().fromJson(StopChargeMsg, StopChargeTapCardError.class);
+        try {
+            boolean r = sonicInterface.Abort();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+
+
+        Bundle bundle = new Bundle();
+        boolean isSuccess = false;
+        bundle.putBoolean("IsSuccess", false);
+        bundle.putString("Title", "Invalid Card");
+        bundle.putString("Message", stopChargeTapCardError.CustumError);
+
+
+//        LogUtils.i("StopChargeTapCardErrorReceived", "StopChargeTapCardErrorReceived");
+        getSupportFragmentManager().beginTransaction()
+                .setReorderingAllowed(true)
+                .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
+                .addToBackStack(null)
+                .commit();
+    }
+
+    public void SalesCompletionError(String custumErrorMessage) {
+        Bundle bundle = new Bundle();
+        bundle.putBoolean("IsSuccess", false);
+        bundle.putString("Title", "ERROR");
+        bundle.putString("Message", custumErrorMessage);
+
+        LogUtils.i("SalesCompletionError", "SalesCompletionError");
+        getSupportFragmentManager().beginTransaction()
+                .setReorderingAllowed(true)
+                .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
+                .addToBackStack(null)
+                .commit();
+    }
+
+
+    public Component GetSelectedComponent(String componentName, Component[] componentList) {
+        for (Component component : componentList) {
+            if (component.ComponentName.equals(componentName)) {
+                return component;
+            }
+        }
+        return null;
+    }
+
+    public Component[] replaceComponent(Component[] componentList, Component newComponent) {
+        for (int i = 0; i < componentList.length; i++) {
+            if (componentList[i].ComponentId == newComponent.ComponentId) { // Assuming getId() returns a unique identifier for each component
+                componentList[i] = newComponent; // Replace the component with the new one
+                break; // Exit the loop since we found and replaced the component
+            }
+        }
+        return componentList;
+    }
+
+    public void UpdateConnectorStatus(String status, Component component, int connectorID) {
+        // Check if the component is null to avoid NullPointerException
+        if (component == null) {
+            throw new IllegalArgumentException("Component cannot be null");
+        }
+
+        // Check if the Connectors list is null to avoid NullPointerException
+        if (component.Connectors == null) {
+            throw new IllegalArgumentException("Component's Connectors list cannot be null");
+        }
+
+        if (!component.Connectors.isEmpty()) {
+            for (Connector connector : component.Connectors) {
+                if (connectorID == connector.ConnectorId) {
+                    connector.Status = status;
+                    replaceComponent(wbs.componentList, component);
+                    break;
+                }
+            }
+        }
+    }
+
+    public void UpdateAllConnectorStatus(String status, Component component) {
+        // Check if the component is null to avoid NullPointerException
+        if (component == null) {
+            throw new IllegalArgumentException("Component cannot be null");
+        }
+
+        // Check if the Connectors list is null to avoid NullPointerException
+        if (component.Connectors == null) {
+            throw new IllegalArgumentException("Component's Connectors list cannot be null");
+        }
+
+        if (!component.Connectors.isEmpty()) {
+            for (Connector connector : component.Connectors) {
+                if (!(connector.Status == null)) {
+                    connector.Status = status;
+                    replaceComponent(wbs.componentList, component);
+                }
+            }
+        }
+    }
+
+    public int getConnectorIDByIndex(Component component, int connectorIndex) {
+        return component.Connectors.get(connectorIndex).ConnectorId;
+    }
+
+    public int getConnectorIndexByID(Component component, int connectorID) {
+        if (!component.Connectors.isEmpty()) {
+            for (int i = 0; i < component.Connectors.size(); i++) {
+                if (component.Connectors.get(i).ConnectorId == connectorID) {
+                    return i;
+                }
+            }
+        }
+        return -1; // Return -1 if no matching ConnectorId is found
+    }
+
+
+    public Component GetSelectedComponentbyComponentCode(String componentCode, Component[] componentList) {
+        for (Component component : componentList) {
+            if (component.ComponentCode.equals(componentCode)) {
+                return component;
+            }
+        }
+        return null;
     }
 }

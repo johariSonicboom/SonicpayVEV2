@@ -1,7 +1,7 @@
 package com.sonicboom.sonicpayvui.models;
 
 public class PreAuth {
-    public class PreAuthRequest{
+    public static class PreAuthRequest{
         public int Amount;
     }
 

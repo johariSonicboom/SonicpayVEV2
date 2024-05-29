@@ -7,7 +7,7 @@
         android:fragment="com.sonicboom.sonicpayvui.config.fragment.SPUIConfigFragment$GeneralConfigurationFragment"/>
 
     <Preference
-        android:title="TCP Configuration"
+        android:title="EV Configuration"
         android:fragment="com.sonicboom.sonicpayvui.config.fragment.SPUIConfigFragment$TCPConfigurationFragment"/>
 
     <Preference
