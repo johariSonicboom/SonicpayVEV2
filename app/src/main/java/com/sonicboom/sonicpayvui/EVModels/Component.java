@@ -8,7 +8,7 @@ public class Component {
     public String ComponentCode;
     public String ComponentName;
     public String Aegment;
-    public String Status;
+//    public String Status;
     public String TerminalIP;
     public int TerminalPort;
     public int Zone;

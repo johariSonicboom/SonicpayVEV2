@@ -1,10 +1,13 @@
 package com.sonicboom.sonicpayvui.EVFragments;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
@@ -12,8 +15,8 @@ import androidx.fragment.app.FragmentManager;
 
 import com.sonicboom.sonicpayvui.MainActivity;
 import com.sonicboom.sonicpayvui.R;
-import com.sonicboom.sonicpayvui.WebSocketHandler;
 import com.sonicboom.sonicpayvui.WelcomeFragment;
+import com.sonicboom.sonicpayvui.utils.LogUtils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -21,24 +24,17 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link ChargingFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class ChargingFragment extends Fragment {
 
     private static final String ARG_PARAM1 = "StartChargeTime";
     private static final String ARG_PARAM2 = "param2";
 
-    // Parameters
     private String StartChargeTime = "";
     private String mParam2;
+    private String HideStopButton = "false";
 
-    // Views
     private TextView txtChargeingTime;
 
-    // Timer
     private Timer t;
     private Timer timer;
 
@@ -61,6 +57,7 @@ public class ChargingFragment extends Fragment {
         if (getArguments() != null) {
             StartChargeTime = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
+            HideStopButton = getArguments().getString("HideStopButton");
         }
     }
 
@@ -70,39 +67,43 @@ public class ChargingFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_charging, container, false);
         txtChargeingTime = view.findViewById(R.id.chargeTime_text);
 
+        Button stopChargeButton = view.findViewById(R.id.btnStopCharge);
+        if ("true".equals(HideStopButton)) {
+            stopChargeButton.setVisibility(View.GONE);
+        } else {
+            stopChargeButton.setVisibility(View.VISIBLE);
+        }
+
         try {
             ((MainActivity) requireActivity()).UpdateTitleColor(R.color.main_blue);
             ((MainActivity) requireActivity()).ShowHideTitle(true);
             ((MainActivity) requireActivity()).UpdateTitle("Charging");
 
-
-            if(((MainActivity) requireActivity()).isOneConnector == false){
-                // Initialize and schedule the timer
-                t = new Timer();
-                t.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
-                        try {
-                            Date date = format.parse(StartChargeTime);
-                            long diff = new Date().getTime() - date.getTime();
-                            long seconds = diff / 1000;
-                            long minutes = seconds / 60;
-                            long hours = minutes / 60;
-                            long days = hours / 24;
-                            long m = minutes % 60;
-                            ((MainActivity) requireActivity()).runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    txtChargeingTime.setText(String.format("Charging Time %02d:%02d", hours, m));
-                                }
-                            });
-                        } catch (ParseException e) {
-                            e.printStackTrace();
-                        }
+            // Initialize and schedule the timer
+            t = new Timer();
+            t.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
+                    try {
+                        Date date = format.parse(StartChargeTime);
+                        long diff = new Date().getTime() - date.getTime();
+                        long seconds = diff / 1000;
+                        long minutes = seconds / 60;
+                        long hours = minutes / 60;
+                        long days = hours / 24;
+                        long m = minutes % 60;
+                        // Ensure we are updating the UI on the main thread
+                        new Handler(Looper.getMainLooper()).post(() -> {
+                            if (isAdded()) {
+                                txtChargeingTime.setText(String.format("Charging Time %02d:%02d", hours, m));
+                            }
+                        });
+                    } catch (ParseException e) {
+                        e.printStackTrace();
                     }
-                }, 1000, 1000);
-            }
+                }
+            }, 1000, 1000);
 
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -128,7 +129,15 @@ public class ChargingFragment extends Fragment {
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        startTimerForRedirection();
+
+        Button stopChargeButton = view.findViewById(R.id.btnStopCharge);
+        LogUtils.i("isOneConnector in Charging Fragment", ((MainActivity) requireActivity()).isOneConnector);
+        if(!((MainActivity) requireActivity()).isOneConnector){
+            startTimerForRedirection();
+            LogUtils.i("Charging Fragment", "Timer is activated");
+        } else {
+            stopChargeButton.setVisibility(View.VISIBLE);
+        }
     }
 
     // Call this method to start the timer
@@ -138,7 +147,11 @@ public class ChargingFragment extends Fragment {
             @Override
             public void run() {
                 // Redirect to another fragment here
-                redirectToAnotherFragment();
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    if (isAdded()) {
+                        redirectToAnotherFragment();
+                    }
+                });
             }
         }, 3000); // 3000 milliseconds = 3 seconds
     }

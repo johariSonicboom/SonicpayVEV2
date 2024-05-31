@@ -98,69 +98,49 @@ public class SelectChargerFragment extends Fragment {
             // Set the station name and status in the card view
             TextView chargingStation = cardView.findViewById(R.id.chargingStation);
             chargingStation.setText(component.ComponentName);
-
             TextView status = cardView.findViewById(R.id.status);
-            status.setText(component.Status);
-
-            String connectorStatus = "";
-            if(component.Connectors.size() == 1){
-                selectedConnectorIndex = 0;
-            }
-
-            if ((selectedConnectorIndex - 1) < component.Connectors.size()) {
-                connectorStatus = component.Connectors.get(selectedConnectorIndex).Status;
-            } else {
-                connectorStatus = component.Connectors.get(0).Status;
-            }
-
-
-
-            if(!(connectorStatus == null)) {
-                if (connectorStatus.toUpperCase(Locale.ROOT).equals("STOPCHARGE") || connectorStatus.toUpperCase(Locale.ROOT).equals("BOOTNOTIFICATION") || connectorStatus.toUpperCase(Locale.ROOT).equals("PREPARING")) {
-                    status.setText("AVAILABLE");
-                } else if (connectorStatus.toUpperCase(Locale.ROOT).equals("STARTCHARGE") || connectorStatus.toUpperCase(Locale.ROOT).equals("CHARGING")) {
-                    status.setText("CHARGING");
-                } else {
-                    status.setText(connectorStatus.toUpperCase(Locale.ROOT));
-                }
-            }
-
-            if(status.getText() == ""){
-                status.setText("OFFLINE");
-            }
 
             ImageView statusIcon = cardView.findViewById(R.id.statusIcon);
             ImageView imageCharger = cardView.findViewById(R.id.imageViewCharger);
             LinearLayout statusLayout = cardView.findViewById(R.id.statusLayout);
+            int color;
+
+            if (component.Connectors.size() <= 1) {
+                status.setText(component.Connectors.get(0).Status.toUpperCase(Locale.ROOT));
+            } else{
+                status.setText("AVAILABLE");
+                status.setVisibility(View.INVISIBLE);
+                statusIcon.setVisibility(View.INVISIBLE);
+            }
 
             String statusText = status.getText().toString().toUpperCase(Locale.ROOT);
-            //Red
-//            if (!status.getText().equals("Available")) {
-//                int occupiedColor = Color.parseColor("#E02828");
-//                status.setTextColor(occupiedColor);
-//                statusIcon.setImageTintList(ColorStateList.valueOf(occupiedColor));
-//                imageCharger.setImageTintList(ColorStateList.valueOf(occupiedColor));
+
+//            String connectorStatus = "";
+//            if(component.Connectors.size() == 1){
+//                selectedConnectorIndex = 0;
 //            }
 //
-//            //Charging
-//            if (status.getText().equals("Charging")) {
-//                int chargingdColor = Color.parseColor("#ff8c00");
-//                status.setTextColor(chargingdColor);
-//                statusIcon.setImageTintList(ColorStateList.valueOf(chargingdColor));
-//                imageCharger.setImageTintList(ColorStateList.valueOf(chargingdColor));
+//            if ((selectedConnectorIndex - 1) < component.Connectors.size()) {
+//                connectorStatus = component.Connectors.get(selectedConnectorIndex).Status;
+//            } else {
+//                connectorStatus = component.Connectors.get(0).Status;
 //            }
 //
-//            //Offline
-//            if (status.getText().equals("Offline")) {
-//                int offlineColor = Color.parseColor("#C5C5C5");
-//                status.setTextColor(offlineColor);
-//                statusIcon.setImageTintList(ColorStateList.valueOf(offlineColor));
-//                imageCharger.setImageTintList(ColorStateList.valueOf(offlineColor));
-//                statusLayout.setPadding(88, 0, 0, 0);
+//
+//
+//            if(!(connectorStatus == null)) {
+//                if (connectorStatus.toUpperCase(Locale.ROOT).equals("STOPCHARGE") || connectorStatus.toUpperCase(Locale.ROOT).equals("BOOTNOTIFICATION") || connectorStatus.toUpperCase(Locale.ROOT).equals("PREPARING")) {
+//                    status.setText("AVAILABLE");
+//                } else if (connectorStatus.toUpperCase(Locale.ROOT).equals("STARTCHARGE") || connectorStatus.toUpperCase(Locale.ROOT).equals("CHARGING")) {
+//                    status.setText("CHARGING");
+//                } else {
+//                    status.setText(connectorStatus.toUpperCase(Locale.ROOT));
+//                }
 //            }
 
-
-            int color;
+            if(status.getText() == ""){
+                status.setText("OFFLINE");
+            }
 
             switch (statusText) {
                 case "AVAILABLE":
@@ -182,7 +162,7 @@ public class SelectChargerFragment extends Fragment {
                     color = Color.parseColor("#C5C5C5"); // Example default color
                     break;
             }
-
+//
             status.setTextColor(color);
             statusIcon.setImageTintList(ColorStateList.valueOf(color));
             imageCharger.setImageTintList(ColorStateList.valueOf(color));
@@ -190,9 +170,9 @@ public class SelectChargerFragment extends Fragment {
 //            if (statusText.equals("UNKNOWN") || statusText.equals("INOPERATIVE")) {
 //                statusLayout.setPadding(88, 0, 0, 0);
 //            }
-
-
-            // Add the card view to the container
+//
+//
+//            // Add the card view to the container
             cardContainer.addView(cardView);
         }
 

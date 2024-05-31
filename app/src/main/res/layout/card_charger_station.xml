@@ -64,6 +64,7 @@
                     android:layout_gravity="center"
                     android:paddingEnd="8dp"
                     android:src="@drawable/bga_banner_point_enabled"
+                    android:visibility="visible"
                     app:tint="#008842" />
 
                 <com.google.android.material.textview.MaterialTextView
@@ -72,7 +73,8 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:text="Available"
-                    android:textColor="#008842" />
+                    android:textColor="#008842"
+                    android:visibility="visible" />
 
             </LinearLayout>
 

@@ -33,6 +33,7 @@ public class PlugInToStartFragment extends Fragment {
     private String mParam1;
     private String mParam2;
     private String StartChargeTime;
+    private String HideStopButton;
     private Handler handler;
     private Runnable runnable;
 
@@ -65,6 +66,7 @@ public class PlugInToStartFragment extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
             StartChargeTime = getArguments().getString("StartChargeTime");
+            HideStopButton = getArguments().getString("HideStopButton");
         }
     }
 
@@ -87,49 +89,6 @@ public class PlugInToStartFragment extends Fragment {
         startTimerForRedirection();
     }
 
-//
-//    public void startAutoRedirectionToIdlePage() {
-//
-//        Log.i("startAutoRedirectionToIdlePage", "startAutoRedirectionToIdlePage");
-//        // Declare a Handler object
-//        handler = new Handler();
-//
-//        // Define the delay duration in milliseconds
-//        int delayMillis = 3000;
-//
-//        // Create a Runnable to be executed after the delay
-//        runnable = new Runnable() {
-//            @Override
-//            public void run() {
-//                handler.removeCallbacks(this);
-//
-//                Bundle bundle = new Bundle();
-//                bundle.putString("StartChargeTime", StartChargeTime);
-//
-//                FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
-//                Fragment f = fragmentManager.findFragmentById(R.id.fragmentContainer);
-//                if (f instanceof ResultFragment)
-//                // do something with f
-//                {
-//                    fragmentManager.beginTransaction().setReorderingAllowed(true).replace(R.id.fragmentContainer, ChargingFragment.class, bundle).addToBackStack(null).commit();
-//                    if (fragmentManager.getBackStackEntryCount() > 1)
-//                        fragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-//                }
-//
-//
-//            }
-//        };
-//
-//        // Start the timer by posting the Runnable with the specified delay
-//        handler.postDelayed(runnable, delayMillis);
-//    }
-//
-//    public void stopAutoRedirectionToIdlePage() {
-//        if (handler != null && runnable != null) handler.removeCallbacks(runnable);
-//    }
-
-// Inside your Fragment class
-
     private Timer timer;
 
     // Call this method to start the timer
@@ -142,7 +101,7 @@ public class PlugInToStartFragment extends Fragment {
                 // Redirect to another fragment here
                 redirectToAnotherFragment();
             }
-        }, 3000); // 3000 milliseconds = 3 seconds
+        }, 4000); // 3000 milliseconds = 3 seconds
     }
 
     // Call this method to stop the timer
@@ -160,6 +119,7 @@ public class PlugInToStartFragment extends Fragment {
         if (isAdded() && getActivity() != null) {
             Bundle bundle = new Bundle();
             bundle.putString("StartChargeTime", StartChargeTime);
+            bundle.putString("HideStopButton", "true");
             FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
             fragmentManager.beginTransaction()
                     .replace(R.id.fragmentContainer, ChargingFragment.class, bundle)

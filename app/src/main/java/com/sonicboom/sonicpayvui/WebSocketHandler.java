@@ -315,11 +315,11 @@ public class WebSocketHandler {
             String connectorStatus;
             Component component2 = mainActivity.GetSelectedComponentbyComponentCode(mainActivity.SelectedChargingStationComponent.ComponentCode, componentList);
 
-            if (component2.Status == null) {
-                connectorStatus = "Offline";
-            } else {
+//            if (component2.Status == null) {
+//                connectorStatus = "Offline";
+//            } else {
                 connectorStatus = statusNotificationResponse.Status;
-            }
+//            }
 
             switch (connectorStatus.toLowerCase(Locale.ROOT)) {
                 case "preparing":
@@ -358,7 +358,7 @@ public class WebSocketHandler {
             GeneralVariable.ChargePointStatus = statusNotificationResponse.Status;
 
             mainActivity.UpdateConnectorStatus(statusNotificationResponse.Status, component2, statusNotificationResponse.ConnectorId);
-            mainActivity.SelectedChargingStationComponent.Status = statusNotificationResponse.Status;
+//            mainActivity.SelectedChargingStationComponent.Status = statusNotificationResponse.Status;
             mainActivity.replaceComponent(componentList, mainActivity.SelectedChargingStationComponent);
 
         }
@@ -469,12 +469,14 @@ public class WebSocketHandler {
 
                     Component component = mainActivity.GetSelectedComponentbyComponentCode(salesCompletionResult.ComponentCode, componentList);
 //                    mainActivity.UpdateAllConnectorStatus("Available", mainActivity.SelectedChargingStationComponent);
-                    mainActivity.SelectedChargingStationComponent.Status = "Available";
+//                    mainActivity.SelectedChargingStationComponent.Status = "Available";
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             } catch (Exception ex) {
+                LogUtils.i("SalesCompletionReceivedError", ex);
                 mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, String.format("Total Chargin time %02d Hours %02d Minutes", 0, 0));
+                LogUtils.i("SalesCompletionReceivedError", ex);
             }
         }
     }

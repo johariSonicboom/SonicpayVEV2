@@ -94,13 +94,13 @@ public class SelectConnectorFragment extends Fragment {
                 View cardView2 = inflater.inflate(R.layout.card_connector, container, false);
 
                 // Set the station name and status in the card view
-                TextView chargingStation = cardView2.findViewById(R.id.connector);
-                chargingStation.setText(component.ComponentName);
+                TextView connectorText = cardView2.findViewById(R.id.connector);
+                connectorText.setText(String.valueOf(connector.ConnectorId));
 
                 TextView status = cardView2.findViewById(R.id.status);
-                status.setText(component.Status);
+                status.setText(connector.Status);
 
-                String connectorStatus = component.Status.toUpperCase(Locale.ROOT);
+                String connectorStatus = connector.Status.toUpperCase(Locale.ROOT);
 
                 if (connector.Status != null && !connector.Status.isEmpty()) {
                     if (connectorStatus.equals("STOPCHARGE") || connectorStatus.equals("BOOTNOTIFICATION")) {
