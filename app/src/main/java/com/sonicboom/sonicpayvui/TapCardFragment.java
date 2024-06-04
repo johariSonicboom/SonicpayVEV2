@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment;
 
 import com.google.gson.Gson;
 import com.sbs.aidl.Class.QRResponse;
+import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
 import com.sonicboom.sonicpayvui.models.eQRType;
 import com.sonicboom.sonicpayvui.utils.LogUtils;
 import com.sonicboom.sonicpayvui.utils.ScannerUtils;
@@ -68,6 +69,8 @@ public class TapCardFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        GeneralVariable.CurrentFragment = "TapCardFragment";
 
         // Inflate the layout for this fragment
         ((MainActivity)requireActivity()).UpdateTitleColor(R.color.main_blue);
@@ -128,6 +131,7 @@ public class TapCardFragment extends Fragment {
         moreQR.setOnClickListener(view1 -> {
             Bundle bundle = new Bundle();
             QRResponse qrResponse = new Gson().fromJson(((MainActivity) requireActivity()).mStr, QRResponse.class);
+            LogUtils.i("QR", qrResponse);
             bundle.putString("QRList", new Gson().toJson(qrResponse.qrList));
             bundle.putString("SalesRequest", mSalesRequest);
             requireActivity().getSupportFragmentManager().beginTransaction()

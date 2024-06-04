@@ -61,7 +61,6 @@ import com.sonicboom.sonicpayvui.EVFragments.StopChargeTapCardFragment;
 import com.sonicboom.sonicpayvui.EVModels.Component;
 import com.sonicboom.sonicpayvui.EVModels.Connector;
 import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
-import com.sonicboom.sonicpayvui.EVModels.SharedResource;
 import com.sonicboom.sonicpayvui.EVModels.StartSales;
 import com.sonicboom.sonicpayvui.EVModels.StopChargeTapCardError;
 import com.sonicboom.sonicpayvui.EVModels.eChargePointStatus;
@@ -88,9 +87,9 @@ import com.sonicboom.sonicpayvui.utils.Utils;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -120,6 +119,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public Component SelectedChargingStationComponent;
     public int selectedConnectorIndex;
     public boolean isOneConnector;
+    public List<com.sonicboom.sonicpayvui.SalesCompletion> SalesCompletionQueue = new ArrayList<>();
+    public int settlementCounter;
+    //Used to skip the Result Fragment if the SalesCompletion returns error to avoid showing two result fragments.
+    public boolean IsSkipSalesCompletionResultFragment;
+
 
     public boolean IsCharging;
     TextView txtStatus;
@@ -151,7 +155,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 }
             } else {
-                if(!isOneConnector) {
+                if (!isOneConnector) {
                     Bundle bundle = new Bundle();
                     boolean isSuccess = false;
                     bundle.putBoolean("IsSuccess", isSuccess);
@@ -514,9 +518,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             LogUtils.i(TAG, "SalesP3DebtRecoveryCallback:" + new Gson().toJson(result) + ", OriSysId: " + orinSystemID);
         }
 
-        //Used to skip the Result Fragment if the SalesCompletion returns error to avoid showing two result fragments.
-        public boolean IsSkipSalesCompletionResultFragment;
-
 
         @SuppressLint("DefaultLocale")
         @Override
@@ -604,7 +605,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }
         }
-
 
         @Override
         public void SalesCompletionCallback(SalesCompletionResult result) throws RemoteException {
@@ -848,7 +848,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         @Override
-        public void MaxChargedEntryCallback(MaxChargedEntryResult result) throws RemoteException {
+        public void MaxChargedEntryCallback(MaxChargedEntryResult result) throws
+                RemoteException {
             LogUtils.i(TAG, "MaxChargedEntryCallback:" + new Gson().toJson(result));
 
             if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
@@ -938,6 +939,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     WebSocketHandler wbs = null;
+    private Handler handlerTimer;
+    private Runnable runnable;
 
     @SuppressLint("DefaultLocale")
     @Override
@@ -966,6 +969,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .addToBackStack(null)
                         .commit();
                 return false;
+
+
             }
 
             // To cancel ResultFragment auto redirection to Idle page timer if received new command
@@ -1208,6 +1213,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         txtStatus = findViewById(R.id.txtstatus);
         wbs = new WebSocketHandler(this);
 
+// Initialize the handler
+        handlerTimer = new Handler();
+
+// Define the runnable
+        runnable = new Runnable() {
+            @Override
+            public void run() {
+                // Execute the function
+                if (SalesCompletionQueue != null && !SalesCompletionQueue.isEmpty()) {
+                    if (GeneralVariable.CurrentFragment.equals("WelcomeFragment")) {
+                        com.sonicboom.sonicpayvui.SalesCompletion salesCompletionResult = SalesCompletionQueue.get(0); // Get the first item
+                        Component salesCompletionComponent = GetSelectedComponentbyComponentCode(salesCompletionResult.ComponentCode, wbs.componentList);
+
+                        long diff = new Date().getTime() - salesCompletionComponent.StartChargeTime.getTime();
+
+                        long seconds = diff / 1000;
+                        long minutes = seconds / 60;
+                        long hours = minutes / 60;
+                        long days = hours / 24;
+                        long m = minutes % 60;
+                        String timeUse = String.format("Total Charging time %02d Hours %02d Minutes", hours, m);
+
+                        SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
+                        SalesCompletionQueue.remove(0); // Remove the first item
+                    }
+                }
+
+                if(settlementCounter > 0){
+                    StartSettlement();
+                    settlementCounter--;
+                }
+
+                // Schedule the runnable to run again after 5 seconds
+                handler.postDelayed(this, 5000);
+            }
+        };
+
+// Start the runnable for the first time
+        handlerTimer.post(runnable);
+
+
         LogUtils.d(TAG, "onCreate ended.");
     }
 
@@ -1254,7 +1300,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         try {
                             for (Component component : wbs.componentList) {
                                 wbs.GetStatus(component.ComponentCode);
-                                LogUtils.i("Start Component Status :" + component.ComponentCode, component.Connectors.get(0).Status);
+                                if (component.Connectors != null && !component.Connectors.isEmpty()) {
+                                    LogUtils.i("Start Component Status :" + component.ComponentCode, component.Connectors.get(0).Status);
+                                } else {
+                                    LogUtils.i("Start Component Status :", "Status is null or connectors are empty for component: " + component.ComponentCode);
+                                    return;
+                                }
                             }
 
                             // After fetching statuses, handle the UI update on the main thread
@@ -1316,23 +1367,56 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                             LogUtils.e(TAG, "ReadCard Exception: " + Log.getStackTraceString(e));
                                                         }
 
-                                                    } else {
+                                                    } else if (SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("AVAILABLE") || SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("PREPARING")) {
                                                         IsStopChargeTapCard = false;
                                                         IsCharging = true;
                                                         isOneConnector = true;
 
-                                                        UpdateTitle("Fare Rate");
-                                                        bundle.putString("FareChargeText", SelectedChargingStationComponent.FareChargeText);
-                                                        bundle.putString("FareChargeDescription", SelectedChargingStationComponent.FareChargeDescription);
+                                                        if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.IsSkipFare))) {
+                                                            ShowHideTitle(true);
+                                                            UpdateTitle("Key in Phone No");
+                                                            getSupportFragmentManager().beginTransaction()
+                                                                    .setReorderingAllowed(true)
+                                                                    .replace(R.id.fragmentContainer, PhoneNumberFragment.class, null)
+                                                                    .addToBackStack(null)
+                                                                    .commit();
+                                                        } else {
+                                                            if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.IsSkipFare))) {
+                                                                ShowHideTitle(true);
+                                                                UpdateTitle("Key in Phone No");
+                                                                getSupportFragmentManager().beginTransaction()
+                                                                        .setReorderingAllowed(true)
+                                                                        .replace(R.id.fragmentContainer, PhoneNumberFragment.class, null)
+                                                                        .addToBackStack(null)
+                                                                        .commit();
+                                                            } else {
+                                                                UpdateTitle("Fare Rate");
+                                                                bundle.putString("FareChargeText", SelectedChargingStationComponent.FareChargeText);
+                                                                bundle.putString("FareChargeDescription", SelectedChargingStationComponent.FareChargeDescription);
+                                                                getSupportFragmentManager().beginTransaction()
+                                                                        .setReorderingAllowed(true)
+                                                                        .replace(R.id.fragmentContainer, ChargingRateFragment.class, bundle)
+                                                                        .addToBackStack(null)
+                                                                        .commit();
+                                                            }
+                                                        }
+                                                    } else {
+                                                        Bundle bundle = new Bundle();
+                                                        boolean isSuccess = false;
+                                                        bundle.putBoolean("IsSuccess", isSuccess);
+                                                        bundle.putString("Title", "CHARGE POINT ERROR");
+                                                        bundle.putString("Message", "The current Charge Point status is : " + SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT));
+
+
                                                         getSupportFragmentManager().beginTransaction()
                                                                 .setReorderingAllowed(true)
-                                                                .replace(R.id.fragmentContainer, ChargingRateFragment.class, bundle)
+                                                                .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
                                                                 .addToBackStack(null)
                                                                 .commit();
                                                     }
                                                 }
                                                 //One Charge Station, Multiple Connectors
-                                            } else{
+                                            } else {
                                                 btnStartCharge.setVisibility(View.GONE);
                                                 UpdateTitle("Connectors");
 
@@ -1348,15 +1432,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         } else {
 //                                             //Multiple Charge Station will always go to Select Charger Fragment
 //
-                                                selectedConnectorIndex = 0;
+                                            selectedConnectorIndex = 0;
 //
-                                                btnStartCharge.setVisibility(View.GONE);
-                                                UpdateTitle("Select Charger");
-                                                getSupportFragmentManager().beginTransaction()
-                                                        .setReorderingAllowed(true)
-                                                        .replace(R.id.fragmentContainer, finalSelectChargerFragment, null)
-                                                        .addToBackStack(null)
-                                                        .commit();
+                                            btnStartCharge.setVisibility(View.GONE);
+                                            UpdateTitle("Select Charger");
+                                            getSupportFragmentManager().beginTransaction()
+                                                    .setReorderingAllowed(true)
+                                                    .replace(R.id.fragmentContainer, finalSelectChargerFragment, null)
+                                                    .addToBackStack(null)
+                                                    .commit();
                                         }
                                     } catch (Exception e) {
                                         LogUtils.e("ConditionError", e);
@@ -1403,16 +1487,58 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             //Phone Fragment Cancel Button
             case R.id.btnCancel:
                 selectedConnectorIndex = 0;
-                btnStartCharge.setVisibility(View.GONE);
 
-                UpdateTitle("Fare Rate");
-                bundle.putString("FareChargeText", SelectedChargingStationComponent.FareChargeText);
-                bundle.putString("FareChargeDescription", SelectedChargingStationComponent.FareChargeDescription);
-                getSupportFragmentManager().beginTransaction()
-                        .setReorderingAllowed(true)
-                        .replace(R.id.fragmentContainer, ChargingRateFragment.class, bundle)
-                        .addToBackStack(null)
-                        .commit();
+                if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.IsSkipFare))) {
+                    if (wbs.componentList.length == 1) {
+                        if (SelectedChargingStationComponent.Connectors.size() > 1) {
+                            btnStartCharge.setVisibility(View.GONE);
+                            UpdateTitle("Connectors");
+                            selectConnectorFragment[0] = new SelectConnectorFragment(SelectedChargingStationComponent);
+                            getSupportFragmentManager().beginTransaction()
+                                    .setReorderingAllowed(true)
+                                    .replace(R.id.fragmentContainer, selectConnectorFragment[0])
+                                    .addToBackStack(null)
+                                    .commit();
+                        } else {
+                            getSupportFragmentManager().beginTransaction()
+                                    .setReorderingAllowed(true)
+                                    .replace(R.id.fragmentContainer, WelcomeFragment.class, null)
+                                    .addToBackStack(null)
+                                    .commit();
+                            btnStartCharge.setVisibility(View.VISIBLE);
+                            ShowHideTitle(true);
+                        }
+                    } else {
+                        if (SelectedChargingStationComponent.Connectors.size() > 1) {
+                            btnStartCharge.setVisibility(View.GONE);
+                            UpdateTitle("Connectors");
+                            selectConnectorFragment[0] = new SelectConnectorFragment(SelectedChargingStationComponent);
+                            getSupportFragmentManager().beginTransaction()
+                                    .setReorderingAllowed(true)
+                                    .replace(R.id.fragmentContainer, selectConnectorFragment[0])
+                                    .addToBackStack(null)
+                                    .commit();
+                        } else {
+//                        selectChargerFragment = new SelectChargerFragment(wbs.componentList, selectedConnectorIndex);
+                            ShowHideTitle(true);
+                            UpdateTitle("Select Charger");
+                            getSupportFragmentManager().beginTransaction()
+                                    .setReorderingAllowed(true)
+                                    .replace(R.id.fragmentContainer, selectChargerFragment)
+                                    .addToBackStack(null)
+                                    .commit();
+                        }
+                    }
+                } else {
+                    UpdateTitle("Fare Rate");
+                    bundle.putString("FareChargeText", SelectedChargingStationComponent.FareChargeText);
+                    bundle.putString("FareChargeDescription", SelectedChargingStationComponent.FareChargeDescription);
+                    getSupportFragmentManager().beginTransaction()
+                            .setReorderingAllowed(true)
+                            .replace(R.id.fragmentContainer, ChargingRateFragment.class, bundle)
+                            .addToBackStack(null)
+                            .commit();
+                }
                 break;
             //Select Charger Fragment Back button
             case R.id.btnBack:
@@ -1443,16 +1569,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             SelectedChargingStationComponent.Connectors != null &&
                             SelectedChargingStationComponent.Connectors.size() < 2) {
                         selectedConnectorIndex = 0;
-                        btnStartCharge.setVisibility(View.GONE);
+                            if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.IsSkipFare))) {
+                                ShowHideTitle(true);
+                                UpdateTitle("Key in Phone No");
+                                getSupportFragmentManager().beginTransaction()
+                                        .setReorderingAllowed(true)
+                                        .replace(R.id.fragmentContainer, PhoneNumberFragment.class, null)
+                                        .addToBackStack(null)
+                                        .commit();
+                            } else {
+                                UpdateTitle("Fare Rate");
+                                bundle.putString("FareChargeText", SelectedChargingStationComponent.FareChargeText);
+                                bundle.putString("FareChargeDescription", SelectedChargingStationComponent.FareChargeDescription);
+                                getSupportFragmentManager().beginTransaction()
+                                        .setReorderingAllowed(true)
+                                        .replace(R.id.fragmentContainer, ChargingRateFragment.class, bundle)
+                                        .addToBackStack(null)
+                                        .commit();
+                            }
 
-                        UpdateTitle("Fare Rate");
-                        bundle.putString("FareChargeText", SelectedChargingStationComponent.FareChargeText);
-                        bundle.putString("FareChargeDescription", SelectedChargingStationComponent.FareChargeDescription);
-                        getSupportFragmentManager().beginTransaction()
-                                .setReorderingAllowed(true)
-                                .replace(R.id.fragmentContainer, ChargingRateFragment.class, bundle)
-                                .addToBackStack(null)
-                                .commit();
                     } else {
                         btnStartCharge.setVisibility(View.GONE);
                         UpdateTitle("Connectors");
@@ -1519,16 +1654,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     SelectedChargingStationComponent.SelectedConnector = selectedConnectorIndex;
                     replaceComponent(wbs.componentList, SelectedChargingStationComponent);
 
-                    btnStartCharge.setVisibility(View.GONE);
-
-                    UpdateTitle("Fare Rate");
-                    bundle.putString("FareChargeText", SelectedChargingStationComponent.FareChargeText);
-                    bundle.putString("FareChargeDescription", SelectedChargingStationComponent.FareChargeDescription);
-                    getSupportFragmentManager().beginTransaction()
-                            .setReorderingAllowed(true)
-                            .replace(R.id.fragmentContainer, ChargingRateFragment.class, bundle)
-                            .addToBackStack(null)
-                            .commit();
+                        if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.IsSkipFare))) {
+                            ShowHideTitle(true);
+                            UpdateTitle("Key in Phone No");
+                            getSupportFragmentManager().beginTransaction()
+                                    .setReorderingAllowed(true)
+                                    .replace(R.id.fragmentContainer, PhoneNumberFragment.class, null)
+                                    .addToBackStack(null)
+                                    .commit();
+                        } else {
+                            UpdateTitle("Fare Rate");
+                            bundle.putString("FareChargeText", SelectedChargingStationComponent.FareChargeText);
+                            bundle.putString("FareChargeDescription", SelectedChargingStationComponent.FareChargeDescription);
+                            getSupportFragmentManager().beginTransaction()
+                                    .setReorderingAllowed(true)
+                                    .replace(R.id.fragmentContainer, ChargingRateFragment.class, bundle)
+                                    .addToBackStack(null)
+                                    .commit();
+                        }
                 } else if (connectorStatusText.equals("BLOCKED")) {
                     Toast.makeText(this, "Please unplug charger", Toast.LENGTH_SHORT).show();
                 } else if (connectorStatusText.equals("CHARGING")) {
@@ -1616,52 +1759,52 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     e.printStackTrace();
                 }
 
-                    if (wbs.componentList.length == 1) {
-                        if (isOneConnector) {
-                            SimpleDateFormat originalFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH);
-                            Date date = null;
-                            try {
-                                date = originalFormat.parse(String.valueOf(SelectedChargingStationComponent.StartChargeTime));
-                            } catch (ParseException e) {
-                                e.printStackTrace();
-                            }
+                if (wbs.componentList.length == 1) {
+                    if (isOneConnector) {
+                        SimpleDateFormat originalFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH);
+                        Date date = null;
+                        try {
+                            date = originalFormat.parse(String.valueOf(SelectedChargingStationComponent.StartChargeTime));
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
 
-                            // Then format it to the desired format
-                            SimpleDateFormat targetFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-                            String formattedDate = targetFormat.format(date);
+                        // Then format it to the desired format
+                        SimpleDateFormat targetFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+                        String formattedDate = targetFormat.format(date);
 
-                            bundle.putString("StartChargeTime", formattedDate);
-                            bundle.putString("HideStopButton", "false");
-                            getSupportFragmentManager().beginTransaction()
-                                    .replace(R.id.fragmentContainer, ChargingFragment.class, bundle)
-                                    .addToBackStack(null)
-                                    .commit();
-                        } else {
+                        bundle.putString("StartChargeTime", formattedDate);
+                        bundle.putString("HideStopButton", "false");
+                        getSupportFragmentManager().beginTransaction()
+                                .replace(R.id.fragmentContainer, ChargingFragment.class, bundle)
+                                .addToBackStack(null)
+                                .commit();
+                    } else {
 //                            ShowHideTitle(true);
 //                            getSupportFragmentManager().beginTransaction()
 //                                    .setReorderingAllowed(true)
 //                                    .replace(R.id.fragmentContainer, WelcomeFragment.class, null)
 //                                    .addToBackStack(null)
 //                                    .commit();
-                            ShowHideTitle(true);
-                            UpdateTitle("Connectors");
-                            selectConnectorFragment[0] = new SelectConnectorFragment(SelectedChargingStationComponent);
-                            getSupportFragmentManager().beginTransaction()
-                                    .setReorderingAllowed(true)
-                                    .replace(R.id.fragmentContainer, selectConnectorFragment[0])
-                                    .addToBackStack(null)
-                                    .commit();
-                        }
-
-                    } else {
                         ShowHideTitle(true);
-                        UpdateTitle("Select Charger");
+                        UpdateTitle("Connectors");
+                        selectConnectorFragment[0] = new SelectConnectorFragment(SelectedChargingStationComponent);
                         getSupportFragmentManager().beginTransaction()
                                 .setReorderingAllowed(true)
-                                .replace(R.id.fragmentContainer, selectChargerFragment)
+                                .replace(R.id.fragmentContainer, selectConnectorFragment[0])
                                 .addToBackStack(null)
                                 .commit();
                     }
+
+                } else {
+                    ShowHideTitle(true);
+                    UpdateTitle("Select Charger");
+                    getSupportFragmentManager().beginTransaction()
+                            .setReorderingAllowed(true)
+                            .replace(R.id.fragmentContainer, selectChargerFragment)
+                            .addToBackStack(null)
+                            .commit();
+                }
 
                 break;
 
@@ -1695,15 +1838,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 //                    if (result) {
 
-                        Log.d("startChargeTime : ", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
-                        bundle.putString("startChargeTime", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
-                        StopChargeTapCardFragment fragment = new StopChargeTapCardFragment(this);
+                    Log.d("startChargeTime : ", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
+                    bundle.putString("startChargeTime", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
+                    StopChargeTapCardFragment fragment = new StopChargeTapCardFragment(this);
 
-                        getSupportFragmentManager().beginTransaction()
-                                .setReorderingAllowed(true)
-                                .replace(R.id.fragmentContainer, fragment)
-                                .addToBackStack(null)
-                                .commit();
+                    getSupportFragmentManager().beginTransaction()
+                            .setReorderingAllowed(true)
+                            .replace(R.id.fragmentContainer, fragment)
+                            .addToBackStack(null)
+                            .commit();
 //                    }
                 } catch (RemoteException e) {
                     LogUtils.e(TAG, "ReadCard Exception: " + Log.getStackTraceString(e));
@@ -1828,10 +1971,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         btnStartCharge.setText("Disconnected");
                         btnStartCharge.setClickable(false);
                         btnStartCharge.setVisibility(View.VISIBLE);
-//                        getSupportFragmentManager().beginTransaction()
-//                                .setReorderingAllowed(true)
-//                                .add(R.id.fragmentContainer, WelcomeFragment.class, null)
-//                                .commit();
                         GeneralVariable.Status = "Disconnected";
                         break;
                     case Charging:
@@ -2002,7 +2141,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             ArrayList<Date> settlementList = new ArrayList<>();
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMdd");
             SimpleDateFormat datetimeFormat = new SimpleDateFormat("yyMMdd HHmmss");
-            if (sonicInterface.ReadSharedPrefBoolean(getString(R.string.EnableAutoSettlement))) {
+            if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.EnableAutoSettlement))) {
                 String AutoSettlementTime = sonicInterface.ReadSharedPref(getString(R.string.AutoSettlementTime));
                 if (!AutoSettlementTime.isEmpty()) {
                     String[] settlementTimeSchedule = AutoSettlementTime.split("\\|");
@@ -2097,12 +2236,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             LogUtils.i("SettlementTimer Running");
             try {
                 GetStatusResult result = sonicInterface.getStatus();
-                if (result.TerminalState == eTerminalState.Idle || result.TerminalState == eTerminalState.WaitingForCard) {
-                    if (result.TerminalState == eTerminalState.WaitingForCard) {
-                        boolean r = sonicInterface.Abort();
-                    }
-                } else {
+                if (GeneralVariable.CurrentFragment.equals("WelcomeFragment")) {
                     StartSettlement();
+                } else {
+                    settlementCounter++;
                 }
 
             } catch (RemoteException e) {
@@ -2316,4 +2453,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         return null;
     }
+
 }
+

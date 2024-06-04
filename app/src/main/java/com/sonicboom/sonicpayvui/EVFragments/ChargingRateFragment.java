@@ -10,6 +10,7 @@ import android.widget.TextView;
 import androidx.fragment.app.Fragment;
 
 import com.sbs.aidl.IAIDLSonicpayInterface;
+import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
 import com.sonicboom.sonicpayvui.R;
 
 /**
@@ -74,6 +75,8 @@ public class ChargingRateFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        GeneralVariable.CurrentFragment = "ChargingRateFragment";
 
 //        try {
 //            boolean r = sonicInterface.Abort();

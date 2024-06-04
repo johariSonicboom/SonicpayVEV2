@@ -8,6 +8,7 @@ import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
 
+import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
 import com.sonicboom.sonicpayvui.MainActivity;
 import com.sonicboom.sonicpayvui.R;
 
@@ -71,6 +72,8 @@ public class StopChargeTapCardFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        GeneralVariable.CurrentFragment = "StopChargeTapCardFragment";
         // Inflate the layout for this fragment
         ((MainActivity)requireActivity()).UpdateTitleColor(R.color.main_blue);
         ((MainActivity)requireActivity()).ShowHideTitle(false);

@@ -15,6 +15,7 @@ import android.widget.TextView;
 
 import com.google.gson.Gson;
 import com.sbs.aidl.Class.QRResponse;
+import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
 import com.sonicboom.sonicpayvui.models.eQRType;
 import com.sonicboom.sonicpayvui.utils.LogUtils;
 import com.sonicboom.sonicpayvui.utils.Utils;
@@ -58,6 +59,8 @@ public class ProgressFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        GeneralVariable.CurrentFragment = "ProgressFragment";
         // Inflate the layout for this fragment
         ((MainActivity)requireActivity()).UpdateTitleColor(R.color.main_blue);
         if (mTitleText != null && !mTitleText.equalsIgnoreCase(""))

@@ -14,6 +14,7 @@ import android.widget.TextView;
 import androidx.fragment.app.Fragment;
 
 import com.sonicboom.sonicpayvui.EVModels.Component;
+import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
 import com.sonicboom.sonicpayvui.R;
 
 import java.util.Locale;
@@ -84,6 +85,8 @@ public class SelectChargerFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        GeneralVariable.CurrentFragment = "SelectChargerFragment";
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_select_charger, container, false);
         
