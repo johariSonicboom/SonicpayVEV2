@@ -97,6 +97,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import pl.droidsonroids.gif.GifImageView;
 
@@ -1291,14 +1292,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 ExecutorService executor = Executors.newSingleThreadExecutor();
                 Handler handler = new Handler(Looper.getMainLooper());
 
+                // Declare futureTask as an array to make it effectively final
+                final Future<?>[] futureTask = new Future<?>[1];
+
+                // Define the timeout Runnable
+                Runnable timeoutRunnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        // Cancel the task if it's running
+                        if (futureTask[0] != null && !futureTask[0].isDone()) {
+                            futureTask[0].cancel(true);
+                            LogUtils.e("TimeoutError", "Loading took longer than 5 seconds");
+                            Toast.makeText(MainActivity.this, "Loading timeout. Please try again.", Toast.LENGTH_SHORT).show();
+                            getSupportFragmentManager().beginTransaction()
+                                    .setReorderingAllowed(true)
+                                    .replace(R.id.fragmentContainer, WelcomeFragment.class, null)
+                                    .addToBackStack(null)
+                                    .commit();
+                            btnStartCharge.setVisibility(View.VISIBLE);
+                        }
+                    }
+                };
+
+                int LoadingTimeOutDuration =3000;
+                LoadingTimeOutDuration = Integer.parseInt(new SharedPrefUI(getApplicationContext()).ReadSharedPrefStr(getString(R.string.LoadingTimeOutDuration)));
+
+                // Post the timeout Runnable with a 5-second delay
+                handler.postDelayed(timeoutRunnable, LoadingTimeOutDuration);
+
                 selectConnectorFragment[0] = new SelectConnectorFragment(SelectedChargingStationComponent);
                 SelectConnectorFragment finalSelectConnectorFragment = selectConnectorFragment[0];
                 SelectChargerFragment finalSelectChargerFragment = selectChargerFragment;
-                executor.execute(new Runnable() {
+                futureTask[0] = executor.submit(new Runnable() {
                     @Override
                     public void run() {
                         try {
                             for (Component component : wbs.componentList) {
+                                // Check for interruption
+                                if (Thread.currentThread().isInterrupted()) {
+                                    return;
+                                }
+
                                 wbs.GetStatus(component.ComponentCode);
                                 if (component.Connectors != null && !component.Connectors.isEmpty()) {
                                     LogUtils.i("Start Component Status :" + component.ComponentCode, component.Connectors.get(0).Status);
@@ -1312,13 +1346,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             handler.post(new Runnable() {
                                 @Override
                                 public void run() {
+                                    // Cancel the timeout Runnable
+                                    handler.removeCallbacks(timeoutRunnable);
+
                                     try {
                                         // One charge station
                                         if (wbs.componentList.length == 1) {
                                             SelectedChargingStationComponent = wbs.componentList[0];
                                             SelectedChargingStation = SelectedChargingStationComponent.ComponentName;
 
-                                            //One charge station, One Connector
+                                            // One charge station, One Connector
                                             if (SelectedChargingStationComponent.Connectors.size() <= 1) {
                                                 if (SelectedChargingStationComponent.Connectors.get(0).Status.toUpperCase(Locale.ROOT).equals("BLOCKED")) {
                                                     Toast.makeText(MainActivity.this, "Please unplug charger", Toast.LENGTH_SHORT).show();
@@ -1337,7 +1374,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                             IsStopChargeTapCard = true;
 
                                                             if (result) {
-
                                                                 // First parse the original date string
                                                                 SimpleDateFormat originalFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH);
                                                                 Date date = originalFormat.parse(String.valueOf(SelectedChargingStationComponent.StartChargeTime));
@@ -1353,20 +1389,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                                         .replace(R.id.fragmentContainer, ChargingFragment.class, bundle)
                                                                         .addToBackStack(null)
                                                                         .commit();
-//                                                                Log.d("startChargeTime : ", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
-//                                                                bundle.putString("startChargeTime", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
-//                                                                StopChargeTapCardFragment fragment = new StopChargeTapCardFragment(MainActivity.this);
-//
-//                                                                getSupportFragmentManager().beginTransaction()
-//                                                                        .setReorderingAllowed(true)
-//                                                                        .replace(R.id.fragmentContainer, fragment)
-//                                                                        .addToBackStack(null)
-//                                                                        .commit();
                                                             }
                                                         } catch (RemoteException e) {
                                                             LogUtils.e(TAG, "ReadCard Exception: " + Log.getStackTraceString(e));
                                                         }
-
                                                     } else if (SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("AVAILABLE") || SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("PREPARING")) {
                                                         IsStopChargeTapCard = false;
                                                         IsCharging = true;
@@ -1407,7 +1433,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                         bundle.putString("Title", "CHARGE POINT ERROR");
                                                         bundle.putString("Message", "The current Charge Point status is : " + SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT));
 
-
                                                         getSupportFragmentManager().beginTransaction()
                                                                 .setReorderingAllowed(true)
                                                                 .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
@@ -1415,7 +1440,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                                 .commit();
                                                     }
                                                 }
-                                                //One Charge Station, Multiple Connectors
+                                                // One Charge Station, Multiple Connectors
                                             } else {
                                                 btnStartCharge.setVisibility(View.GONE);
                                                 UpdateTitle("Connectors");
@@ -1428,12 +1453,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                         .commit();
                                             }
 
-                                            //Multiple Charge Stations
+                                            // Multiple Charge Stations
                                         } else {
-//                                             //Multiple Charge Station will always go to Select Charger Fragment
-//
+                                            // Multiple Charge Station will always go to Select Charger Fragment
                                             selectedConnectorIndex = 0;
-//
+
                                             btnStartCharge.setVisibility(View.GONE);
                                             UpdateTitle("Select Charger");
                                             getSupportFragmentManager().beginTransaction()
@@ -1447,13 +1471,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     }
                                 }
                             });
-
                         } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            LogUtils.e(TAG, "Task interrupted: " + Log.getStackTraceString(e));
                         }
                     }
                 });
                 break;
+
+
             case R.id.btnPhoneNumber:
                 phNumber = ((EditText) findViewById(R.id.phone_noCountryCode)).getText().toString() + ((EditText) findViewById(R.id.phone_no)).getText().toString();
                 try {

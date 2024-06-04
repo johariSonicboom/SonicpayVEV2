@@ -170,5 +170,6 @@
     <string name="ComponentCode">ComponentCode</string>
     <string name="WebSocketURL">WebSocketURL</string>
     <string name="IsSkipFare">IsSkipFare</string>
+    <string name="LoadingTimeOutDuration">LoadingTimeOutDuration</string>
 
 </resources>

@@ -25,6 +25,13 @@
         <SwitchPreference android:title="Skip Charging Rate Screen"
             android:key="@string/IsSkipFare"
             android:defaultValue="false" />
+
+        <EditTextPreference
+            android:title="Loading Time Out Duration (in ms)"
+            android:key="@string/LoadingTimeOutDuration"
+            android:inputType="text"
+            app:useSimpleSummaryProvider="true"
+            android:defaultValue="5000"/>
     </PreferenceCategory>
 
 </PreferenceScreen>

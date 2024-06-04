@@ -1,12 +1,14 @@
 package com.sonicboom.sonicpayvui;
 
 
+import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
 import com.google.gson.Gson;
 import com.sbs.aidl.Class.SalesCompletionResult;
 import com.sbs.aidl.Class.SalesResult;
+import com.sonicboom.sonicpayvui.EVFragments.ChargingFragment;
 import com.sonicboom.sonicpayvui.EVModels.Component;
 import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
 import com.sonicboom.sonicpayvui.EVModels.GetCharPointStatusRequest;
@@ -192,6 +194,17 @@ public class WebSocketHandler {
 //            GetStatus(component.ComponentCode);
             //}
 
+            if(componentList.length == 1 && componentList[0].Connectors.size() == 1){
+                Bundle bundle = new Bundle();
+                bundle.putString("StartChargeTime", componentList[0].Connectors.get(0).Description);
+                bundle.putString("HideStopButton", "false");
+                mainActivity.isOneConnector = true;
+                mainActivity.getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragmentContainer, ChargingFragment.class, bundle)
+                        .addToBackStack(null)
+                        .commit();
+            }
+
             for (Component component : componentList) {
                 GetStatus(component.ComponentCode);
             }
@@ -324,7 +337,10 @@ public class WebSocketHandler {
                 case "charging":
                     if (!statusNotificationResponse.Description.isEmpty()) {
 
+                        new Date().getTime();
                         SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
+//                        String formattedDate = format.format(new Date());
+//                        mainActivity.StartCharging(formattedDate);
 
                         try {
                             mainActivity.SelectedChargingStationComponent.StartChargeTime = format.parse(statusNotificationResponse.Description);
@@ -382,8 +398,10 @@ public class WebSocketHandler {
                     if (!notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description.isEmpty()) {
                         //charging fragment
 //                            mainActivity.StartCharging(notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description);
+                        new Date().getTime();
                         SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
-
+//                        String formattedDate = format.format(new Date());
+//                        mainActivity.StartCharging(formattedDate);
 
                         try {
                             mainActivity.SelectedChargingStationComponent = mainActivity.GetSelectedComponentbyComponentCode(notificationResponse.ComponentCode, componentList);
