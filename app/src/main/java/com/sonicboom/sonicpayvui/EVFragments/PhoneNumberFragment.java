@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.sbs.aidl.IAIDLSonicpayInterface;
+import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
 import com.sonicboom.sonicpayvui.MainActivity;
 import com.sonicboom.sonicpayvui.R;
 
@@ -66,6 +67,8 @@ public class PhoneNumberFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        GeneralVariable.CurrentFragment = "PhoneNumberFragment";
 
 //        try {
 //            boolean r = sonicInterface.Abort();

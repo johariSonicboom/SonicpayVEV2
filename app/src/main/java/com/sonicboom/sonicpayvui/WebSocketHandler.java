@@ -267,6 +267,7 @@ public class WebSocketHandler {
         return null;
     }
 
+
     void SalesCompletionResultResponse(SalesCompletionResult result) {
         String uniqId = RandomString(16);
         vSalesCompletionResult SalesCompletion = new vSalesCompletionResult();
@@ -313,26 +314,16 @@ public class WebSocketHandler {
             Log.d("Notification Response", "GetStatusResponse");
 
             String connectorStatus;
-            Component component2 = mainActivity.GetSelectedComponentbyComponentCode(mainActivity.SelectedChargingStationComponent.ComponentCode, componentList);
-
-//            if (component2.Status == null) {
-//                connectorStatus = "Offline";
-//            } else {
-                connectorStatus = statusNotificationResponse.Status;
-//            }
+            connectorStatus = statusNotificationResponse.Status;
 
             switch (connectorStatus.toLowerCase(Locale.ROOT)) {
                 case "preparing":
 
                     break;
                 case "startcharge":
-                    Component selectedComponent = mainActivity.GetSelectedComponentbyComponentCode(mainActivity.SelectedChargingStationComponent.ComponentCode, componentList);
-//                        mainActivity.UpdateAllConnectorStatus(notificationResponse.Status, selectedComponent);
-
                 case "charging":
                     if (!statusNotificationResponse.Description.isEmpty()) {
 
-//                            mainActivity.StartCharging(notificationResponse.Description);
                         SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
 
                         try {
@@ -344,9 +335,6 @@ public class WebSocketHandler {
                         mainActivity.UpdateChargePointStatus(eChargePointStatus.Charging);
                     }
                     new Date().getTime();
-                    SimpleDateFormat format2 = new SimpleDateFormat("yyyyMMddHHmmss");
-                    String formattedDate = format2.format(new Date());
-//                    mainActivity.StartCharging(formattedDate);
                     break;
                 case "available":
                     break;
@@ -357,8 +345,7 @@ public class WebSocketHandler {
             mainActivity.UpdateStatus(statusNotificationResponse.Status);
             GeneralVariable.ChargePointStatus = statusNotificationResponse.Status;
 
-            mainActivity.UpdateConnectorStatus(statusNotificationResponse.Status, component2, statusNotificationResponse.ConnectorId);
-//            mainActivity.SelectedChargingStationComponent.Status = statusNotificationResponse.Status;
+            mainActivity.UpdateConnectorStatus(statusNotificationResponse.Status, component, statusNotificationResponse.ConnectorId);
             mainActivity.replaceComponent(componentList, mainActivity.SelectedChargingStationComponent);
 
         }
@@ -373,10 +360,7 @@ public class WebSocketHandler {
             Component component = mainActivity.GetSelectedComponentbyComponentCode(notificationResponse.ComponentCode, componentList);
 
             mainActivity.replaceComponentConnectors(componentList, notificationResponse.ComponentCode, notificationResponse.Connectors);
-//            mainActivity.UpdateConnectorStatus(component.Connectors.get(component.SelectedConnector).Status, component, notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).ConnectorId);
-//                String connectorStatus = notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Status;
 
-//            mainActivity.replaceComponent(componentList, component);
             String connectorStatus;
 
             if (component.Connectors.isEmpty()) {
@@ -390,17 +374,10 @@ public class WebSocketHandler {
             mainActivity.replaceComponent(componentList, component);
 
             switch (connectorStatus.toLowerCase(Locale.ROOT)) {
-//                switch (notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Status.toLowerCase(Locale.ROOT)) {
                 case "preparing":
 
                     break;
                 case "startcharge":
-                    Component selectedComponent = mainActivity.GetSelectedComponentbyComponentCode(notificationResponse.ComponentCode, componentList);
-//                        mainActivity.UpdateAllConnectorStatus(notificationResponse.Status, selectedComponent);
-                    new Date().getTime();
-                    SimpleDateFormat format2 = new SimpleDateFormat("yyyyMMddHHmmss");
-                    String formattedDate = format2.format(new Date());
-//                    mainActivity.StartCharging(formattedDate);
                 case "charging":
                     if (!notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description.isEmpty()) {
                         //charging fragment
@@ -452,29 +429,34 @@ public class WebSocketHandler {
             try {
                 LogUtils.i("custumErrorMessage is Null", "custumErrorMessage is Null");
                 Txid = salesCompletionResult.TxId;
-                long diff = new Date().getTime() - mainActivity.SelectedChargingStationComponent.StartChargeTime.getTime();
+                Component salesCompletionComponent = mainActivity.GetSelectedComponentbyComponentCode(salesCompletionResult.ComponentCode, componentList);
+
+                long diff = new Date().getTime() - salesCompletionComponent.StartChargeTime.getTime();
+//                long diff = new Date().getTime() - mainActivity.SelectedChargingStationComponent.StartChargeTime.getTime();
                 long seconds = diff / 1000;
                 long minutes = seconds / 60;
                 long hours = minutes / 60;
                 long days = hours / 24;
                 long m = minutes % 60;
                 String TimeUse = String.format("Total Charging Time %02d Hours %02d Minutes", hours, m);
-                mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, TimeUse);
-
+                if (GeneralVariable.CurrentFragment.equals("WelcomeFragment")) {
+                    mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, TimeUse);
+                } else {
+                    mainActivity.SalesCompletionQueue.add(salesCompletionResult);
+                }
                 try {
                     Thread.sleep(4000);
-                    mainActivity.UpdateChargePointStatus(eChargePointStatus.Idle);
+//                    mainActivity.UpdateChargePointStatus(eChargePointStatus.Idle);
                     mainActivity.UpdateStatus("Available");
                     GeneralVariable.ChargePointStatus = "Available";
 
-                    Component component = mainActivity.GetSelectedComponentbyComponentCode(salesCompletionResult.ComponentCode, componentList);
+//                    Component component = mainActivity.GetSelectedComponentbyComponentCode(salesCompletionResult.ComponentCode, componentList);
 //                    mainActivity.UpdateAllConnectorStatus("Available", mainActivity.SelectedChargingStationComponent);
 //                    mainActivity.SelectedChargingStationComponent.Status = "Available";
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             } catch (Exception ex) {
-                LogUtils.i("SalesCompletionReceivedError", ex);
                 mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, String.format("Total Chargin time %02d Hours %02d Minutes", 0, 0));
                 LogUtils.i("SalesCompletionReceivedError", ex);
             }

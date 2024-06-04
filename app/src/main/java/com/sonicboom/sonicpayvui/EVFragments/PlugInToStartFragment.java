@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
 import com.sonicboom.sonicpayvui.R;
 
 import java.util.Timer;
@@ -73,6 +74,7 @@ public class PlugInToStartFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
+        GeneralVariable.CurrentFragment = "PlugInToStartFragment";
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_plug_in_to_start, container, false);
 
