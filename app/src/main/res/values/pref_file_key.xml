@@ -171,5 +171,7 @@
     <string name="WebSocketURL">WebSocketURL</string>
     <string name="IsSkipFare">IsSkipFare</string>
     <string name="LoadingTimeOutDuration">LoadingTimeOutDuration</string>
+    <string name="EnableTapCardStopCharge">EnableTapCardStopCharge</string>
+
 
 </resources>

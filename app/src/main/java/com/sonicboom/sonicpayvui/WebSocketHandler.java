@@ -329,11 +329,7 @@ public class WebSocketHandler {
 //                        String formattedDate = format.format(new Date());
 //                        mainActivity.StartCharging(formattedDate);
 
-
-
                         SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
-
-
 
                         try {
                             Thread.sleep(5000);

@@ -67,9 +67,9 @@ public class PlugInToStartFragment extends Fragment {
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState){
         super.onViewCreated(view, savedInstanceState);
-        Log.i("onViewCreated", "onViewCreated");
+//        Log.i("onViewCreated", "onViewCreated");
         if (StayOnFragment){
-            LogUtils.i("Stay on Plugin Fragment");
+//            LogUtils.i("Stay on Plugin Fragment");
         }else{
             startTimerForRedirection();
         }
