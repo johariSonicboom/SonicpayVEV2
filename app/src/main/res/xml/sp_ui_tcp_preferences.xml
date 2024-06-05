@@ -31,7 +31,7 @@
             android:key="@string/LoadingTimeOutDuration"
             android:inputType="text"
             app:useSimpleSummaryProvider="true"
-            android:defaultValue="5000"/>
+            android:defaultValue="10000"/>
     </PreferenceCategory>
 
 </PreferenceScreen>

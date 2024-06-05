@@ -25,6 +25,7 @@ import com.sonicboom.sonicpayvui.utils.LogUtils;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.SecureRandom;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -190,20 +191,6 @@ public class WebSocketHandler {
                 return;
             }
             mainActivity.UpdateChargePointStatus(eChargePointStatus.Idle);
-            //if(component.Status.equalsIgnoreCase("charging")){
-//            GetStatus(component.ComponentCode);
-            //}
-
-            if(componentList.length == 1 && componentList[0].Connectors.size() == 1){
-                Bundle bundle = new Bundle();
-                bundle.putString("StartChargeTime", componentList[0].Connectors.get(0).Description);
-                bundle.putString("HideStopButton", "false");
-                mainActivity.isOneConnector = true;
-                mainActivity.getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragmentContainer, ChargingFragment.class, bundle)
-                        .addToBackStack(null)
-                        .commit();
-            }
 
             for (Component component : componentList) {
                 GetStatus(component.ComponentCode);
@@ -337,10 +324,33 @@ public class WebSocketHandler {
                 case "charging":
                     if (!statusNotificationResponse.Description.isEmpty()) {
 
-                        new Date().getTime();
-                        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
+//                        new Date().getTime();
+//                        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
 //                        String formattedDate = format.format(new Date());
 //                        mainActivity.StartCharging(formattedDate);
+
+
+
+                        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
+
+
+
+                        try {
+                            Thread.sleep(5000);
+//                            mainActivity.ShowHideTitle(true);
+//                            mainActivity.UpdateTitle("Charging");
+                            if (componentList.length == 1 && componentList[0].Connectors.size() <= 1) {
+                                mainActivity.ShowHideTitle(true);
+                                mainActivity.UpdateTitle("Charging");
+                                mainActivity.isOneConnector = true;
+                                mainActivity.StartCharging(statusNotificationResponse.Description, "false");
+                            }
+                            else {
+                                mainActivity.StartCharging(statusNotificationResponse.Description, "true");
+                            }
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
 
                         try {
                             mainActivity.SelectedChargingStationComponent.StartChargeTime = format.parse(statusNotificationResponse.Description);
@@ -350,7 +360,6 @@ public class WebSocketHandler {
                     } else if (mainActivity.SelectedChargingStationComponent.StartChargeTime != null) {
                         mainActivity.UpdateChargePointStatus(eChargePointStatus.Charging);
                     }
-                    new Date().getTime();
                     break;
                 case "available":
                     break;
@@ -368,7 +377,7 @@ public class WebSocketHandler {
 
     }
 
-    public void NotificationReceived(String notificationResponseMsg) {
+    public void   NotificationReceived(String notificationResponseMsg) {
         if (!notificationResponseMsg.isEmpty()) {
             GetStatusResponse notificationResponse = new Gson().fromJson(notificationResponseMsg, GetStatusResponse.class);
             Log.d("Notification Response", notificationResponse.toString());
@@ -398,10 +407,30 @@ public class WebSocketHandler {
                     if (!notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description.isEmpty()) {
                         //charging fragment
 //                            mainActivity.StartCharging(notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description);
-                        new Date().getTime();
-                        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
+//                        new Date().getTime();
+//                        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
 //                        String formattedDate = format.format(new Date());
 //                        mainActivity.StartCharging(formattedDate);
+
+                        new Date().getTime();
+                        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
+                        String formattedDate = format.format(new Date());
+
+                        try {
+                            Thread.sleep(5000);
+                            if (componentList.length == 1 && componentList[0].Connectors.size() <= 1) {
+                                mainActivity.ShowHideTitle(true);
+                                mainActivity.UpdateTitle("Charging");
+                                mainActivity.isOneConnector = true;
+                                mainActivity.StartCharging(notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description, "false");
+                            }
+//                            else {
+//                                mainActivity.StartCharging(notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description, "true");
+//                            }
+
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
 
                         try {
                             mainActivity.SelectedChargingStationComponent = mainActivity.GetSelectedComponentbyComponentCode(notificationResponse.ComponentCode, componentList);
@@ -457,7 +486,7 @@ public class WebSocketHandler {
                 long days = hours / 24;
                 long m = minutes % 60;
                 String TimeUse = String.format("Total Charging Time %02d Hours %02d Minutes", hours, m);
-                if (GeneralVariable.CurrentFragment.equals("WelcomeFragment")) {
+                if (GeneralVariable.CurrentFragment.equals("WelcomeFragment") || GeneralVariable.CurrentFragment.equals("ChargingFragment")) {
                     mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, TimeUse);
                 } else {
                     mainActivity.SalesCompletionQueue.add(salesCompletionResult);
