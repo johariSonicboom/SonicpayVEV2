@@ -3,6 +3,7 @@ package com.sonicboom.sonicpayvui.EVFragments;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.RemoteException;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,6 +17,7 @@ import androidx.fragment.app.FragmentManager;
 import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
 import com.sonicboom.sonicpayvui.MainActivity;
 import com.sonicboom.sonicpayvui.R;
+import com.sonicboom.sonicpayvui.SharedPrefUI;
 import com.sonicboom.sonicpayvui.WelcomeFragment;
 import com.sonicboom.sonicpayvui.utils.LogUtils;
 
@@ -135,13 +137,24 @@ public class ChargingFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         Button stopChargeButton = view.findViewById(R.id.btnStopCharge);
-        LogUtils.i("isOneConnector in Charging Fragment", ((MainActivity) requireActivity()).isOneConnector);
-        if(!((MainActivity) requireActivity()).isOneConnector){
-            startTimerForRedirection();
-            LogUtils.i("Charging Fragment", "Timer is activated");
-        } else {
-            stopChargeButton.setVisibility(View.VISIBLE);
-        }
+//        LogUtils.i("isOneConnector in Charging Fragment", ((MainActivity) requireActivity()).isOneConnector);
+            LogUtils.i("EnableTapCardStopCharge", new SharedPrefUI(requireActivity()).ReadSharedPrefBoolean(getString(R.string.EnableTapCardStopCharge)));
+//            if(new SharedPrefUI(requireActivity()).ReadSharedPrefBoolean(getString(R.string.EnableTapCardStopCharge))){
+//                stopChargeButton.setVisibility(View.VISIBLE);
+//            } else {
+//                stopChargeButton.setVisibility(View.INVISIBLE);
+//            }
+
+            if(!((MainActivity) requireActivity()).isOneConnector){
+                startTimerForRedirection();
+                LogUtils.i("Charging Fragment", "Timer is activated");
+            } else {
+                if(new SharedPrefUI(requireActivity()).ReadSharedPrefBoolean(getString(R.string.EnableTapCardStopCharge))){
+                stopChargeButton.setVisibility(View.VISIBLE);
+            } else {
+                stopChargeButton.setVisibility(View.INVISIBLE);
+            }
+            }
     }
 
     // Call this method to start the timer
