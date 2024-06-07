@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
+import androidx.fragment.app.FragmentManager;
+
 import com.google.gson.Gson;
 import com.sbs.aidl.Class.SalesCompletionResult;
 import com.sbs.aidl.Class.SalesResult;
@@ -157,8 +159,6 @@ public class WebSocketHandler {
 
     private void StartSalesReceived(String notificationResponseMsg) {
         startSales = new Gson().fromJson(notificationResponseMsg, StartSales.class);
-
-
     }
 
 
@@ -198,6 +198,7 @@ public class WebSocketHandler {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
     }
 
     void GetStatus(String ComponentCode) throws InterruptedException {
@@ -311,11 +312,12 @@ public class WebSocketHandler {
             GetStatusNotificationResponse statusNotificationResponse = new Gson().fromJson(statusNotificationResponseMsg, GetStatusNotificationResponse.class);
             Log.d("Status Notification Response", statusNotificationResponse.toString());
             Component component = mainActivity.GetSelectedComponentbyComponentCode(statusNotificationResponse.ComponentCode, componentList);
-            Log.d("Notification Response", "GetStatusResponse");
+//            Log.d("Notification Response", "GetStatusResponse");
 
             String connectorStatus;
             connectorStatus = statusNotificationResponse.Status;
 
+            LogUtils.i("connectorStatus", connectorStatus.toLowerCase(Locale.ROOT));
             switch (connectorStatus.toLowerCase(Locale.ROOT)) {
                 case "preparing":
 
@@ -340,8 +342,7 @@ public class WebSocketHandler {
                                 mainActivity.UpdateTitle("Charging");
                                 mainActivity.isOneConnector = true;
                                 mainActivity.StartCharging(statusNotificationResponse.Description, "false");
-                            }
-                            else {
+                            } else {
                                 mainActivity.StartCharging(statusNotificationResponse.Description, "true");
                             }
                         } catch (InterruptedException e) {
@@ -355,6 +356,8 @@ public class WebSocketHandler {
                         }
                     } else if (mainActivity.SelectedChargingStationComponent.StartChargeTime != null) {
                         mainActivity.UpdateChargePointStatus(eChargePointStatus.Charging);
+                    } else {
+                        mainActivity.ChangeToWelcomeFragment();
                     }
                     break;
                 case "available":
@@ -373,7 +376,7 @@ public class WebSocketHandler {
 
     }
 
-    public void   NotificationReceived(String notificationResponseMsg) {
+    public void NotificationReceived(String notificationResponseMsg) {
         if (!notificationResponseMsg.isEmpty()) {
             GetStatusResponse notificationResponse = new Gson().fromJson(notificationResponseMsg, GetStatusResponse.class);
             Log.d("Notification Response", notificationResponse.toString());
@@ -394,6 +397,7 @@ public class WebSocketHandler {
             component.FareChargeDescription = notificationResponse.DescriptionText;
             mainActivity.replaceComponent(componentList, component);
 
+            LogUtils.i("connectorStatus", connectorStatus.toLowerCase(Locale.ROOT));
             switch (connectorStatus.toLowerCase(Locale.ROOT)) {
                 case "preparing":
 
@@ -418,7 +422,7 @@ public class WebSocketHandler {
                                 mainActivity.ShowHideTitle(true);
                                 mainActivity.UpdateTitle("Charging");
                                 mainActivity.isOneConnector = true;
-                                mainActivity.StartCharging(notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description, "false");
+                                mainActivity.StartCharging(notificationResponse.Connectors.get(0).Description, "false");
                             }
 //                            else {
 //                                mainActivity.StartCharging(notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description, "true");
@@ -429,14 +433,16 @@ public class WebSocketHandler {
                         }
 
                         try {
-                            mainActivity.SelectedChargingStationComponent = mainActivity.GetSelectedComponentbyComponentCode(notificationResponse.ComponentCode, componentList);
-                            mainActivity.SelectedChargingStationComponent.StartChargeTime = format.parse(notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description);
-                            mainActivity.replaceComponent(componentList, mainActivity.SelectedChargingStationComponent);
+//                            mainActivity.SelectedChargingStationComponent = mainActivity.GetSelectedComponentbyComponentCode(notificationResponse.ComponentCode, componentList);
+                            mainActivity.SelectedChargingStationComponent.StartChargeTime = format.parse(notificationResponse.Connectors.get(0).Description);
+//                            mainActivity.replaceComponent(componentList, mainActivity.SelectedChargingStationComponent);
                         } catch (Exception ex) {
                             LogUtils.e(ex);
                         }
                     } else if (mainActivity.SelectedChargingStationComponent.StartChargeTime != null) {
                         mainActivity.UpdateChargePointStatus(eChargePointStatus.Charging);
+                    } else {
+                        mainActivity.ChangeToWelcomeFragment();
                     }
 
                     break;

@@ -36,7 +36,7 @@
         <SwitchPreference
             android:title="Enable Tap Card to Stop Charging"
             android:key="@string/EnableTapCardStopCharge"
-            android:defaultValue="true" />
+            android:defaultValue="false" />
     </PreferenceCategory>
 
 </PreferenceScreen>

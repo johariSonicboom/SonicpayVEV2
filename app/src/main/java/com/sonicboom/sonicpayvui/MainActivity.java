@@ -136,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
             if (!result.CardType.name().equals("Unknown")) {
-                if (IsStopChargeTapCard) {
+//                if (IsStopChargeTapCard) {
 
                     StopChargeTapCard stopChargeTapCardResponse = new StopChargeTapCard();
                     stopChargeTapCardResponse.CardNo = result.CardNo;
@@ -154,9 +154,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             .addToBackStack(null)
                             .commit();
 
-                }
+//                }
             } else {
-                if (!isOneConnector) {
+//                if (!isOneConnector) {
                     Bundle bundle = new Bundle();
                     boolean isSuccess = false;
                     bundle.putBoolean("IsSuccess", isSuccess);
@@ -170,7 +170,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
                             .addToBackStack(null)
                             .commit();
-                }
+//                }
             }
 
         }
@@ -548,8 +548,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     .addToBackStack(null)
                     .commit();
 
+
+
             if (isSuccess) {
                 StartSales startSales = wbs.SalesResultResponse(result, phNumber);
+                LogUtils.i("startSales in preAuth", startSales);
                 if (startSales != null) {
 
 
@@ -631,6 +634,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             .addToBackStack(null)
                             .commit();
                 }
+            }else{
+                LogUtils.i("preAuth is success fail");
             }
         }
 
@@ -1251,7 +1256,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void run() {
                 // Execute the function
                 if (SalesCompletionQueue != null && !SalesCompletionQueue.isEmpty()) {
-                    if (GeneralVariable.CurrentFragment.equals("WelcomeFragment")) {
+                    if (GeneralVariable.CurrentFragment.equals("WelcomeFragment") || GeneralVariable.CurrentFragment.equals("ChargingFragment")) {
                         com.sonicboom.sonicpayvui.SalesCompletion salesCompletionResult = SalesCompletionQueue.get(0); // Get the first item
                         Component salesCompletionComponent = GetSelectedComponentbyComponentCode(salesCompletionResult.ComponentCode, wbs.componentList);
 
@@ -1330,7 +1335,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         // Cancel the task if it's running
                         if (futureTask[0] != null && !futureTask[0].isDone()) {
                             futureTask[0].cancel(true);
-                            LogUtils.e("TimeoutError", "Loading took longer than 5 seconds");
+                            LogUtils.e("TimeoutError", "Loading timeout");
                             Toast.makeText(MainActivity.this, "Loading timeout. Please try again.", Toast.LENGTH_SHORT).show();
                             getSupportFragmentManager().beginTransaction()
                                     .setReorderingAllowed(true)
@@ -1403,12 +1408,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                                                             if (result) {
                                                                 // First parse the original date string
-                                                                SimpleDateFormat originalFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH);
-                                                                Date date = originalFormat.parse(String.valueOf(SelectedChargingStationComponent.StartChargeTime));
+//                                                                SimpleDateFormat originalFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH);
+//                                                                Date date = originalFormat.parse(String.valueOf(SelectedChargingStationComponent.StartChargeTime));
 
                                                                 // Then format it to the desired format
                                                                 SimpleDateFormat targetFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-                                                                String formattedDate = targetFormat.format(date);
+                                                                String formattedDate = targetFormat.format(SelectedChargingStationComponent.StartChargeTime);
 
                                                                 bundle.putString("StartChargeTime", formattedDate);
                                                                 bundle.putString("HideStopButton", "false");
@@ -1734,6 +1739,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else if (connectorStatusText.equals("CHARGING")) {
                     try {
                         if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.EnableTapCardStopCharge))) {
+                            SelectedChargingStationComponent.SelectedConnector = selectedConnectorIndex;
                             boolean result = sonicInterface.ReadCard(true, callbackInterface);
                             IsStopChargeTapCard = true;
                             if (result) {
@@ -1820,17 +1826,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 if (wbs.componentList.length == 1) {
                     if (isOneConnector) {
-                        SimpleDateFormat originalFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH);
-                        Date date = null;
-                        try {
-                            date = originalFormat.parse(String.valueOf(SelectedChargingStationComponent.StartChargeTime));
-                        } catch (ParseException e) {
-                            e.printStackTrace();
-                        }
+//                        SimpleDateFormat originalFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH);
+//                        Date date;
+//                        try {
+//                            date = originalFormat.parse(String.valueOf(SelectedChargingStationComponent.StartChargeTime));
+//                        } catch (ParseException e) {
+//                            e.printStackTrace();
+//                        }
 
                         // Then format it to the desired format
                         SimpleDateFormat targetFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-                        String formattedDate = targetFormat.format(date);
+                        String formattedDate = targetFormat.format(SelectedChargingStationComponent.StartChargeTime);
 
                         bundle.putString("StartChargeTime", formattedDate);
                         bundle.putString("HideStopButton", "false");
@@ -2032,14 +2038,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         btnStartCharge.setVisibility(View.VISIBLE);
                         GeneralVariable.Status = "Disconnected";
 
-                        // Clear the back stack
-                        getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-
-                        // Replace the current fragment with the WelcomeFragment
-                        getSupportFragmentManager().beginTransaction()
-                                .setReorderingAllowed(true)
-                                .replace(R.id.fragmentContainer, WelcomeFragment.class, null)
-                                .commit();
+//                        // Clear the back stack
+//                        getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+//
+//                        // Replace the current fragment with the WelcomeFragment
+//                        getSupportFragmentManager().beginTransaction()
+//                                .setReorderingAllowed(true)
+//                                .replace(R.id.fragmentContainer, WelcomeFragment.class, null)
+//                                .commit();
+                        ChangeToWelcomeFragment();
 
                         break;
 
@@ -2059,6 +2066,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
 
 
+    }
+
+    public void ChangeToWelcomeFragment(){
+        // Clear the back stack
+        getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
+        // Replace the current fragment with the WelcomeFragment
+        getSupportFragmentManager().beginTransaction()
+                .setReorderingAllowed(true)
+                .replace(R.id.fragmentContainer, WelcomeFragment.class, null)
+                .commit();
     }
 
     protected void ConnectService() {
@@ -2467,7 +2485,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         bundle.putString("Title", "ERROR");
         bundle.putString("Message", custumErrorMessage);
 
-        LogUtils.i("SalesCompletionError", "SalesCompletionError");
+        LogUtils.i("SalesCompletionError");
         getSupportFragmentManager().beginTransaction()
                 .setReorderingAllowed(true)
                 .replace(R.id.fragmentContainer, ResultFragment.class, bundle)

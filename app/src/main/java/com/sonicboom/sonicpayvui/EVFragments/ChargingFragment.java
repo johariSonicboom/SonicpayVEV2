@@ -138,23 +138,23 @@ public class ChargingFragment extends Fragment {
 
         Button stopChargeButton = view.findViewById(R.id.btnStopCharge);
 //        LogUtils.i("isOneConnector in Charging Fragment", ((MainActivity) requireActivity()).isOneConnector);
-            LogUtils.i("EnableTapCardStopCharge", new SharedPrefUI(requireActivity()).ReadSharedPrefBoolean(getString(R.string.EnableTapCardStopCharge)));
+        LogUtils.i("EnableTapCardStopCharge", new SharedPrefUI(requireActivity()).ReadSharedPrefBoolean(getString(R.string.EnableTapCardStopCharge)));
 //            if(new SharedPrefUI(requireActivity()).ReadSharedPrefBoolean(getString(R.string.EnableTapCardStopCharge))){
 //                stopChargeButton.setVisibility(View.VISIBLE);
 //            } else {
 //                stopChargeButton.setVisibility(View.INVISIBLE);
 //            }
 
-            if(!((MainActivity) requireActivity()).isOneConnector){
-                startTimerForRedirection();
-                LogUtils.i("Charging Fragment", "Timer is activated");
-            } else {
-                if(new SharedPrefUI(requireActivity()).ReadSharedPrefBoolean(getString(R.string.EnableTapCardStopCharge))){
+        if (!((MainActivity) requireActivity()).isOneConnector) {
+            startTimerForRedirection();
+            LogUtils.i("Charging Fragment", "Timer is activated");
+        } else {
+            if (new SharedPrefUI(requireActivity()).ReadSharedPrefBoolean(getString(R.string.EnableTapCardStopCharge))) {
                 stopChargeButton.setVisibility(View.VISIBLE);
             } else {
                 stopChargeButton.setVisibility(View.INVISIBLE);
             }
-            }
+        }
     }
 
     // Call this method to start the timer

@@ -31,6 +31,7 @@ public class PlugInToStartFragment extends Fragment {
     private String mParam1;
     private String mParam2;
     private Timer timer;
+    private Timer timeoutTimer;
 
     private boolean StayOnFragment;
 
@@ -68,6 +69,7 @@ public class PlugInToStartFragment extends Fragment {
     public void onViewCreated(View view, Bundle savedInstanceState){
         super.onViewCreated(view, savedInstanceState);
 //        Log.i("onViewCreated", "onViewCreated");
+        startTimerForTimeout();
         if (StayOnFragment){
 //            LogUtils.i("Stay on Plugin Fragment");
         }else{
@@ -79,6 +81,7 @@ public class PlugInToStartFragment extends Fragment {
     public void onPause() {
         super.onPause();
         stopTimerForRedirection();
+        stopTimerForTimeout();
     }
 
     // Call this method to start the timer
@@ -92,6 +95,26 @@ public class PlugInToStartFragment extends Fragment {
                 redirectToAnotherFragment();
             }
         }, 4000); // 3000 milliseconds = 3 seconds
+    }
+
+    public void startTimerForTimeout() {
+        timeoutTimer = new Timer();
+        Log.i("Timer Start", "Plugin Fragment Redirect");
+        timeoutTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                // Redirect to another fragment here
+                redirectToAnotherFragment();
+            }
+        }, 30000); //
+    }
+
+    // Call this method to stop the timer
+    public void stopTimerForTimeout() {
+        if (timeoutTimer != null) {
+            timeoutTimer.cancel();
+            timeoutTimer = null;
+        }
     }
 
     // Call this method to stop the timer
