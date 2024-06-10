@@ -81,18 +81,22 @@ public class WelcomeFragment extends Fragment {
         List<Integer> myList = new ArrayList<>();
         myList.add(R.drawable.paywave);
 
-        if(((MainActivity)requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsMCCSEnabled)))
-            myList.add(R.drawable.mydebit_logo);
-        if(((MainActivity)requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsVisaEnabled)))
-            myList.add(R.drawable.visa_logo);
-        if(((MainActivity)requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsMasterEnabled)))
-            myList.add(R.drawable.mastercard_logo);
-        if(((MainActivity)requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsAmexEnabled)))
-            myList.add(R.drawable.amex_crop_logo);
-        if(((MainActivity)requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsUPIEEnabled)))
-            myList.add(R.drawable.unionpay_logo);
-        if(((MainActivity)requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsTngEnabled)))
-            myList.add(R.drawable.tng_logo);
+try {
+    if (((MainActivity) requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsMCCSEnabled)))
+        myList.add(R.drawable.mydebit_logo);
+    if (((MainActivity) requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsVisaEnabled)))
+        myList.add(R.drawable.visa_logo);
+    if (((MainActivity) requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsMasterEnabled)))
+        myList.add(R.drawable.mastercard_logo);
+    if (((MainActivity) requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsAmexEnabled)))
+        myList.add(R.drawable.amex_crop_logo);
+    if (((MainActivity) requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsUPIEEnabled)))
+        myList.add(R.drawable.unionpay_logo);
+    if (((MainActivity) requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsTngEnabled)))
+        myList.add(R.drawable.tng_logo);
+}catch (Exception e){
+    LogUtils.i("Start Banner Exception", e);
+        }
 
         int[] resIds = myList.stream().mapToInt(i->i).toArray();
 

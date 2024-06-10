@@ -158,6 +158,7 @@ public class WebSocketHandler {
     public StartSales startSales;
 
     private void StartSalesReceived(String notificationResponseMsg) {
+        LogUtils.i("StartSalesReceived",notificationResponseMsg);
         startSales = new Gson().fromJson(notificationResponseMsg, StartSales.class);
     }
 
@@ -176,7 +177,7 @@ public class WebSocketHandler {
 
 
         try {
-            sharedResource.waitForCondition();
+            sharedResource.waitForCondition(10000);
 
             String[] Reveied = InitResul.split("\\|");
             Gson gson = new Gson();
@@ -212,7 +213,7 @@ public class WebSocketHandler {
         //new Thread(() -> {
         sharedResource = new SharedResource();
         webSocketClient.send(GetChargePointMessage);
-        sharedResource.waitForCondition();
+        sharedResource.waitForCondition(10000);
         LogUtils.e("GetStatus ", GetChargePointMessage);
         //}).start();
 
@@ -251,20 +252,12 @@ public class WebSocketHandler {
         sharedResource = new SharedResource();
 
         try {
-            sharedResource.waitForCondition();
+            sharedResource.waitForCondition(10000);
             return startSales;
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
-
-//        try {
-//            sharedResource.waitForCondition();
-//
-//
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
         return null;
     }
 
@@ -312,7 +305,6 @@ public class WebSocketHandler {
             GetStatusNotificationResponse statusNotificationResponse = new Gson().fromJson(statusNotificationResponseMsg, GetStatusNotificationResponse.class);
             Log.d("Status Notification Response", statusNotificationResponse.toString());
             Component component = mainActivity.GetSelectedComponentbyComponentCode(statusNotificationResponse.ComponentCode, componentList);
-//            Log.d("Notification Response", "GetStatusResponse");
 
             String connectorStatus;
             connectorStatus = statusNotificationResponse.Status;
@@ -325,11 +317,6 @@ public class WebSocketHandler {
                 case "startcharge":
                 case "charging":
                     if (!statusNotificationResponse.Description.isEmpty()) {
-
-//                        new Date().getTime();
-//                        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
-//                        String formattedDate = format.format(new Date());
-//                        mainActivity.StartCharging(formattedDate);
 
                         SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
 
@@ -405,12 +392,6 @@ public class WebSocketHandler {
                 case "startcharge":
                 case "charging":
                     if (!notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description.isEmpty()) {
-                        //charging fragment
-//                            mainActivity.StartCharging(notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description);
-//                        new Date().getTime();
-//                        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
-//                        String formattedDate = format.format(new Date());
-//                        mainActivity.StartCharging(formattedDate);
 
                         new Date().getTime();
                         SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -419,8 +400,6 @@ public class WebSocketHandler {
                         try {
                             Thread.sleep(5000);
                             if (componentList.length == 1 && componentList[0].Connectors.size() <= 1) {
-                                mainActivity.ShowHideTitle(true);
-                                mainActivity.UpdateTitle("Charging");
                                 mainActivity.isOneConnector = true;
                                 mainActivity.StartCharging(notificationResponse.Connectors.get(0).Description, "false");
                             }
@@ -465,7 +444,6 @@ public class WebSocketHandler {
         salesCompletionResult = new Gson().fromJson(StopChargeMsg, SalesCompletion.class);
 
         if (salesCompletionResult.CustumErrorMessage != null) {
-            // mainActivity.SalesCompletionError(salesCompletion.CustumErrorMessage);
             try {
                 Thread.sleep(3000);
                 mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, String.format("Total Chargin time %02d Hours %02d Minutes", 0, 0));
@@ -499,9 +477,7 @@ public class WebSocketHandler {
                     mainActivity.UpdateStatus("Available");
                     GeneralVariable.ChargePointStatus = "Available";
 
-//                    Component component = mainActivity.GetSelectedComponentbyComponentCode(salesCompletionResult.ComponentCode, componentList);
-//                    mainActivity.UpdateAllConnectorStatus("Available", mainActivity.SelectedChargingStationComponent);
-//                    mainActivity.SelectedChargingStationComponent.Status = "Available";
+//
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

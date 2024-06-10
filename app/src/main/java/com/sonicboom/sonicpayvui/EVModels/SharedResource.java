@@ -7,11 +7,10 @@ public class SharedResource {
         condition = false;
     }
 
-    public synchronized void waitForCondition() throws InterruptedException {
+    public synchronized void waitForCondition(int duration) throws InterruptedException {
         while (!condition) {
-            wait(3000); // Release the lock and wait for notification
+            if (duration > 0) { wait(duration); break; } else { wait(); }
         }
-        // Code to be executed when the condition is met
     }
 
     public synchronized void setCondition() {

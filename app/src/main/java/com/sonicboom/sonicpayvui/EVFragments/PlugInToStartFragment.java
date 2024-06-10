@@ -106,7 +106,7 @@ public class PlugInToStartFragment extends Fragment {
                 // Redirect to another fragment here
                 redirectToAnotherFragment();
             }
-        }, 30000); //
+        }, 60000); //
     }
 
     // Call this method to stop the timer

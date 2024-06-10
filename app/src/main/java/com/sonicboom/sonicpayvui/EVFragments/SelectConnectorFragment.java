@@ -101,7 +101,7 @@ public class SelectConnectorFragment extends Fragment {
                 connectorText.setText(String.valueOf(connector.ConnectorId));
 
                 TextView status = cardView2.findViewById(R.id.status);
-                status.setText(connector.Status);
+                status.setText(connector.Status.toUpperCase(Locale.ROOT));
 
                 String connectorStatus = connector.Status.toUpperCase(Locale.ROOT);
 
@@ -130,6 +130,7 @@ public class SelectConnectorFragment extends Fragment {
                 int color;
 
                 switch (statusText) {
+                    case "PREPARING":
                     case "AVAILABLE":
                         color = Color.parseColor("#008842");
                         break;
