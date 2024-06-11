@@ -124,6 +124,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public boolean runSettlement;
     //Used to skip the Result Fragment if the SalesCompletion returns error to avoid showing two result fragments.
     public boolean IsSkipSalesCompletionResultFragment;
+    public boolean preAuthSuccess = false;
 
 
     public boolean IsCharging;
@@ -133,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void ReadCardCallback(ReadCardResult result) {
             LogUtils.i(TAG, "ReadCardCallback:" + new Gson().toJson(result));
-
+            preAuthSuccess = false;
 
             if (!result.CardType.name().equals("Unknown")) {
 //                if (IsStopChargeTapCard) {
@@ -156,21 +157,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 //                }
             } else {
+
+                if(!stopChargeBack) {
+                    LogUtils.i("Read Card Error");
 //                if (!isOneConnector) {
-                Bundle bundle = new Bundle();
-                boolean isSuccess = false;
-                bundle.putBoolean("IsSuccess", isSuccess);
-                bundle.putString("Title", "Unknown Card");
-                bundle.putBoolean("IsTng", result.CardType == eCreditCardType.TNGCard);
-                bundle.putString("Message", "Error: Unknown Card Type. Try Tapping The Card Again");
+                    Bundle bundle = new Bundle();
+                    boolean isSuccess = false;
+                    bundle.putBoolean("IsSuccess", isSuccess);
+                    bundle.putString("Title", "Unknown Card");
+                    bundle.putBoolean("IsTng", result.CardType == eCreditCardType.TNGCard);
+                    bundle.putString("Message", "Error: Unknown Card Type. Try Tapping The Card Again");
 
 
-                getSupportFragmentManager().beginTransaction()
-                        .setReorderingAllowed(true)
-                        .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
-                        .addToBackStack(null)
-                        .commit();
+                    getSupportFragmentManager().beginTransaction()
+                            .setReorderingAllowed(true)
+                            .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
+                            .addToBackStack(null)
+                            .commit();
 //                }
+                } else{
+                    stopChargeBack = false;
+                }
             }
 
         }
@@ -524,7 +531,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void PreAuthCallback(SalesResult result) throws RemoteException {
             LogUtils.i(TAG, "PreAuthCallback:" + new Gson().toJson(result));
-
+            preAuthSuccess = false;
             Bundle bundle = new Bundle();
             boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
             bundle.putBoolean("IsSuccess", isSuccess);
@@ -540,6 +547,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 bundle.putString("Message", message);
             }
+            preAuthSuccess = true;
             bundle.putString("Amount", String.format("%.2f", (double) TotalAmountCharges / 100f));
 
             getSupportFragmentManager().beginTransaction()
@@ -1294,6 +1302,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
+boolean stopChargeBack = false;
 
     @Override
     public void onClick(View view) {
@@ -1386,7 +1395,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                                             // One charge station, One Connector
                                             if (SelectedChargingStationComponent.Connectors.size() <= 1) {
-                                                if (SelectedChargingStationComponent.Connectors.get(0).Status.toUpperCase(Locale.ROOT).equals("BLOCKED")) {
+                                                if (SelectedChargingStationComponent.Connectors.get(0).Status.toUpperCase(Locale.ROOT).equals("BLOCKED") || SelectedChargingStationComponent.Connectors.get(0).Status.toUpperCase(Locale.ROOT).equals("FINISHING")) {
                                                     Toast.makeText(MainActivity.this, "Please unplug charger", Toast.LENGTH_SHORT).show();
                                                     getSupportFragmentManager().beginTransaction()
                                                             .setReorderingAllowed(true)
@@ -1398,27 +1407,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                     btnStartCharge.setVisibility(View.GONE);
 
                                                     if (SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("STARTCHARGE") || SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("CHARGING")) {
-                                                        try {
-                                                            boolean result = sonicInterface.ReadCard(true, callbackInterface);
-                                                            IsStopChargeTapCard = true;
+//
+                                                        IsStopChargeTapCard = true;
 
-                                                            if (result) {
-                                                                // Format the start charge time
-                                                                SimpleDateFormat targetFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-                                                                String formattedDate = targetFormat.format(SelectedChargingStationComponent.StartChargeTime);
+//
+                                                        SimpleDateFormat targetFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+                                                        String formattedDate = targetFormat.format(SelectedChargingStationComponent.StartChargeTime);
 
-                                                                bundle.putString("StartChargeTime", formattedDate);
-                                                                bundle.putString("HideStopButton", "false");
-                                                                isOneConnector = true;
-                                                                getSupportFragmentManager().beginTransaction()
-                                                                        .replace(R.id.fragmentContainer, ChargingFragment.class, bundle)
-                                                                        .addToBackStack(null)
-                                                                        .commit();
-                                                            }
-                                                        } catch (RemoteException e) {
-                                                            LogUtils.e(TAG, "ReadCard Exception: " + Log.getStackTraceString(e));
-                                                        }
-                                                    } else if (SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("AVAILABLE") || SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("PREPARING") || SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("FINISHING")) {
+                                                        bundle.putString("StartChargeTime", formattedDate);
+                                                        bundle.putString("HideStopButton", "false");
+                                                        isOneConnector = true;
+                                                        getSupportFragmentManager().beginTransaction()
+                                                                .replace(R.id.fragmentContainer, ChargingFragment.class, bundle)
+                                                                .addToBackStack(null)
+                                                                .commit();
+
+                                                    } else if (SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("AVAILABLE") || SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("PREPARING")) {
                                                         IsStopChargeTapCard = false;
                                                         IsCharging = true;
                                                         isOneConnector = true;
@@ -1515,7 +1519,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     boolean result = sonicInterface.PreAuth(preAuthRequest.Amount, callbackInterface);
 
                     if (result) {
-//                        //Notify UI to change to Progress screen
+                        //Notify UI to change to Progress screen
                         bundle.putString("Amount", String.format("%.2f", (double) preAuthRequest.Amount / 100f));
 
                         bundle.putString("chargingStation", SelectedChargingStation);
@@ -1648,20 +1652,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 .addToBackStack(null)
                                 .commit();
                     }
-//                }else{
-//                    Toast.makeText(this, "Charging Station Not Available", Toast.LENGTH_SHORT).show();
-//                }
-
-//                    //Used for skipping Select Connector
-////                    btnStartCharge.setVisibility(View.GONE);
-////                    UpdateTitle("Key in Phone No");
-////                    getSupportFragmentManager().beginTransaction()
-////                            .setReorderingAllowed(true)
-////                            .replace(R.id.fragmentContainer, PhoneNumberFragment.class, null)
-////                            .addToBackStack(null)
-////                            .commit();
-//
-//
                 } else if (chargingStationStatus.getText().toString().equals("CHARGING")) {
                     try {
                         if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.EnableTapCardStopCharge))) {
@@ -1811,44 +1801,49 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 break;
             case R.id.btnStopChargeTapCardBack:
+
+                stopChargeBack = true;
                 try {
                     boolean r = sonicInterface.Abort();
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
 
-                if (wbs.componentList.length == 1) {
-                    if (isOneConnector) {
+                if(r) {
+                    LogUtils.i("Abort Succesful");
+                    if (wbs.componentList.length == 1) {
+                        if (isOneConnector) {
 
-                        // Then format it to the desired format
-                        SimpleDateFormat targetFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-                        String formattedDate = targetFormat.format(SelectedChargingStationComponent.StartChargeTime);
+                            // Then format it to the desired format
+                            SimpleDateFormat targetFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+                            String formattedDate = targetFormat.format(SelectedChargingStationComponent.StartChargeTime);
 
-                        bundle.putString("StartChargeTime", formattedDate);
-                        bundle.putString("HideStopButton", "false");
-                        getSupportFragmentManager().beginTransaction()
-                                .replace(R.id.fragmentContainer, ChargingFragment.class, bundle)
-                                .addToBackStack(null)
-                                .commit();
+                            bundle.putString("StartChargeTime", formattedDate);
+                            bundle.putString("HideStopButton", "false");
+                            getSupportFragmentManager().beginTransaction()
+                                    .replace(R.id.fragmentContainer, ChargingFragment.class, bundle)
+                                    .addToBackStack(null)
+                                    .commit();
+                        } else {
+                            ShowHideTitle(true);
+                            UpdateTitle("Connectors");
+                            selectConnectorFragment[0] = new SelectConnectorFragment(SelectedChargingStationComponent);
+                            getSupportFragmentManager().beginTransaction()
+                                    .setReorderingAllowed(true)
+                                    .replace(R.id.fragmentContainer, selectConnectorFragment[0])
+                                    .addToBackStack(null)
+                                    .commit();
+                        }
+
                     } else {
                         ShowHideTitle(true);
-                        UpdateTitle("Connectors");
-                        selectConnectorFragment[0] = new SelectConnectorFragment(SelectedChargingStationComponent);
+                        UpdateTitle("Select Charger");
                         getSupportFragmentManager().beginTransaction()
                                 .setReorderingAllowed(true)
-                                .replace(R.id.fragmentContainer, selectConnectorFragment[0])
+                                .replace(R.id.fragmentContainer, selectChargerFragment)
                                 .addToBackStack(null)
                                 .commit();
                     }
-
-                } else {
-                    ShowHideTitle(true);
-                    UpdateTitle("Select Charger");
-                    getSupportFragmentManager().beginTransaction()
-                            .setReorderingAllowed(true)
-                            .replace(R.id.fragmentContainer, selectChargerFragment)
-                            .addToBackStack(null)
-                            .commit();
+                }
+                } catch (RemoteException e) {
+                    e.printStackTrace();
                 }
 
                 break;
@@ -1881,18 +1876,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     IsStopChargeTapCard = true;
 
-//                    if (result) {
+                    if (result) {
 
-                    Log.d("startChargeTime : ", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
-                    bundle.putString("startChargeTime", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
-                    StopChargeTapCardFragment fragment = new StopChargeTapCardFragment(this);
+                        Log.d("startChargeTime : ", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
+                        bundle.putString("startChargeTime", String.valueOf(SelectedChargingStationComponent.StartChargeTime));
+                        StopChargeTapCardFragment fragment = new StopChargeTapCardFragment(this);
 
-                    getSupportFragmentManager().beginTransaction()
-                            .setReorderingAllowed(true)
-                            .replace(R.id.fragmentContainer, fragment)
-                            .addToBackStack(null)
-                            .commit();
-//                    }
+                        getSupportFragmentManager().beginTransaction()
+                                .setReorderingAllowed(true)
+                                .replace(R.id.fragmentContainer, fragment)
+                                .addToBackStack(null)
+                                .commit();
+                    }
                 } catch (RemoteException e) {
                     LogUtils.e(TAG, "ReadCard Exception: " + Log.getStackTraceString(e));
                 }

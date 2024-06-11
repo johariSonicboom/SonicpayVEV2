@@ -165,7 +165,12 @@ public class ResultFragment extends Fragment {
         if (mStickPage)
             return;
 
-        startAutoRedirectionToIdlePage();
+//        if(GeneralVariable.CurrentFragment.equals(""))
+        if(!((MainActivity)requireActivity()).preAuthSuccess) {
+            startAutoRedirectionToIdlePage();
+        }else{
+            ((MainActivity)requireActivity()).preAuthSuccess = false;
+        }
     }
 
     public void startAutoRedirectionToIdlePage() {
