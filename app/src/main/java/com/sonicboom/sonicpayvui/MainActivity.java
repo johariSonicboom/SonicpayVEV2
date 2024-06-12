@@ -548,8 +548,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     message += result.StatusCode;
                 }
                 bundle.putString("Message", message);
+            }else{
+                preAuthSuccess = true;
             }
-            preAuthSuccess = true;
+
             bundle.putString("Amount", String.format("%.2f", (double) TotalAmountCharges / 100f));
 
             getSupportFragmentManager().beginTransaction()

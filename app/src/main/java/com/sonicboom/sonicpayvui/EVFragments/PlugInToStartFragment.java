@@ -95,7 +95,7 @@ public class PlugInToStartFragment extends Fragment {
                 // Redirect to another fragment here
                 redirectToAnotherFragment();
             }
-        }, 4000); // 3000 milliseconds = 3 seconds
+        }, 6000); // 6000 milliseconds = 6 seconds
     }
 
     public void startTimerForTimeout() {
