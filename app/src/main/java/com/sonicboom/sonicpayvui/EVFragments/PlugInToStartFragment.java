@@ -12,6 +12,7 @@ import androidx.fragment.app.FragmentManager;
 
 import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
 import com.sonicboom.sonicpayvui.R;
+import com.sonicboom.sonicpayvui.SharedPrefUI;
 import com.sonicboom.sonicpayvui.WelcomeFragment;
 import com.sonicboom.sonicpayvui.utils.LogUtils;
 
@@ -100,13 +101,15 @@ public class PlugInToStartFragment extends Fragment {
     public void startTimerForTimeout() {
         timeoutTimer = new Timer();
         Log.i("Timer Start", "Plugin Fragment Redirect");
+        int PlugInTimeOutDuration = 3000;
+        PlugInTimeOutDuration = Integer.parseInt( new SharedPrefUI(requireContext()).ReadSharedPrefStr(getString(R.string.PlugInTimeOutDuration)));
         timeoutTimer.schedule(new TimerTask() {
             @Override
             public void run() {
                 // Redirect to another fragment here
                 redirectToAnotherFragment();
             }
-        }, 60000); //
+        }, PlugInTimeOutDuration); //
     }
 
     // Call this method to stop the timer

@@ -149,6 +149,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 wbs.StopChargeTapCardResultResponse(stopChargeTapCardResponse);
 
                 UpdateTitle("Stop Charge");
+                ShowHideTitle(true);
                 getSupportFragmentManager().beginTransaction()
                         .setReorderingAllowed(true)
                         .replace(R.id.fragmentContainer, DisconnectChargerFragment.class, null)
@@ -159,6 +160,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             } else {
 
                 if(!stopChargeBack) {
+//                    ShowHideTitle(true);
                     LogUtils.i("Read Card Error");
 //                if (!isOneConnector) {
                     Bundle bundle = new Bundle();
@@ -600,6 +602,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         }
 
                     } else {
+                        preAuthSuccess = false;
                         LogUtils.i("startSales in PreAuth is not success");
                         new Thread(() -> {
                             try {
@@ -626,6 +629,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 .commit();
                     }
                 } else {
+                    preAuthSuccess = false;
                     LogUtils.e(TAG, "startSales is null");
                     bundle = new Bundle();
                     isSuccess = false;
@@ -1947,15 +1951,34 @@ boolean stopChargeBack = false;
     }
 
     public void UpdateTitle(String title) {
-        TextView textView = findViewById(R.id.header_title);
-        textView.setText(title);
+        try {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    TextView textView = findViewById(R.id.header_title);
+                    textView.setText(title);
+                }
+            });
+        } catch (Exception e){
+            LogUtils.e("Update Title Exception",e);
+        }
     }
 
     public void ShowHideTitle(boolean isShow) {
-        TextView textView = findViewById(R.id.header_title);
-        textView.setVisibility(isShow ? View.VISIBLE : View.GONE);
-        if (!isShow)
-            textView.setText("");
+        try {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    TextView textView = findViewById(R.id.header_title);
+                    textView.setVisibility(isShow ? View.VISIBLE : View.GONE);
+                    if (!isShow)
+                        textView.setText("");
+                }
+            });
+        } catch (Exception e){
+            LogUtils.e("ShowHideTitle Exception",e);
+        }
+
     }
 
     public void UpdateTitle(String title, int fontSize) {
@@ -2434,6 +2457,7 @@ boolean stopChargeBack = false;
 
         Bundle bundle = new Bundle();
         boolean isSuccess = false;
+        ShowHideTitle(true);
         bundle.putBoolean("IsSuccess", false);
         bundle.putString("Title", "Invalid Card");
         bundle.putString("Message", stopChargeTapCardError.CustumError);
