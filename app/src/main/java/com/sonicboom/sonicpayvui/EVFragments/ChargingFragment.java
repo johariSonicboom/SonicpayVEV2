@@ -170,7 +170,7 @@ public class ChargingFragment extends Fragment {
                     }
                 });
             }
-        }, 3000); // 3000 milliseconds = 3 seconds
+        }, 6000); // 6000 milliseconds = 6 seconds
     }
 
     // Call this method to stop the timer
