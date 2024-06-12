@@ -33,6 +33,20 @@
             app:useSimpleSummaryProvider="true"
             android:defaultValue="10000"/>
 
+        <EditTextPreference
+            android:title="Plug In Time Out Duration (in ms)"
+            android:key="@string/PlugInTimeOutDuration"
+            android:inputType="text"
+            app:useSimpleSummaryProvider="true"
+            android:defaultValue="60000"/>
+
+        <EditTextPreference
+            android:title="Disconnect Gun Time Out Duration (in ms)"
+            android:key="@string/DisconnectGunTimeOutDuration"
+            android:inputType="text"
+            app:useSimpleSummaryProvider="true"
+            android:defaultValue="30000"/>
+
         <SwitchPreference
             android:title="Enable Tap Card to Stop Charging"
             android:key="@string/EnableTapCardStopCharge"

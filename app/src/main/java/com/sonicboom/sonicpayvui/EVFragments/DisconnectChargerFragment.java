@@ -10,6 +10,7 @@ import androidx.fragment.app.FragmentManager;
 
 import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
 import com.sonicboom.sonicpayvui.R;
+import com.sonicboom.sonicpayvui.SharedPrefUI;
 import com.sonicboom.sonicpayvui.WelcomeFragment;
 
 import java.util.Timer;
@@ -78,6 +79,8 @@ public class DisconnectChargerFragment extends Fragment {
 
     // Call this method to start the timer
     public void startTimerForRedirection() {
+        int DisconnectGunTimeOutDuration = 30000;
+        DisconnectGunTimeOutDuration = Integer.parseInt( new SharedPrefUI(requireContext()).ReadSharedPrefStr(getString(R.string.DisconnectGunTimeOutDuration)));
         timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
@@ -85,7 +88,7 @@ public class DisconnectChargerFragment extends Fragment {
                 // Redirect to another fragment here
                 redirectToAnotherFragment();
             }
-        }, 5000); // 3000 milliseconds = 3 seconds
+        }, DisconnectGunTimeOutDuration); // 30000 milliseconds = 30 seconds
     }
 
     // Call this method to stop the timer
@@ -94,6 +97,12 @@ public class DisconnectChargerFragment extends Fragment {
             timer.cancel();
             timer = null;
         }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        stopTimerForRedirection();
     }
 
     // Method to redirect to another fragment

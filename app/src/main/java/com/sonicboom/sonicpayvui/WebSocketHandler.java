@@ -441,6 +441,7 @@ public class WebSocketHandler {
     public SalesCompletion salesCompletionResult;
 
     public void SalesCompletionReceived(String StopChargeMsg) {
+        mainActivity.preAuthSuccess = false;
         salesCompletionResult = new Gson().fromJson(StopChargeMsg, SalesCompletion.class);
 
         if (salesCompletionResult.CustumErrorMessage != null) {

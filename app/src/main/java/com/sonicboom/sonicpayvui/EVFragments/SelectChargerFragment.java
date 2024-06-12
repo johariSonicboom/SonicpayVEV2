@@ -118,28 +118,6 @@ public class SelectChargerFragment extends Fragment {
 
             String statusText = status.getText().toString().toUpperCase(Locale.ROOT);
 
-//            String connectorStatus = "";
-//            if(component.Connectors.size() == 1){
-//                selectedConnectorIndex = 0;
-//            }
-//
-//            if ((selectedConnectorIndex - 1) < component.Connectors.size()) {
-//                connectorStatus = component.Connectors.get(selectedConnectorIndex).Status;
-//            } else {
-//                connectorStatus = component.Connectors.get(0).Status;
-//            }
-//
-//
-//
-//            if(!(connectorStatus == null)) {
-//                if (connectorStatus.toUpperCase(Locale.ROOT).equals("STOPCHARGE") || connectorStatus.toUpperCase(Locale.ROOT).equals("BOOTNOTIFICATION") || connectorStatus.toUpperCase(Locale.ROOT).equals("PREPARING")) {
-//                    status.setText("AVAILABLE");
-//                } else if (connectorStatus.toUpperCase(Locale.ROOT).equals("STARTCHARGE") || connectorStatus.toUpperCase(Locale.ROOT).equals("CHARGING")) {
-//                    status.setText("CHARGING");
-//                } else {
-//                    status.setText(connectorStatus.toUpperCase(Locale.ROOT));
-//                }
-//            }
 
             if(status.getText() == ""){
                 status.setText("OFFLINE");
@@ -170,11 +148,6 @@ public class SelectChargerFragment extends Fragment {
             statusIcon.setImageTintList(ColorStateList.valueOf(color));
             imageCharger.setImageTintList(ColorStateList.valueOf(color));
 
-//            if (statusText.equals("UNKNOWN") || statusText.equals("INOPERATIVE")) {
-//                statusLayout.setPadding(88, 0, 0, 0);
-//            }
-//
-//
 //            // Add the card view to the container
             cardContainer.addView(cardView);
         }

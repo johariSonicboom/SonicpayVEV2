@@ -17,8 +17,8 @@
             android:id="@+id/tapCard"
             android:layout_marginTop="16sp"
             android:layout_gravity="center"
-            android:layout_width="250dp"
-            android:layout_height="250dp"
+            android:layout_width="230dp"
+            android:layout_height="230dp"
             android:scaleType="fitStart"
             android:src="@drawable/car" />
         <TextView
@@ -28,6 +28,28 @@
             android:text="Please disconnect charger"
             android:textSize="36sp"
             android:gravity="center"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="bottom">
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnBack"
+            android:text="OK"
+            android:layout_width="fill_parent"
+            android:layout_height="70dp"
+            android:layout_margin="10dp"
+            android:fontFamily="@font/poppins"
+            android:textStyle="bold"
+            android:background="@drawable/rounded_corner_with_bg_yellow"
+            android:padding="10dp"
+            android:textSize="30sp"
+            android:gravity="center"
+            android:onClick="onClick" />
+
+        </LinearLayout>
 
     </LinearLayout>
 </FrameLayout>

@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +18,9 @@ import android.widget.TextView;
 
 import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
 import com.sonicboom.sonicpayvui.utils.LogUtils;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class ResultFragment extends Fragment {
 
@@ -158,6 +162,13 @@ public class ResultFragment extends Fragment {
     }
 
     @Override
+    public void onPause() {
+        super.onPause();
+        stopAutoRedirectionToIdlePage();
+        stopTimerForTimeout();
+    }
+
+    @Override
     public void onViewCreated(View view, Bundle savedInstanceState){
         super.onViewCreated(view, savedInstanceState);
         LogUtils.d(TAG, "onViewCreated");
@@ -165,7 +176,13 @@ public class ResultFragment extends Fragment {
         if (mStickPage)
             return;
 
-        startAutoRedirectionToIdlePage();
+//        if(GeneralVariable.CurrentFragment.equals(""))
+        if(!((MainActivity)requireActivity()).preAuthSuccess) {
+            startAutoRedirectionToIdlePage();
+        }else{
+            ((MainActivity)requireActivity()).preAuthSuccess = false;
+        }
+        startTimerForTimeout();
     }
 
     public void startAutoRedirectionToIdlePage() {
@@ -198,6 +215,32 @@ public class ResultFragment extends Fragment {
 
         // Start the timer by posting the Runnable with the specified delay
         handler.postDelayed(runnable, delayMillis);
+    }
+
+    private Timer timeoutTimer;
+    public void startTimerForTimeout() {
+        timeoutTimer = new Timer();
+        Log.i("Timer Start", "Plugin Fragment Redirect");
+        timeoutTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
+
+                fragmentManager.beginTransaction()
+                        .setReorderingAllowed(true)
+                        .replace(R.id.fragmentContainer, WelcomeFragment.class, null)
+                        .addToBackStack(null)
+                        .commit();
+            }
+        }, 60000); //
+    }
+
+    // Call this method to stop the timer
+    public void stopTimerForTimeout() {
+        if (timeoutTimer != null) {
+            timeoutTimer.cancel();
+            timeoutTimer = null;
+        }
     }
 
     public void stopAutoRedirectionToIdlePage() {
