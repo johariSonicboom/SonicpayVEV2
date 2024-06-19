@@ -48,6 +48,7 @@
                     android:textSize="24sp"
                     android:background="@android:drawable/edit_text"
                     android:backgroundTint="#BCC0F5"
+                    android:longClickable="false"
                     />
 
 

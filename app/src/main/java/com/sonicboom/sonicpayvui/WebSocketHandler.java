@@ -81,28 +81,34 @@ public class WebSocketHandler {
                 System.out.println("onTextReceived :" + message);
                 LogUtils.i("onTextReceived :" + message);
                 String[] Received = message.split("\\|");
-                switch (Received[1]) {
+                switch (Received[2]) {
                     case "StatusNotification":
-                        StatusNotificationReceived(Received[2]);
+                        LogUtils.i("onTextReceived StatusNotification :" + Received[3]);
+                        StatusNotificationReceived(Received[3]);
                         break;
                     case "GetCharPointStatus":
-                        NotificationReceived(Received[2]);
+                        NotificationReceived(Received[3]);
                         sharedResource.setCondition();
                         break;
                     case "SalesCompletion":
+                        String SalesCompletionACK = String.format("%s|%s|%s|%s", Received[0], Received[1] ,"SalesCompletion", "ACK");
+                        new Thread(() -> {
+                            webSocketClient.send(SalesCompletionACK);
+                        }).start();
+
                         //SalesCompletionReceived(Reveied[2]);
-                        SalesCompletionReceived(Received[2]);
+                        SalesCompletionReceived(Received[3]);
                         break;
                     case "initialization":
                         InitResul = message;
                         sharedResource.setCondition();
                         break;
                     case "StopChargeTapCardError":
-                        LogUtils.i("StopChargeTapCardError :" + Received[2]);
-                        mainActivity.StopChargeTapCardErrorReceived(Received[2]);
+                        LogUtils.i("StopChargeTapCardError :" + Received[3]);
+                        mainActivity.StopChargeTapCardErrorReceived(Received[3]);
                         break;
                     case "StartSales":
-                        StartSalesReceived(Received[2]);
+                        StartSalesReceived(Received[3]);
                         sharedResource.setCondition();
                         break;
                     default:
@@ -167,22 +173,24 @@ public class WebSocketHandler {
 
     void Init() {
         String uniqId = RandomString(16);
-        String InitMessage = String.format("%s|%s|%s", uniqId, "initialization", "");
+        String InitMessage = String.format("0|%s|%s|%s", uniqId, "initialization", "");
 
         new Thread(() -> {
             LogUtils.e("Init ", InitMessage);
+            sharedResource = new SharedResource();
             webSocketClient.send(InitMessage);
-
         }).start();
 
 
         try {
+//            sharedResource = new SharedResource();
             sharedResource.waitForCondition(10000);
 
             String[] Reveied = InitResul.split("\\|");
             Gson gson = new Gson();
 
-            componentList = gson.fromJson(Reveied[2], Component[].class);
+            componentList = gson.fromJson(Reveied[3], Component[].class);
+            LogUtils.i("componentList", componentList);
 
             if (componentList.length > 0) {
                 mainActivity.SelectedChargingStationComponent = componentList[0];
@@ -209,7 +217,7 @@ public class WebSocketHandler {
         charPointStatusRequest.ComponentCode = ComponentCode;
         Gson gson = new Gson();
 
-        String GetChargePointMessage = String.format("%s|%s|%s", uniqId, "GetCharPointStatus", gson.toJson(charPointStatusRequest));
+        String GetChargePointMessage = String.format("0|%s|%s|%s", uniqId, "GetCharPointStatus", gson.toJson(charPointStatusRequest));
         //new Thread(() -> {
         sharedResource = new SharedResource();
         webSocketClient.send(GetChargePointMessage);
@@ -243,7 +251,7 @@ public class WebSocketHandler {
         startTransaction.RNN = PreAuthResponse.emvInfo.RRN;
         startTransaction.Connector = mainActivity.getConnectorIDByIndex(mainActivity.SelectedChargingStationComponent, mainActivity.selectedConnectorIndex);
         Gson gson = new Gson();
-        String StartTransactionMessage = String.format("%s|%s|%s", uniqId, "StartSales", gson.toJson(startTransaction));
+        String StartTransactionMessage = String.format("0|%s|%s|%s", uniqId, "StartSales", gson.toJson(startTransaction));
 
         startTransactionTrace = PreAuthResponse.emvInfo.TransactionTrace;
 
@@ -278,7 +286,7 @@ public class WebSocketHandler {
         SalesCompletion.RNN = result.RRN;
         SalesCompletion.PaymentId = Integer.parseInt(result.SystemId);
         Gson gson = new Gson();
-        String SalesCompletionMessage = String.format("%s|%s|%s", uniqId, "SalesCompletionResult", gson.toJson(SalesCompletion));
+        String SalesCompletionMessage = String.format("0|%s|%s|%s", uniqId, "SalesCompletionResult", gson.toJson(SalesCompletion));
 
         new Thread(() -> {
 
@@ -287,78 +295,75 @@ public class WebSocketHandler {
         }).start();
 
 
-//        try {
-//            sharedResource.waitForCondition();
-//
-//
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
     }
 
     static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     static SecureRandom rnd = new SecureRandom();
 
     public void StatusNotificationReceived(String statusNotificationResponseMsg) {
-        if (!statusNotificationResponseMsg.isEmpty()) {
+        try {
+            if (!statusNotificationResponseMsg.isEmpty()) {
 
-            GetStatusNotificationResponse statusNotificationResponse = new Gson().fromJson(statusNotificationResponseMsg, GetStatusNotificationResponse.class);
-            Log.d("Status Notification Response", statusNotificationResponse.toString());
-            Component component = mainActivity.GetSelectedComponentbyComponentCode(statusNotificationResponse.ComponentCode, componentList);
+                GetStatusNotificationResponse statusNotificationResponse = new Gson().fromJson(statusNotificationResponseMsg, GetStatusNotificationResponse.class);
+                Log.d("Status Notification Response", statusNotificationResponse.toString());
+                Component component = mainActivity.GetSelectedComponentbyComponentCode(statusNotificationResponse.ComponentCode, componentList);
 
-            String connectorStatus;
-            connectorStatus = statusNotificationResponse.Status;
+                String connectorStatus;
+                connectorStatus = statusNotificationResponse.Status;
 
-            LogUtils.i("connectorStatus", connectorStatus.toLowerCase(Locale.ROOT));
-            switch (connectorStatus.toLowerCase(Locale.ROOT)) {
-                case "preparing":
+                LogUtils.i("connectorStatus", connectorStatus.toLowerCase(Locale.ROOT));
+                switch (connectorStatus.toLowerCase(Locale.ROOT)) {
+                    case "preparing":
 
-                    break;
-                case "startcharge":
-                case "charging":
-                    if (!statusNotificationResponse.Description.isEmpty()) {
+                        break;
+                    case "startcharge":
+                    case "charging":
+                        if (!statusNotificationResponse.Description.isEmpty()) {
 
-                        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
+                            SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
 
-                        try {
-                            Thread.sleep(5000);
+                            try {
+                                Thread.sleep(5000);
 //                            mainActivity.ShowHideTitle(true);
 //                            mainActivity.UpdateTitle("Charging");
-                            if (componentList.length == 1 && componentList[0].Connectors.size() <= 1) {
-                                mainActivity.ShowHideTitle(true);
-                                mainActivity.UpdateTitle("Charging");
-                                mainActivity.isOneConnector = true;
-                                mainActivity.StartCharging(statusNotificationResponse.Description, "false");
-                            } else {
-                                mainActivity.StartCharging(statusNotificationResponse.Description, "true");
+                                if (componentList.length == 1 && componentList[0].Connectors.size() <= 1) {
+                                    mainActivity.ShowHideTitle(true);
+                                    mainActivity.UpdateTitle("Charging");
+                                    mainActivity.isOneConnector = true;
+                                    mainActivity.StartCharging(statusNotificationResponse.Description, "false");
+                                } else {
+                                    mainActivity.StartCharging(statusNotificationResponse.Description, "true");
+                                }
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
                             }
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
 
-                        try {
-                            mainActivity.SelectedChargingStationComponent.StartChargeTime = format.parse(statusNotificationResponse.Description);
-                        } catch (Exception ex) {
-                            LogUtils.e("NotificationReceived ", ex);
+                            try {
+                                mainActivity.SelectedChargingStationComponent.StartChargeTime = format.parse(statusNotificationResponse.Description);
+                            } catch (Exception ex) {
+                                LogUtils.e("NotificationReceived ", ex);
+                            }
+                        } else if (mainActivity.SelectedChargingStationComponent.StartChargeTime != null) {
+                            mainActivity.UpdateChargePointStatus(eChargePointStatus.Charging);
+                        } else {
+                            mainActivity.ChangeToWelcomeFragment();
                         }
-                    } else if (mainActivity.SelectedChargingStationComponent.StartChargeTime != null) {
-                        mainActivity.UpdateChargePointStatus(eChargePointStatus.Charging);
-                    } else {
-                        mainActivity.ChangeToWelcomeFragment();
-                    }
-                    break;
-                case "available":
-                    break;
-                case "offline":
-                    break;
+                        break;
+                    case "available":
+                        break;
+                    case "offline":
+                        break;
+                }
+
+                mainActivity.UpdateStatus(statusNotificationResponse.Status);
+                GeneralVariable.ChargePointStatus = statusNotificationResponse.Status;
+
+                mainActivity.UpdateConnectorStatus(statusNotificationResponse.Status, component, statusNotificationResponse.ConnectorId);
+                mainActivity.replaceComponent(componentList, mainActivity.SelectedChargingStationComponent);
+
             }
-
-            mainActivity.UpdateStatus(statusNotificationResponse.Status);
-            GeneralVariable.ChargePointStatus = statusNotificationResponse.Status;
-
-            mainActivity.UpdateConnectorStatus(statusNotificationResponse.Status, component, statusNotificationResponse.ConnectorId);
-            mainActivity.replaceComponent(componentList, mainActivity.SelectedChargingStationComponent);
-
+        }catch (Exception e){
+            LogUtils.e("StatusNotificationReceived Exception: ", e);
         }
 
     }
@@ -439,53 +444,74 @@ public class WebSocketHandler {
     }
 
     public SalesCompletion salesCompletionResult;
+    private String previousTransactionTrace ="";
 
     public void SalesCompletionReceived(String StopChargeMsg) {
         mainActivity.preAuthSuccess = false;
         salesCompletionResult = new Gson().fromJson(StopChargeMsg, SalesCompletion.class);
 
-        if (salesCompletionResult.CustumErrorMessage != null) {
-            try {
-                Thread.sleep(3000);
-                mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, String.format("Total Chargin time %02d Hours %02d Minutes", 0, 0));
-                LogUtils.i("custumErrorMessage", "custumErrorMessage is Not Null : " + salesCompletionResult.CustumErrorMessage);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-        } else {
-            try {
-                LogUtils.i("custumErrorMessage is Null", "custumErrorMessage is Null");
-                Txid = salesCompletionResult.TxId;
-                Component salesCompletionComponent = mainActivity.GetSelectedComponentbyComponentCode(salesCompletionResult.ComponentCode, componentList);
-
-                long diff = new Date().getTime() - salesCompletionComponent.StartChargeTime.getTime();
-//                long diff = new Date().getTime() - mainActivity.SelectedChargingStationComponent.StartChargeTime.getTime();
-                long seconds = diff / 1000;
-                long minutes = seconds / 60;
-                long hours = minutes / 60;
-                long days = hours / 24;
-                long m = minutes % 60;
-                String TimeUse = String.format("Total Charging Time %02d Hours %02d Minutes", hours, m);
-                if (GeneralVariable.CurrentFragment.equals("WelcomeFragment") || GeneralVariable.CurrentFragment.equals("ChargingFragment")) {
-                    mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, TimeUse);
-                } else {
-                    mainActivity.SalesCompletionQueue.add(salesCompletionResult);
-                }
+        if(previousTransactionTrace != salesCompletionResult.TransactionTrace) {
+            previousTransactionTrace = salesCompletionResult.TransactionTrace;
+            if (salesCompletionResult.CustumErrorMessage != null) {
                 try {
-                    Thread.sleep(4000);
-//                    mainActivity.UpdateChargePointStatus(eChargePointStatus.Idle);
-                    mainActivity.UpdateStatus("Available");
-                    GeneralVariable.ChargePointStatus = "Available";
-
-//
+                    Thread.sleep(3000);
+                    mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, String.format("Total Chargin time %02d Hours %02d Minutes", 0, 0));
+                    LogUtils.i("custumErrorMessage", "custumErrorMessage is Not Null : " + salesCompletionResult.CustumErrorMessage);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-            } catch (Exception ex) {
-                mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, String.format("Total Chargin time %02d Hours %02d Minutes", 0, 0));
-                LogUtils.i("SalesCompletionReceivedError", ex);
+
+            } else {
+                try {
+                    LogUtils.i("custumErrorMessage is Null", "custumErrorMessage is Null");
+                    Txid = salesCompletionResult.TxId;
+                    Component salesCompletionComponent = mainActivity.GetSelectedComponentbyComponentCode(salesCompletionResult.ComponentCode, componentList);
+
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+
+                    Date currentDate = new Date();
+
+                    // Format the current date and time using the SimpleDateFormat instance
+                    String formattedDate = sdf.format(currentDate);
+
+                    Date formattedDateObject = sdf.parse(formattedDate);
+
+
+                    if (salesCompletionComponent.StartChargeTime == null) {
+                        salesCompletionComponent.StartChargeTime = formattedDateObject;
+                    }
+                    long diff = new Date().getTime() - salesCompletionComponent.StartChargeTime.getTime();
+//                long diff = new Date().getTime() - mainActivity.SelectedChargingStationComponent.StartChargeTime.getTime();
+                    long seconds = diff / 1000;
+                    long minutes = seconds / 60;
+                    long hours = minutes / 60;
+                    long days = hours / 24;
+                    long m = minutes % 60;
+                    String TimeUse = String.format("Total Charging Time %02d Hours %02d Minutes", hours, m);
+                    if (GeneralVariable.CurrentFragment.equals("WelcomeFragment") || GeneralVariable.CurrentFragment.equals("ChargingFragment")) {
+                        LogUtils.i("SalesCompletion Executed");
+                        mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, TimeUse);
+                    } else {
+                        LogUtils.i("SalesCompletion added to Queue");
+                        mainActivity.SalesCompletionQueue.add(salesCompletionResult);
+                    }
+                    try {
+                        Thread.sleep(4000);
+//                    mainActivity.UpdateChargePointStatus(eChargePointStatus.Idle);
+                        mainActivity.UpdateStatus("Available");
+                        GeneralVariable.ChargePointStatus = "Available";
+                        mainActivity. SelectedChargingStationComponent.StartChargeTime = null;
+//
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } catch (Exception ex) {
+                    mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, String.format("Total Chargin time %02d Hours %02d Minutes", 0, 0));
+                    LogUtils.i("SalesCompletionReceivedError", ex);
+                }
             }
+        } else{
+            LogUtils.i("SalesCompletion did not execute because the current trace is the same as prevous trace");
         }
     }
 
@@ -502,13 +528,17 @@ public class WebSocketHandler {
 
 
         Gson gson = new Gson();
-        String StopChargeTapCardMessage = String.format("%s|%s|%s", uniqId, "StopChargeTapCard", gson.toJson(result));
+        String StopChargeTapCardMessage = String.format("0|%s|%s|%s", uniqId, "StopChargeTapCard", gson.toJson(result));
 
+        try{
         new Thread(() -> {
 
             webSocketClient.send(StopChargeTapCardMessage);
             LogUtils.i("StopChargeTapCardResultResponse ", StopChargeTapCardMessage);
         }).start();
+        } catch (Exception e){
+            LogUtils.i("StopChargeTapCardResultResponse Exception", e);
+        }
     }
 
 }
