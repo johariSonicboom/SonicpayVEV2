@@ -25,9 +25,31 @@
             android:id="@+id/chargeTime_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Plugin To Start Charge"
+            android:text="Plug in Cable to Start Charging"
             android:textSize="36sp"
             android:gravity="center"/>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="bottom">
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnBackPlugin"
+            android:text="OK"
+            android:layout_width="fill_parent"
+            android:layout_height="70dp"
+            android:layout_margin="10dp"
+            android:fontFamily="@font/poppins"
+            android:textStyle="bold"
+            android:background="@drawable/rounded_corner_with_bg_yellow"
+            android:padding="10dp"
+            android:textSize="30sp"
+            android:gravity="center"
+            android:onClick="onClick" />
+
     </LinearLayout>
+
+</LinearLayout>
 </FrameLayout>

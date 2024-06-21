@@ -30,6 +30,7 @@ import java.security.SecureRandom;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import dev.gustavoavila.websocketclient.WebSocketClient;
@@ -202,19 +203,23 @@ public class WebSocketHandler {
             mainActivity.UpdateChargePointStatus(eChargePointStatus.Idle);
 
             for (Component component : componentList) {
-                GetStatus(component.ComponentCode);
+                GetStatus(component.ComponentCode, component.Connectors.get(0).ConnectorId);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
+        } catch (Exception ex){
+            ex.printStackTrace();
+            LogUtils.e("Init exception during Init", ex);
         }
 
     }
 
-    void GetStatus(String ComponentCode) throws InterruptedException {
+    void GetStatus(String componentCode, int connectorID) throws InterruptedException {
         String uniqId = RandomString(16);
         GetCharPointStatusRequest charPointStatusRequest = new GetCharPointStatusRequest();
 
-        charPointStatusRequest.ComponentCode = ComponentCode;
+        charPointStatusRequest.ComponentCode = componentCode;
+        charPointStatusRequest.ConnectorID = connectorID;
         Gson gson = new Gson();
 
         String GetChargePointMessage = String.format("0|%s|%s|%s", uniqId, "GetCharPointStatus", gson.toJson(charPointStatusRequest));
@@ -326,6 +331,10 @@ public class WebSocketHandler {
                                 Thread.sleep(5000);
 //                            mainActivity.ShowHideTitle(true);
 //                            mainActivity.UpdateTitle("Charging");
+                                int connectorIndex = mainActivity.getConnectorIndexByID(component,statusNotificationResponse.ConnectorId);
+                                component.Connectors.get(connectorIndex).Description = statusNotificationResponse.Description;
+                                mainActivity.replaceComponent(componentList, component);
+
                                 if (componentList.length == 1 && componentList[0].Connectors.size() <= 1) {
                                     mainActivity.ShowHideTitle(true);
                                     mainActivity.UpdateTitle("Charging");
@@ -487,10 +496,11 @@ public class WebSocketHandler {
                     long hours = minutes / 60;
                     long days = hours / 24;
                     long m = minutes % 60;
-                    String TimeUse = String.format("Total Charging Time %02d Hours %02d Minutes", hours, m);
+//                    String TimeUse = String.format("Total Charging Time %02d Hours %02d Minutes", hours, m);
+                    String timeUse = String.format("Total Charging time: " + salesCompletionResult.ChargingPeriod);
                     if (GeneralVariable.CurrentFragment.equals("WelcomeFragment") || GeneralVariable.CurrentFragment.equals("ChargingFragment")) {
                         LogUtils.i("SalesCompletion Executed");
-                        mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, TimeUse);
+                        mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
                     } else {
                         LogUtils.i("SalesCompletion added to Queue");
                         mainActivity.SalesCompletionQueue.add(salesCompletionResult);
@@ -500,7 +510,7 @@ public class WebSocketHandler {
 //                    mainActivity.UpdateChargePointStatus(eChargePointStatus.Idle);
                         mainActivity.UpdateStatus("Available");
                         GeneralVariable.ChargePointStatus = "Available";
-                        mainActivity. SelectedChargingStationComponent.StartChargeTime = null;
+                        mainActivity.SelectedChargingStationComponent.StartChargeTime = null;
 //
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -531,11 +541,11 @@ public class WebSocketHandler {
         String StopChargeTapCardMessage = String.format("0|%s|%s|%s", uniqId, "StopChargeTapCard", gson.toJson(result));
 
         try{
-        new Thread(() -> {
+            new Thread(() -> {
 
-            webSocketClient.send(StopChargeTapCardMessage);
-            LogUtils.i("StopChargeTapCardResultResponse ", StopChargeTapCardMessage);
-        }).start();
+                webSocketClient.send(StopChargeTapCardMessage);
+                LogUtils.i("StopChargeTapCardResultResponse ", StopChargeTapCardMessage);
+            }).start();
         } catch (Exception e){
             LogUtils.i("StopChargeTapCardResultResponse Exception", e);
         }

@@ -17,6 +17,8 @@ import com.sonicboom.sonicpayvui.EVModels.Component;
 import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
 import com.sonicboom.sonicpayvui.R;
 
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Locale;
 
 /**
@@ -93,6 +95,14 @@ public class SelectChargerFragment extends Fragment {
         // Get the GridLayout where you want to add the card views
         GridLayout cardContainer = view.findViewById(R.id.cardContainer);
 
+        // Sort the componentList based on the componentName
+        Arrays.sort(componentList, new Comparator<Component>() {
+            @Override
+            public int compare(Component c1, Component c2) {
+                return c1.ComponentName.compareToIgnoreCase(c2.ComponentName);
+            }
+        });
+
 
         for (Component component : componentList) {
             // Inflate the card view layout
@@ -124,6 +134,7 @@ public class SelectChargerFragment extends Fragment {
             }
 
             switch (statusText) {
+                case "PREPARING":
                 case "AVAILABLE":
                     color = Color.parseColor("#008842");
                     break;

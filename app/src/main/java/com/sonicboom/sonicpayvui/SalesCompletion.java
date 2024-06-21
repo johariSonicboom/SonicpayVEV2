@@ -8,6 +8,7 @@ public class SalesCompletion {
     public double Amount;
     public int TxId;
     public String CustumErrorMessage;
+    public String ChargingPeriod;
 
     public SalesCompletion() {
         // Default constructor

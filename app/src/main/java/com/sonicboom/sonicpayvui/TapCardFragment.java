@@ -61,7 +61,7 @@ public class TapCardFragment extends Fragment {
             mSalesRequest = getArguments().getString(SalesRequest);
             mTapCardMsg = getArguments().getString(TapCardMsg);
 //            mSelectedChargingStation = getArguments().getString("chargingStation");
-            mSelectedChargingStation =  ((MainActivity)requireActivity()).SelectedChargingStationComponent.ComponentCode;
+            mSelectedChargingStation =  ((MainActivity)requireActivity()).SelectedChargingStationComponent.ComponentName;
         }
     }
 

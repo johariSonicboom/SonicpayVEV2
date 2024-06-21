@@ -3,6 +3,7 @@ package com.sonicboom.sonicpayvui;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -17,6 +18,7 @@ import com.sbs.aidl.Class.GetStatusResult;
 import com.sbs.aidl.Class.eTerminalState;
 import com.sbs.aidl.IAIDLCardCallbackInterface;
 import com.sbs.aidl.IAIDLSonicpayInterface;
+import com.sonicboom.sonicpayvui.activity.ConfigLoginActivity;
 import com.sonicboom.sonicpayvui.models.AppUpdate;
 import com.sonicboom.sonicpayvui.models.TCPGeneralMessage;
 import com.sonicboom.sonicpayvui.models.eHostNo;
@@ -129,7 +131,10 @@ public class MQTT {
                                         AppUpdate(context, BuildConfig.APPLICATION_ID, String.valueOf(BuildConfig.VERSION_CODE));
                                         break;
                                     case "maintenancescreen":
-                                        Router.startUri(context, RouterConst.CONFIG_LOGIN);
+//                                        Router.startUri(context, RouterConst.CONFIG_LOGIN);
+                                        Intent intent = new Intent(context, ConfigLoginActivity.class);
+                                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                        context.startActivity(intent);
                                         break;
                                     case "apprestart":
                                         AppRestart(payload);
