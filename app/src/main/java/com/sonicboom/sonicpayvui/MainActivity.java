@@ -2615,9 +2615,10 @@ boolean stopChargeBack = false;
     public Component[] replaceComponentConnectors(Component[] componentList, String componentCode, List<Connector> newConnectors) {
         for (int i = 0; i < componentList.length; i++) {
             if (componentList[i].ComponentCode.equals(componentCode)) { // Assuming getId() returns a unique identifier for each component
-                if(componentList[i].Connectors.get(0).ConnectorId == newConnectors.get(0).ConnectorId)
-                componentList[i].Connectors = newConnectors; // Replace the component with the new one
-                break; // Exit the loop since we found and replaced the component
+                if(componentList[i].Connectors.get(0).ConnectorId == newConnectors.get(0).ConnectorId) {
+                    componentList[i].Connectors = newConnectors; // Replace the component with the new one
+                    break; // Exit the loop since we found and replaced the component
+                }
             }
         }
         return componentList;
