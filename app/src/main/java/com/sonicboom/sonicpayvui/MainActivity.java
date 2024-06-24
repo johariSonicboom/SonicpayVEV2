@@ -1342,7 +1342,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         runSettlement = false;
                     }
 
-                    handler.postDelayed(this, 5000); // Schedule the runnable to run again after 5 seconds
+                    handler.postDelayed(this, 3000); // Schedule the runnable to run again after 3 seconds
                 } catch (Exception e) {
                     LogUtils.e("Error in runnable: ", e);
                 }
@@ -1421,7 +1421,6 @@ boolean stopChargeBack = false;
                 handler.postDelayed(timeoutRunnable, LoadingTimeOutDuration);
 
                 selectConnectorFragment[0] = new SelectConnectorFragment(SelectedChargingStationComponent);
-                SelectConnectorFragment finalSelectConnectorFragment = selectConnectorFragment[0];
                 SelectChargerFragment finalSelectChargerFragment = selectChargerFragment;
                 futureTask[0] = executor.submit(new Runnable() {
                     @Override
@@ -1436,7 +1435,7 @@ boolean stopChargeBack = false;
                                 wbs.GetStatus(component.ComponentCode, component.Connectors.get(0).ConnectorId);
 //                                wbs.GetStatusList(wbs.componentList);
                                 if (component.Connectors != null && !component.Connectors.isEmpty()) {
-                                    LogUtils.i("Start Component Status :" + component.ComponentCode, component.Connectors.get(0).Status);
+                                    LogUtils.i("Start Component Status :" + component.ComponentCode + " | ConnectorID :" + component.Connectors.get(0).ConnectorId, component.Connectors.get(0).Status);
                                 } else {
                                     LogUtils.i("Start Component Status :", "Status is null or connectors are empty for component: " + component.ComponentCode);
                                     return;
