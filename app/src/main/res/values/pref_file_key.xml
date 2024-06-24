@@ -173,6 +173,7 @@
     <string name="LoadingTimeOutDuration">LoadingTimeOutDuration</string>
     <string name="PlugInTimeOutDuration">PlugInTimeOutDuration</string>
     <string name="DisconnectGunTimeOutDuration">DisconnectGunTimeOutDuration</string>
+    <string name="GoBackToWelcomeTimeOutDuration">DisconnectGunTimeOutDuration</string>
     <string name="EnableTapCardStopCharge">EnableTapCardStopCharge</string>
 
 
