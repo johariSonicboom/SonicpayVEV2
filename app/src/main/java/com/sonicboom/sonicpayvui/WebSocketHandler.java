@@ -608,7 +608,7 @@ public class WebSocketHandler {
                 }
 
             } else {
-                try {
+//                try {
                     LogUtils.i("custumErrorMessage is Null", "custumErrorMessage is Null");
                     Txid = salesCompletionResult.TxId;
 
@@ -622,15 +622,15 @@ public class WebSocketHandler {
                         mainActivity.SalesCompletionQueue.add(salesCompletionResult);
                     }
                     try {
-                        Thread.sleep(4000);
+//                        Thread.sleep(4000);
 //                    mainActivity.UpdateChargePointStatus(eChargePointStatus.Idle);
                         mainActivity.UpdateStatus("Available");
                         GeneralVariable.ChargePointStatus = "Available";
                         mainActivity.SelectedChargingStationComponent.StartChargeTime = null;
 //
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
                 } catch (Exception ex) {
                     mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, String.format("Total Chargin time %02d Hours %02d Minutes", 0, 0));
                     LogUtils.i("SalesCompletionReceivedError", ex);
