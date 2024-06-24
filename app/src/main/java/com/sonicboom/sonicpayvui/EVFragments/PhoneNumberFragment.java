@@ -3,8 +3,10 @@ package com.sonicboom.sonicpayvui.EVFragments;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
 import android.os.RemoteException;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +15,12 @@ import com.sbs.aidl.IAIDLSonicpayInterface;
 import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
 import com.sonicboom.sonicpayvui.MainActivity;
 import com.sonicboom.sonicpayvui.R;
+import com.sonicboom.sonicpayvui.SharedPrefUI;
+import com.sonicboom.sonicpayvui.WelcomeFragment;
+import com.sonicboom.sonicpayvui.utils.LogUtils;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -31,6 +39,7 @@ public class PhoneNumberFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+    private Timer timeoutTimer;
 
     public PhoneNumberFragment() {
         // Required empty public constructor
@@ -79,5 +88,51 @@ public class PhoneNumberFragment extends Fragment {
         View view =inflater.inflate(R.layout.fragment_phone_number, container, false);
         view.findViewById(R.id.btnPhoneNumber).setOnClickListener( ((MainActivity)requireActivity()));
         return view;
+    }
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState){
+        super.onViewCreated(view, savedInstanceState);
+        startTimerForTimeout();
+    }
+
+    public void startTimerForTimeout() {
+        timeoutTimer = new Timer();
+        Log.i("Timer Start", "Plugin Fragment Redirect");
+        int GoBackToWelcomeTimeOutDuration = 300000;
+        GoBackToWelcomeTimeOutDuration = Integer.parseInt( new SharedPrefUI(requireContext()).ReadSharedPrefStr(getString(R.string.GoBackToWelcomeTimeOutDuration)));
+        timeoutTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                // Redirect to another fragment here
+                redirectToAnotherFragment();
+            }
+        }, GoBackToWelcomeTimeOutDuration); //
+    }
+
+    public void stopTimerForTimeout() {
+        if (timeoutTimer != null) {
+            timeoutTimer.cancel();
+            timeoutTimer = null;
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        stopTimerForTimeout();
+    }
+
+    // Method to redirect to another fragment
+    private void redirectToAnotherFragment() {
+        // Perform the fragment redirection here
+        LogUtils.i("Fragment Inactive, redirecting to Welcome Fragment", GeneralVariable.CurrentFragment);
+        if (isAdded() && getActivity() != null) {
+            Bundle bundle = new Bundle();
+            FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
+            fragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainer, WelcomeFragment.class, bundle)
+                    .addToBackStack(null)
+                    .commit();
+        }
     }
 }

@@ -1329,29 +1329,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         if (GeneralVariable.CurrentFragment.equals("WelcomeFragment") || GeneralVariable.CurrentFragment.equals("ChargingFragment")) {
                             LogUtils.i("Executing Sales Completion in Queue");
                             com.sonicboom.sonicpayvui.SalesCompletion salesCompletionResult = SalesCompletionQueue.get(0); // Get the first item
-                            Component salesCompletionComponent = GetSelectedComponentbyComponentCode(salesCompletionResult.ComponentCode, wbs.componentList);
 
-                            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
-                            Date currentDate = new Date();
-                            String formattedDate = sdf.format(currentDate);
-
-                            Date formattedDateObject;
-                            try {
-                                formattedDateObject = sdf.parse(formattedDate);
-                            } catch (ParseException e) {
-                                e.printStackTrace();
-                                LogUtils.e("Date parsing failed: ", e);
-                                return;
-                            }
-
-                            if (salesCompletionComponent.StartChargeTime == null) {
-                                salesCompletionComponent.StartChargeTime = formattedDateObject;
-                            }
-
-                            long diff = new Date().getTime() - salesCompletionComponent.StartChargeTime.getTime();
-                            long minutes = diff / 1000 / 60;
-                            long hours = minutes / 60;
-                            long m = minutes % 60;
 //                            String timeUse = String.format("Total Charging time %02d Hours %02d Minutes", hours, m);
                             String timeUse = String.format("Total Charging time: " + salesCompletionResult.ChargingPeriod);
                             SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
@@ -1456,6 +1434,7 @@ boolean stopChargeBack = false;
                                 }
 
                                 wbs.GetStatus(component.ComponentCode, component.Connectors.get(0).ConnectorId);
+//                                wbs.GetStatusList(wbs.componentList);
                                 if (component.Connectors != null && !component.Connectors.isEmpty()) {
                                     LogUtils.i("Start Component Status :" + component.ComponentCode, component.Connectors.get(0).Status);
                                 } else {
@@ -1702,7 +1681,9 @@ boolean stopChargeBack = false;
                 selectConnectorFragment[0] = new SelectConnectorFragment(SelectedChargingStationComponent);
 
                 SelectedChargingStationComponent = GetSelectedComponent(SelectedChargingStation, wbs.componentList);
-                if (chargingStationStatus.getText().toString().equals("AVAILABLE") || chargingStationStatus.getText().toString().equals("PREPARING")) {
+                if (chargingStationStatus.getText().toString().equals("AVAILABLE")
+                        || chargingStationStatus.getText().toString().equals("PREPARING")
+                ) {
 
 
                     if (SelectedChargingStationComponent != null &&
@@ -1738,7 +1719,9 @@ boolean stopChargeBack = false;
                                 .addToBackStack(null)
                                 .commit();
                     }
-                } else if (chargingStationStatus.getText().toString().equals("CHARGING")) {
+                } else if (chargingStationStatus.getText().toString().equals("CHARGING")
+                        || chargingStationStatus.getText().toString().equals("STARTCHARGE")
+                ) {
                     try {
                         if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.EnableTapCardStopCharge))) {
                             boolean result = sonicInterface.ReadCard(true, callbackInterface);
@@ -1782,7 +1765,7 @@ boolean stopChargeBack = false;
 //                selectedConnectorIndex = Integer.valueOf(connector.getText().toString()) - 1;
 
                     SelectedChargingStationComponent.SelectedConnector = selectedConnectorIndex;
-                    replaceComponent(wbs.componentList, SelectedChargingStationComponent);
+                    replaceComponent(wbs.componentList, SelectedChargingStationComponent, SelectedChargingStationComponent.Connectors.get(0).ConnectorId);
 
                     if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.IsSkipFare))) {
                         ShowHideTitle(true);
@@ -1804,7 +1787,7 @@ boolean stopChargeBack = false;
                     }
                 } else if (connectorStatusText.equals("BLOCKED")) {
                     Toast.makeText(this, "Please unplug charger", Toast.LENGTH_SHORT).show();
-                } else if (connectorStatusText.equals("CHARGING")) {
+                } else if (connectorStatusText.equals("CHARGING") || connectorStatusText.equals("STARTCHARGE")) {
                     try {
                         if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.EnableTapCardStopCharge))) {
                             selectedConnectorIndex = getConnectorIndexByID(SelectedChargingStationComponent, Integer.valueOf(connector.getText().toString()));
@@ -2616,11 +2599,14 @@ boolean stopChargeBack = false;
         return null;
     }
 
-    public Component[] replaceComponent(Component[] componentList, Component newComponent) {
+    public Component[] replaceComponent(Component[] componentList, Component newComponent, int connectorID) {
         for (int i = 0; i < componentList.length; i++) {
-            if (componentList[i].ComponentId == newComponent.ComponentId) { // Assuming getId() returns a unique identifier for each component
-                componentList[i] = newComponent; // Replace the component with the new one
-                break; // Exit the loop since we found and replaced the component
+            if (componentList[i].ComponentId == newComponent.ComponentId) {
+                if(componentList[i].Connectors.get(0).ConnectorId == newComponent.Connectors.get(0).ConnectorId) {
+                    // Assuming getId() returns a unique identifier for each component
+                    componentList[i] = newComponent; // Replace the component with the new one
+                    break; // Exit the loop since we found and replaced the component
+                }
             }
         }
         return componentList;
@@ -2629,8 +2615,10 @@ boolean stopChargeBack = false;
     public Component[] replaceComponentConnectors(Component[] componentList, String componentCode, List<Connector> newConnectors) {
         for (int i = 0; i < componentList.length; i++) {
             if (componentList[i].ComponentCode.equals(componentCode)) { // Assuming getId() returns a unique identifier for each component
-                componentList[i].Connectors = newConnectors; // Replace the component with the new one
-                break; // Exit the loop since we found and replaced the component
+                if(componentList[i].Connectors.get(0).ConnectorId == newConnectors.get(0).ConnectorId) {
+                    componentList[i].Connectors = newConnectors; // Replace the component with the new one
+                    break; // Exit the loop since we found and replaced the component
+                }
             }
         }
         return componentList;
@@ -2652,7 +2640,7 @@ boolean stopChargeBack = false;
                 for (Connector connector : component.Connectors) {
                     if (connectorID == connector.ConnectorId) {
                         connector.Status = status;
-                        replaceComponent(wbs.componentList, component);
+                        replaceComponent(wbs.componentList, component, component.Connectors.get(0).ConnectorId);
                         break;
                     }
                 }
@@ -2678,7 +2666,7 @@ boolean stopChargeBack = false;
             for (Connector connector : component.Connectors) {
                 if (!(connector.Status == null)) {
                     connector.Status = status;
-                    replaceComponent(wbs.componentList, component);
+                    replaceComponent(wbs.componentList, component, component.Connectors.get(0).ConnectorId);
                 }
             }
         }
@@ -2711,11 +2699,13 @@ boolean stopChargeBack = false;
     }
 
 
-    public Component GetSelectedComponentbyComponentCode(String componentCode, Component[] componentList) {
+    public Component GetSelectedComponentbyComponentCode(String componentCode, Component[] componentList, int connectorID) {
         try {
             for (Component component : componentList) {
                 if (component.ComponentCode.equals(componentCode)) {
-                    return component;
+                    if(component.Connectors.get(0).ConnectorId == connectorID) {
+                        return component;
+                    }
                 }
             }
         }catch (Exception e){
