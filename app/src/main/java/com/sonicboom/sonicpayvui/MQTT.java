@@ -428,9 +428,9 @@ public class MQTT {
                 );
             }
 
-            for (Integer hostNo : hostNos) {
-                Settlement(hostNo, oriPayload, false);
-            }
+            //for (Integer hostNo : hostNos) {
+                Settlement(0, oriPayload, false);
+           // }
 
             payload.IsSuccess = true;
         } catch (Exception e) {

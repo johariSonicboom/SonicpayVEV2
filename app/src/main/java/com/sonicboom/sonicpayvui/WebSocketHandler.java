@@ -498,9 +498,7 @@ public class WebSocketHandler {
                 }
 
                 try {
-//                            mainActivity.SelectedChargingStationComponent = mainActivity.GetSelectedComponentbyComponentCode(notificationResponse.ComponentCode, componentList);
                     mainActivity.SelectedChargingStationComponent.StartChargeTime = format.parse(componentList[0].Connectors.get(0).Description);
-//                            mainActivity.replaceComponent(componentList, mainActivity.SelectedChargingStationComponent);
                 } catch (Exception ex) {
                     LogUtils.e(ex);
                 }
@@ -633,9 +631,7 @@ public class WebSocketHandler {
     }
 
     public void StopChargeTapCardResultResponse(StopChargeTapCard result) {
-
         String uniqId = RandomString(16);
-
 
         Gson gson = new Gson();
         String StopChargeTapCardMessage = String.format("0|%s|%s|%s", uniqId, "StopChargeTapCard", gson.toJson(result));

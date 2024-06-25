@@ -116,6 +116,8 @@ try {
 
         int[] resIds = myList.stream().mapToInt(i->i).toArray();
 
+        LogUtils.i("resIds: ", resIds);
+
         mContentBanner.setData(localImageSize, ImageView.ScaleType.FIT_CENTER, resIds);
         mContentBanner.setAutoPlayInterval(1500);
         mContentBanner.setAllowUserScrollable(false);
@@ -125,10 +127,18 @@ try {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 TextView textView = view.findViewById(R.id.welcomeTitle);
-                if(position == 0 && positionOffset == 0.0 || position == resIds.length - 1  && positionOffset >= 0.8)
+//                LogUtils.i("position :", position);
+//                LogUtils.i("positionOffset :", positionOffset);
+//                LogUtils.i("positionOffsetPixels :", positionOffsetPixels);
+                if(position == 0 && positionOffset >= 0.0 || position == resIds.length - 1  && positionOffset >= 0.8) {
                     textView.setText("TAP TO PAY");
-                else
+                } else if(position == resIds.length - 2 && positionOffset >= 0.8f || position == resIds.length - 1  && positionOffset >= 0.0){
+                    if (clientCode.equals("GECSB")) {
+                        textView.setText("");
+                    }
+                } else {
                     textView.setText("We Accept");
+                }
             }
 
             @Override
