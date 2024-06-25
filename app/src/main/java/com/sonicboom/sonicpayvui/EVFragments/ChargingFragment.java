@@ -64,6 +64,61 @@ public class ChargingFragment extends Fragment {
         }
     }
 
+//    @Override
+//    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+//                             Bundle savedInstanceState) {
+//
+//        GeneralVariable.CurrentFragment = "ChargingFragment";
+//
+//        View view = inflater.inflate(R.layout.fragment_charging, container, false);
+//        txtChargeingTime = view.findViewById(R.id.chargeTime_text);
+//
+//        Button stopChargeButton = view.findViewById(R.id.btnStopCharge);
+//        if ("true".equals(HideStopButton)) {
+//            stopChargeButton.setVisibility(View.GONE);
+//        } else {
+//            stopChargeButton.setVisibility(View.VISIBLE);
+//        }
+//
+//        try {
+//            ((MainActivity) requireActivity()).UpdateTitleColor(R.color.main_blue);
+//            ((MainActivity) requireActivity()).ShowHideTitle(true);
+//            ((MainActivity) requireActivity()).UpdateTitle("Charging");
+//
+//            // Initialize and schedule the timer
+//            t = new Timer();
+//            t.schedule(new TimerTask() {
+//                @Override
+//                public void run() {
+//                    SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
+//                    try {
+//                        Date date = format.parse(StartChargeTime);
+//                        long diff = new Date().getTime() - date.getTime();
+//                        long seconds = diff / 1000;
+//                        long minutes = seconds / 60;
+//                        long hours = minutes / 60;
+//                        long days = hours / 24;
+//                        long m = minutes % 60;
+//                        // Ensure we are updating the UI on the main thread
+//                        new Handler(Looper.getMainLooper()).post(() -> {
+//                            if (isAdded()) {
+//                                txtChargeingTime.setText(String.format("Charging Time %02d:%02d", hours, m));
+//                            }
+//                        });
+//                    } catch (ParseException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }, 1000, 1000);
+//
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//            stopTimerForRedirection();
+//        }
+//
+//        return view;
+//    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -85,38 +140,44 @@ public class ChargingFragment extends Fragment {
             ((MainActivity) requireActivity()).ShowHideTitle(true);
             ((MainActivity) requireActivity()).UpdateTitle("Charging");
 
-            // Initialize and schedule the timer
-            t = new Timer();
-            t.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
-                    try {
-                        Date date = format.parse(StartChargeTime);
-                        long diff = new Date().getTime() - date.getTime();
-                        long seconds = diff / 1000;
-                        long minutes = seconds / 60;
-                        long hours = minutes / 60;
-                        long days = hours / 24;
-                        long m = minutes % 60;
-                        // Ensure we are updating the UI on the main thread
-                        new Handler(Looper.getMainLooper()).post(() -> {
-                            if (isAdded()) {
-                                txtChargeingTime.setText(String.format("Charging Time %02d:%02d", hours, m));
-                            }
-                        });
-                    } catch (ParseException e) {
-                        e.printStackTrace();
+            // Check if StartChargeTime is valid
+            if (StartChargeTime != null && !StartChargeTime.isEmpty()) {
+                // Initialize and schedule the timer
+                t = new Timer();
+                t.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
+                        try {
+                            Date date = format.parse(StartChargeTime);
+                            long diff = new Date().getTime() - date.getTime();
+                            long seconds = diff / 1000;
+                            long minutes = seconds / 60;
+                            long hours = minutes / 60;
+                            long m = minutes % 60;
+                            // Ensure we are updating the UI on the main thread
+                            new Handler(Looper.getMainLooper()).post(() -> {
+                                if (isAdded()) {
+                                    txtChargeingTime.setText(String.format("Charging Time %02d:%02d", hours, m));
+                                }
+                            });
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
                     }
-                }
-            }, 1000, 1000);
+                }, 1000, 1000);
+            } else {
+                Log.e(TAG, "StartChargeTime is null or empty. Cannot start timer.");
+            }
 
         } catch (Exception ex) {
             ex.printStackTrace();
+            stopTimerForRedirection();
         }
 
         return view;
     }
+
 
     private static final String TAG = "Charging";
 

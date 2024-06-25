@@ -41,6 +41,13 @@
             android:defaultValue="60000"/>
 
         <EditTextPreference
+            android:title="Redirect to Welcome Screen Time Out Duration (in ms)"
+            android:key="@string/GoBackToWelcomeTimeOutDuration"
+            android:inputType="text"
+            app:useSimpleSummaryProvider="true"
+            android:defaultValue="180000"/>
+
+        <EditTextPreference
             android:title="Disconnect Gun Time Out Duration (in ms)"
             android:key="@string/DisconnectGunTimeOutDuration"
             android:inputType="text"

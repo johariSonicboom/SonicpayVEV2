@@ -83,7 +83,7 @@ public class StopChargeTapCardFragment extends Fragment {
         if(mStartChargeTime != null){
             txtChargeTime.setText(calculateTotalChargeTime());
         } else{
-            txtChargeTime.setText("TAP CARD TO STOP CHARGE");
+            txtChargeTime.setText("Tap the same card to Stop Charging");
         }
 
         return view; // Return the inflated view

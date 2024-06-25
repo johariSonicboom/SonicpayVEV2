@@ -1,5 +1,6 @@
 package com.sonicboom.sonicpayvui;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.util.Log;
@@ -81,6 +82,17 @@ public class WelcomeFragment extends Fragment {
         List<Integer> myList = new ArrayList<>();
         myList.add(R.drawable.paywave);
 
+//        String clientCode = ((MainActivity) requireActivity()).sonicInterface.ReadSharedPref(getString(R.string.client_code));
+
+        Context context = getContext();
+        // Initialize SharedPrefUI
+        SharedPrefUI sharedPrefUI = new SharedPrefUI(context);
+
+        // Read the shared preference value
+        String clientCode = sharedPrefUI.ReadSharedPrefStr(getString(R.string.client_code));
+
+        LogUtils.i("Client Code", clientCode);
+
 try {
     if (((MainActivity) requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsMCCSEnabled)))
         myList.add(R.drawable.mydebit_logo);
@@ -94,11 +106,17 @@ try {
         myList.add(R.drawable.unionpay_logo);
     if (((MainActivity) requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsTngEnabled)))
         myList.add(R.drawable.tng_logo);
+    if (clientCode.equals("GECSB"))
+        myList.add(R.drawable.chargev_dark);
+
+
 }catch (Exception e){
     LogUtils.i("Start Banner Exception", e);
         }
 
         int[] resIds = myList.stream().mapToInt(i->i).toArray();
+
+        LogUtils.i("resIds: ", resIds);
 
         mContentBanner.setData(localImageSize, ImageView.ScaleType.FIT_CENTER, resIds);
         mContentBanner.setAutoPlayInterval(1500);
@@ -109,10 +127,18 @@ try {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 TextView textView = view.findViewById(R.id.welcomeTitle);
-                if(position == 0 && positionOffset == 0.0 || position == resIds.length - 1  && positionOffset >= 0.8)
+//                LogUtils.i("position :", position);
+//                LogUtils.i("positionOffset :", positionOffset);
+//                LogUtils.i("positionOffsetPixels :", positionOffsetPixels);
+                if(position == 0 && positionOffset >= 0.0 || position == resIds.length - 1  && positionOffset >= 0.8) {
                     textView.setText("TAP TO PAY");
-                else
+                } else if(position == resIds.length - 2 && positionOffset >= 0.8f || position == resIds.length - 1  && positionOffset >= 0.0){
+                    if (clientCode.equals("GECSB")) {
+                        textView.setText("");
+                    }
+                } else {
                     textView.setText("We Accept");
+                }
             }
 
             @Override
