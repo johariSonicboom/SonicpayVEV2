@@ -592,18 +592,17 @@ public class WebSocketHandler {
                 try {
                     Thread.sleep(3000);
                     mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, String.format("Total Chargin time %02d Hours %02d Minutes", 0, 0));
-                    LogUtils.i("custumErrorMessage", "custumErrorMessage is Not Null : " + salesCompletionResult.CustumErrorMessage);
+                    LogUtils.i("SalesCompletion custumErrorMessage", "custumErrorMessage is Not Null : " + salesCompletionResult.CustumErrorMessage);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
 
             } else {
-//                try {
                     LogUtils.i("custumErrorMessage is Null", "custumErrorMessage is Null");
                     Txid = salesCompletionResult.TxId;
 
-//                    String TimeUse = String.format("Total Charging Time %02d Hours %02d Minutes", hours, m);
                     String timeUse = String.format("Total Charging time: " + salesCompletionResult.ChargingPeriod);
+
                     if (GeneralVariable.CurrentFragment.equals("WelcomeFragment") || GeneralVariable.CurrentFragment.equals("ChargingFragment")) {
                         LogUtils.i("SalesCompletion Executed");
                         mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
@@ -612,15 +611,10 @@ public class WebSocketHandler {
                         mainActivity.SalesCompletionQueue.add(salesCompletionResult);
                     }
                     try {
-//                        Thread.sleep(4000);
-//                    mainActivity.UpdateChargePointStatus(eChargePointStatus.Idle);
                         mainActivity.UpdateStatus("Available");
                         GeneralVariable.ChargePointStatus = "Available";
                         mainActivity.SelectedChargingStationComponent.StartChargeTime = null;
-//
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
+
                 } catch (Exception ex) {
                     mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, String.format("Total Chargin time %02d Hours %02d Minutes", 0, 0));
                     LogUtils.i("SalesCompletionReceivedError", ex);
