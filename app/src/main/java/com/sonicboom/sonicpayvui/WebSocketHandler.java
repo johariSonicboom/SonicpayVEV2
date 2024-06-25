@@ -101,8 +101,6 @@ public class WebSocketHandler {
                         new Thread(() -> {
                             webSocketClient.send(SalesCompletionACK);
                         }).start();
-
-                        //SalesCompletionReceived(Reveied[2]);
                         SalesCompletionReceived(Received[3]);
                         break;
                     case "initialization":
@@ -191,10 +189,10 @@ public class WebSocketHandler {
         try {
             sharedResource.waitForCondition(10000);
 
-            String[] Reveied = InitResul.split("\\|");
+            String[] Received = InitResul.split("\\|");
             Gson gson = new Gson();
 
-            componentList = gson.fromJson(Reveied[3], Component[].class);
+            componentList = gson.fromJson(Received[3], Component[].class);
             LogUtils.i("componentList", componentList);
 
             if (componentList.length > 0) {
@@ -480,22 +478,14 @@ public class WebSocketHandler {
         }
     }
 
+    //TO BE IMPLEMENTED
     public void NotificationReceivedByList(String notificationResponseMsg) {
         if (!notificationResponseMsg.isEmpty()) {
-//            GetStatusResponse notificationResponse = new Gson().fromJson(notificationResponseMsg, GetStatusResponse.class);
-            // Define the type for the list of GetStatusResponse
-            Type listType = new TypeToken<List<GetStatusResponse>>() {}.getType();
 
-            // Deserialize the JSON into a List<GetStatusResponse>
-            List<GetStatusResponse> notificationResponseList = new Gson().fromJson(notificationResponseMsg, listType);
-            Log.d("Notification Response", notificationResponseList.toString());
-
-            //TO BE IMPLEMENTED
-
-            String[] Reveied = InitResul.split("\\|");
+            String[] Received = InitResul.split("\\|");
             Gson gson = new Gson();
 
-            componentList = gson.fromJson(Reveied[3], Component[].class);
+            componentList = gson.fromJson(Received[3], Component[].class);
             LogUtils.i("componentList", componentList);
 
             try {
