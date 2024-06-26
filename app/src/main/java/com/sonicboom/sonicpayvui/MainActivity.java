@@ -92,6 +92,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -1260,65 +1261,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         txtStatus = findViewById(R.id.txtstatus);
         wbs = new WebSocketHandler(this);
 
-//        // Initialize the handler
-//        handlerTimer = new Handler();
-//
-//        // Define the runnable
-//        runnable = new Runnable() {
-//            @Override
-//            public void run() {
-//
-//                    // Execute the function
-//                    if (SalesCompletionQueue != null && !SalesCompletionQueue.isEmpty()) {
-//                        if (GeneralVariable.CurrentFragment.equals("WelcomeFragment") || GeneralVariable.CurrentFragment.equals("ChargingFragment")) {
-//                            LogUtils.i("Executing Sales Completion in Queue");
-//                            com.sonicboom.sonicpayvui.SalesCompletion salesCompletionResult = SalesCompletionQueue.get(0); // Get the first item
-//                            Component salesCompletionComponent = GetSelectedComponentbyComponentCode(salesCompletionResult.ComponentCode, wbs.componentList);
-//
-//                            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
-//
-//                            Date currentDate = new Date();
-//
-//                            // Format the current date and time using the SimpleDateFormat instance
-//                            String formattedDate = sdf.format(currentDate);
-//
-//                            Date formattedDateObject = null;
-//                            try {
-//                                formattedDateObject = sdf.parse(formattedDate);
-//                            } catch (ParseException e) {
-//                                e.printStackTrace();
-//                            }
-//
-//
-//                            if (salesCompletionComponent.StartChargeTime == null) {
-//                                salesCompletionComponent.StartChargeTime = formattedDateObject;
-//                            }
-//
-//                            long diff = new Date().getTime() - salesCompletionComponent.StartChargeTime.getTime();
-//
-//                            long seconds = diff / 1000;
-//                            long minutes = seconds / 60;
-//                            long hours = minutes / 60;
-//                            long days = hours / 24;
-//                            long m = minutes % 60;
-//                            String timeUse = String.format("Total Charging time %02d Hours %02d Minutes", hours, m);
-//
-//                            SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
-//                            SalesCompletionQueue.remove(0); // Remove the first item
-//                        }
-//                    }
-//
-//                if (runSettlement) {
-//                    StartSettlement();
-//                    runSettlement = false;
-//                }
-//
-////                LogUtils.i("Timer Running");
-//
-//                // Schedule the runnable to run again after 5 seconds
-//                handler.postDelayed(this, 5000);
-//            }
-//        };
         handlerTimer = new Handler();
 
         runnable = new Runnable() {
@@ -1353,7 +1295,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         handlerTimer.post(runnable);
 
         LogUtils.d(TAG, "onCreate ended.");
+        logAllSharedPrefValues();
+    }
 
+    private void logAllSharedPrefValues() {
+        SharedPrefUI sharedPrefUI = new SharedPrefUI(this);
+        Map<String, ?> allEntries = sharedPrefUI.getAll();
+        for (Map.Entry<String, ?> entry : allEntries.entrySet()) {
+            Log.d(TAG, entry.getKey() + ": " + entry.getValue().toString());
+        }
     }
 
     @Override

@@ -59,6 +59,7 @@ public class WelcomeFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         GeneralVariable.CurrentFragment = "WelcomeFragment";
+        LogUtils.i("Current Fragment", "WelcomeFragment");
 
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_welcome, container, false);
@@ -91,7 +92,7 @@ public class WelcomeFragment extends Fragment {
         // Read the shared preference value
         String clientCode = sharedPrefUI.ReadSharedPrefStr(getString(R.string.client_code));
 
-        LogUtils.i("Client Code", clientCode);
+//        LogUtils.i("Client Code", clientCode);
 
 try {
     if (((MainActivity) requireActivity()).sonicInterface.ReadSharedPrefBoolean(getString(R.string.IsMCCSEnabled)))

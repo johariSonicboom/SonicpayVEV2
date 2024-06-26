@@ -80,6 +80,7 @@ public class ResultFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         GeneralVariable.CurrentFragment = "ResultFragment";
+        LogUtils.i("Current Fragment", "ResultFragment");
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_result, container, false);
 
@@ -220,7 +221,6 @@ public class ResultFragment extends Fragment {
     private Timer timeoutTimer;
     public void startTimerForTimeout() {
         timeoutTimer = new Timer();
-        Log.i("Timer Start", "Plugin Fragment Redirect");
         timeoutTimer.schedule(new TimerTask() {
             @Override
             public void run() {

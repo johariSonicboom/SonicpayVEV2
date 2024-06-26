@@ -125,6 +125,8 @@ public class ChargingFragment extends Fragment {
 
         GeneralVariable.CurrentFragment = "ChargingFragment";
 
+        LogUtils.i("Current Fragment", "ChargingFragment");
+
         View view = inflater.inflate(R.layout.fragment_charging, container, false);
         txtChargeingTime = view.findViewById(R.id.chargeTime_text);
 
