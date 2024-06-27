@@ -305,7 +305,8 @@ public class WebSocketHandler {
         String uniqId = RandomString(16);
         vSalesCompletionResult SalesCompletion = new vSalesCompletionResult();
 
-        SalesCompletion.ComponentCode = mainActivity.SelectedChargingStationComponent.ComponentCode;
+//        SalesCompletion.ComponentCode = mainActivity.SelectedChargingStationComponent.ComponentCode;
+        SalesCompletion.ComponentCode = salesCompletionComponentCode;
         SalesCompletion.TransactionTrace = result.TransactionTrace;
 
         SalesCompletion.TxId = Txid;
@@ -583,6 +584,7 @@ public class WebSocketHandler {
 
     public SalesCompletion salesCompletionResult;
     private String previousTransactionTrace ="";
+    public String salesCompletionComponentCode;
 
     public void SalesCompletionReceived(String StopChargeMsg) {
         mainActivity.preAuthSuccess = false;
@@ -602,6 +604,7 @@ public class WebSocketHandler {
             } else {
                     LogUtils.i("custumErrorMessage is Null", "custumErrorMessage is Null");
                     Txid = salesCompletionResult.TxId;
+                    salesCompletionComponentCode = salesCompletionResult.ComponentCode;
 
                     String timeUse = String.format("Total Charging time: " + salesCompletionResult.ChargingPeriod);
 

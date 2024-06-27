@@ -1340,6 +1340,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             LogUtils.i("Executing Sales Completion in Queue");
                             com.sonicboom.sonicpayvui.SalesCompletion salesCompletionResult = SalesCompletionQueue.get(0); // Get the first item
                             wbs.Txid = salesCompletionResult.TxId;
+                            wbs.salesCompletionComponentCode = salesCompletionResult.ComponentCode;
 //                            String timeUse = String.format("Total Charging time %02d Hours %02d Minutes", hours, m);
                             String timeUse = String.format("Total Charging time: " + salesCompletionResult.ChargingPeriod);
                             SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
