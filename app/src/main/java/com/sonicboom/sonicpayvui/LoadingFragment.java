@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
+import com.sonicboom.sonicpayvui.utils.LogUtils;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -62,6 +63,7 @@ public class LoadingFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         GeneralVariable.CurrentFragment = "LoadingFragment";
+        LogUtils.i("Current Fragment", "LoadingFragment");
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_loading, container, false);
     }

@@ -11,8 +11,8 @@ android {
         applicationId "com.sonicboom.sonicpayvev"
         minSdk 25
         targetSdk 33
-        versionCode 49
-        versionName "1.1.17" + "_" + releaseTime()
+        versionCode 51
+        versionName "1.1.19" + "_" + releaseTime()
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

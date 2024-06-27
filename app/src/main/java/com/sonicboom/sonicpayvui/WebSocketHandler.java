@@ -355,8 +355,6 @@ public class WebSocketHandler {
 
                             try {
                                 Thread.sleep(5000);
-//                            mainActivity.ShowHideTitle(true);
-//                            mainActivity.UpdateTitle("Charging");
                                 int connectorIndex = mainActivity.getConnectorIndexByID(component,statusNotificationResponse.ConnectorId);
                                 component.Connectors.get(connectorIndex).Description = statusNotificationResponse.Description;
                                 mainActivity.replaceComponent(componentList, component, statusNotificationResponse.ConnectorId);
@@ -378,9 +376,12 @@ public class WebSocketHandler {
                             } catch (Exception ex) {
                                 LogUtils.e("NotificationReceived ", ex);
                             }
-                        } else if (mainActivity.SelectedChargingStationComponent.StartChargeTime != null) {
-                            mainActivity.UpdateChargePointStatus(eChargePointStatus.Charging);
-                        } else {
+                        }
+//                        else if (mainActivity.SelectedChargingStationComponent.StartChargeTime != null) {
+//                            mainActivity.UpdateChargePointStatus(eChargePointStatus.Charging);
+//                        }
+                        else {
+                            LogUtils.i("StartCharging failed");
                             mainActivity.ChangeToWelcomeFragment();
                         }
                         break;
@@ -458,9 +459,12 @@ public class WebSocketHandler {
                         } catch (Exception ex) {
                             LogUtils.e(ex);
                         }
-                    } else if (mainActivity.SelectedChargingStationComponent.StartChargeTime != null) {
-                        mainActivity.UpdateChargePointStatus(eChargePointStatus.Charging);
-                    } else {
+                    }
+//                    else if (mainActivity.SelectedChargingStationComponent.StartChargeTime != null) {
+////                        mainActivity.UpdateChargePointStatus(eChargePointStatus.Charging);
+//                    }
+                    else {
+                        LogUtils.i("StartCharging failed");
                         mainActivity.ChangeToWelcomeFragment();
                     }
 

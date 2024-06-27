@@ -38,7 +38,7 @@
             android:key="@string/PlugInTimeOutDuration"
             android:inputType="text"
             app:useSimpleSummaryProvider="true"
-            android:defaultValue="60000"/>
+            android:defaultValue="90000"/>
 
         <EditTextPreference
             android:title="Redirect to Welcome Screen Time Out Duration (in ms)"

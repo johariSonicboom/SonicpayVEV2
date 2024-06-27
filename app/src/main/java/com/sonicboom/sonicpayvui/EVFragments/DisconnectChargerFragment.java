@@ -12,6 +12,7 @@ import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
 import com.sonicboom.sonicpayvui.R;
 import com.sonicboom.sonicpayvui.SharedPrefUI;
 import com.sonicboom.sonicpayvui.WelcomeFragment;
+import com.sonicboom.sonicpayvui.utils.LogUtils;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -68,6 +69,8 @@ public class DisconnectChargerFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         GeneralVariable.CurrentFragment = "DisconnectChargerFragment";
+
+        LogUtils.i("Current Fragment", "DisconnectChargerFragment");
 
         startTimerForRedirection();
         // Inflate the layout for this fragment

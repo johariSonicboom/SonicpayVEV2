@@ -3,6 +3,8 @@ package com.sonicboom.sonicpayvui;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import java.util.Map;
+
 public class SharedPrefUI {
     private final SharedPreferences sharedPreference;
 
@@ -43,5 +45,9 @@ public class SharedPrefUI {
         SharedPreferences.Editor editor = sharedPreference.edit();
         editor.putBoolean(key, value);
         editor.apply();
+    }
+
+    public Map<String, ?> getAll() {
+        return sharedPreference.getAll();
     }
 }

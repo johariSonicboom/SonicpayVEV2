@@ -62,6 +62,8 @@ public class PlugInToStartFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         GeneralVariable.CurrentFragment = "PlugInToStartFragment";
+
+        LogUtils.i("Current Fragment", "PlugInToStartFragment");
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_plug_in_to_start, container, false);
     }
@@ -88,7 +90,6 @@ public class PlugInToStartFragment extends Fragment {
     // Call this method to start the timer
     public void startTimerForRedirection() {
         timer = new Timer();
-        Log.i("Timer Start", "Plugin Fragment Redirect");
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -100,7 +101,6 @@ public class PlugInToStartFragment extends Fragment {
 
     public void startTimerForTimeout() {
         timeoutTimer = new Timer();
-        Log.i("Timer Start", "Plugin Fragment Redirect");
         int PlugInTimeOutDuration = 3000;
         PlugInTimeOutDuration = Integer.parseInt( new SharedPrefUI(requireContext()).ReadSharedPrefStr(getString(R.string.PlugInTimeOutDuration)));
         timeoutTimer.schedule(new TimerTask() {

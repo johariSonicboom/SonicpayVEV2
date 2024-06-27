@@ -183,8 +183,7 @@ public class SelectChargerFragment extends Fragment {
 
     public void startTimerForTimeout() {
         timeoutTimer = new Timer();
-        Log.i("Timer Start", "Plugin Fragment Redirect");
-        int GoBackToWelcomeTimeOutDuration = 3000;
+        int GoBackToWelcomeTimeOutDuration = 300000;
         GoBackToWelcomeTimeOutDuration = Integer.parseInt( new SharedPrefUI(requireContext()).ReadSharedPrefStr(getString(R.string.GoBackToWelcomeTimeOutDuration)));
         timeoutTimer.schedule(new TimerTask() {
             @Override

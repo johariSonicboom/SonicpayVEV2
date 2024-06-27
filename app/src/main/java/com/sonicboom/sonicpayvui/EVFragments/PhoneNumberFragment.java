@@ -79,11 +79,8 @@ public class PhoneNumberFragment extends Fragment {
 
         GeneralVariable.CurrentFragment = "PhoneNumberFragment";
 
-//        try {
-//            boolean r = sonicInterface.Abort();
-//        } catch (RemoteException e) {
-//            e.printStackTrace();
-//        }
+        LogUtils.i("Current Fragment", "PhoneNumberFragment");
+
         // Inflate the layout for this fragment
         View view =inflater.inflate(R.layout.fragment_phone_number, container, false);
         view.findViewById(R.id.btnPhoneNumber).setOnClickListener( ((MainActivity)requireActivity()));
@@ -97,7 +94,6 @@ public class PhoneNumberFragment extends Fragment {
 
     public void startTimerForTimeout() {
         timeoutTimer = new Timer();
-        Log.i("Timer Start", "Plugin Fragment Redirect");
         int GoBackToWelcomeTimeOutDuration = 300000;
         GoBackToWelcomeTimeOutDuration = Integer.parseInt( new SharedPrefUI(requireContext()).ReadSharedPrefStr(getString(R.string.GoBackToWelcomeTimeOutDuration)));
         timeoutTimer.schedule(new TimerTask() {

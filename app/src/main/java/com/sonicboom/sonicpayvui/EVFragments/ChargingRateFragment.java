@@ -87,6 +87,8 @@ public class ChargingRateFragment extends Fragment {
 
         GeneralVariable.CurrentFragment = "ChargingRateFragment";
 
+        LogUtils.i("Current Fragment", "ChargingRateFragment");
+
 //        try {
 //            boolean r = sonicInterface.Abort();
 //        } catch (RemoteException e) {
@@ -117,7 +119,6 @@ public class ChargingRateFragment extends Fragment {
 
     public void startTimerForTimeout() {
         timeoutTimer = new Timer();
-        Log.i("Timer Start", "Plugin Fragment Redirect");
         int GoBackToWelcomeTimeOutDuration = 300000;
         GoBackToWelcomeTimeOutDuration = Integer.parseInt( new SharedPrefUI(requireContext()).ReadSharedPrefStr(getString(R.string.GoBackToWelcomeTimeOutDuration)));
         timeoutTimer.schedule(new TimerTask() {
