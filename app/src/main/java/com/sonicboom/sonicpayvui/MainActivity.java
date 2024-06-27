@@ -87,6 +87,7 @@ import com.sonicboom.sonicpayvui.utils.Utils;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
@@ -163,7 +164,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //                }
             } else {
 
-                if(!stopChargeBack) {
+                if (!stopChargeBack) {
 //                    ShowHideTitle(true);
                     LogUtils.i("Read Card Error");
 //                if (!isOneConnector) {
@@ -181,7 +182,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             .addToBackStack(null)
                             .commit();
 //                }
-                } else{
+                } else {
                     stopChargeBack = false;
                 }
             }
@@ -375,47 +376,111 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
 
+//        @Override
+//        public void SettlementCallback(SettlementResult[] result) {
+//            LogUtils.i(TAG, "SettlementCallback:" + new Gson().toJson(result));
+//
+//            boolean isSuccess = true;
+//            String errorCode = "SF";
+//
+//            if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
+//                TCPGeneralMessage response = new TCPGeneralMessage();
+//                response.Command = "Settlement";
+//
+//                List<Settlement.SettlementResponse> settlementResponses = new ArrayList<>();
+//                for (SettlementResult hostResult : result) {
+//                    Settlement.SettlementResponse settlementResponse = new Settlement.SettlementResponse();
+//                    settlementResponse.BatchNo = hostResult.BatchNo;
+//                    settlementResponse.StatusCode = hostResult.StatusCode;
+//                    settlementResponse.BatchCount = hostResult.BatchCount;
+//                    settlementResponse.HostNo = hostResult.HostNo;
+//                    settlementResponse.BatchAmount = hostResult.BatchAmount;
+//                    settlementResponse.RefundCount = hostResult.RefundCount;
+//                    settlementResponse.RefundAmount = hostResult.RefundAmount;
+//                    settlementResponses.add(settlementResponse);
+//                    if (!hostResult.StatusCode.equals(eStatusCode.Approved.getCode()) || !hostResult.StatusCode.equals(eTngStatusCode.No_Error.getCode())) {
+//                        isSuccess = false;
+//                        errorCode = hostResult.StatusCode;
+//
+//                    }
+//                }
+//
+//                response.Data = settlementResponses;
+//                response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
+//
+//            }
+//            Bundle bundle = new Bundle();
+//            bundle.putBoolean("IsSuccess", isSuccess);
+//            bundle.putString("Title", isSuccess ? "Successful" : "Unsuccessful");
+//            bundle.putString("Message", isSuccess ? "Close batch successfully" : eStatusCode.getDescFromCode(errorCode));
+//
+//            getSupportFragmentManager().beginTransaction()
+//                    .setReorderingAllowed(true)
+//                    .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
+//                    .addToBackStack(null)
+//                    .commit();
+//        }
+
+        int SettlementRetryCount = 0;
+
         @Override
-        public void SettlementCallback(SettlementResult[] result) {
+        public void SettlementCallback(SettlementResult[] result) throws RemoteException {
             LogUtils.i(TAG, "SettlementCallback:" + new Gson().toJson(result));
-            boolean isSuccess = true;
-            String errorCode = "SF";
-
-            if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
-                TCPGeneralMessage response = new TCPGeneralMessage();
-                response.Command = "Settlement";
-
-                List<Settlement.SettlementResponse> settlementResponses = new ArrayList<>();
-                for (SettlementResult hostResult : result) {
-                    Settlement.SettlementResponse settlementResponse = new Settlement.SettlementResponse();
-                    settlementResponse.BatchNo = hostResult.BatchNo;
-                    settlementResponse.StatusCode = hostResult.StatusCode;
-                    settlementResponse.BatchCount = hostResult.BatchCount;
-                    settlementResponse.HostNo = hostResult.HostNo;
-                    settlementResponse.BatchAmount = hostResult.BatchAmount;
-                    settlementResponse.RefundCount = hostResult.RefundCount;
-                    settlementResponse.RefundAmount = hostResult.RefundAmount;
-                    settlementResponses.add(settlementResponse);
-                    if (!hostResult.StatusCode.equals(eStatusCode.Approved.getCode()) || !hostResult.StatusCode.equals(eTngStatusCode.No_Error.getCode())) {
+            if (result.length > 0) {
+//                boolean isSuccess = Arrays.stream(result).anyMatch(c -> c.StatusCode.equals(eStatusCode.Approved.getCode())) || Arrays.stream(result).anyMatch(c -> c.StatusCode.equals(eStatusCode.Zero_Amount_Settlement_Or_No_Transaction.getCode()));
+                boolean isSuccess = true;
+                for (SettlementResult r : result) {
+                    if (!r.StatusCode.equals(eStatusCode.Approved.getCode()) &&
+                            !r.StatusCode.equals(eStatusCode.Zero_Amount_Settlement_Or_No_Transaction.getCode())) {
                         isSuccess = false;
-                        errorCode = hostResult.StatusCode;
+                        break; // Exit the loop early since we found a mismatch
                     }
                 }
-
-                response.Data = settlementResponses;
-                response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
+                LogUtils.i("isSuccess in Settlement Callback", isSuccess);
+                Bundle bundle = new Bundle();
+                bundle.putBoolean("IsSuccess", isSuccess);
+                bundle.putString("Title", isSuccess ? "Successful" : "Unsuccessful[" + SettlementRetryCount + "]");
+                String errorcode = "";
+                if (!isSuccess) {
+                    for (SettlementResult r :
+                            result) {
+                        if (r.StatusCode != "00") {
+                            if (r.StatusCode != "ZE") {
+                                errorcode = eStatusCode.getDescFromCode(r.StatusCode);
+                                LogUtils.i("errorcode", errorcode);
+                            }
+                        }
+                    }
+                }
+                bundle.putString("Message", isSuccess ? "Close batch successfully" : errorcode);
+                getSupportFragmentManager().beginTransaction()
+                        .setReorderingAllowed(true)
+                        .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
+                        .addToBackStack(null)
+                        .commit();
+                if (!isSuccess) {
+                    if (SettlementRetryCount < 3) {
+                        SettlementRetryCount++;
+                        Date date = new Date();
+                        date.setTime(date.getTime() + 300000);
+//                        date.setTime(date.getTime() + 60000);
+                        Timer settlementTimer = new Timer();
+                        LogUtils.i(TAG, "[CheckSchedule] Next Settlement Schedule: " + date);
+                        settlementTimer.schedule(new MyTimerTask(), date);
+                    } else {
+                        LogUtils.i("Settlement Retry All Fail !!Clear ClearSettlement");
+                        sonicInterface.ClearSettlement();
+                        SettlementRetryCount = 0;
+                        IsSettlementRunning = false;
+                        AutoSettlementHandler();
+                    }
+                } else {
+                    IsSettlementRunning = false;
+                    AutoSettlementHandler();
+                }
 
             }
-            Bundle bundle = new Bundle();
-            bundle.putBoolean("IsSuccess", isSuccess);
-            bundle.putString("Title", isSuccess ? "Successful" : "Unsuccessful");
-            bundle.putString("Message", isSuccess ? "Close batch successfully" : eStatusCode.getDescFromCode(errorCode));
 
-            getSupportFragmentManager().beginTransaction()
-                    .setReorderingAllowed(true)
-                    .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
-                    .addToBackStack(null)
-                    .commit();
         }
 
         @SuppressLint("DefaultLocale")
@@ -551,9 +616,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else {
 //                    message += result.StatusCode;
                     message += result.StatusCode + "-" + eStatusCode.getDescFromCode(result.StatusCode);
+                     if(result.StatusCode.equals("PS")){
+                         StartSettlement();
+                     };
                 }
                 bundle.putString("Message", message);
-            }else{
+            } else {
                 preAuthSuccess = true;
             }
 
@@ -1271,7 +1339,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         if (GeneralVariable.CurrentFragment.equals("WelcomeFragment") || GeneralVariable.CurrentFragment.equals("ChargingFragment")) {
                             LogUtils.i("Executing Sales Completion in Queue");
                             com.sonicboom.sonicpayvui.SalesCompletion salesCompletionResult = SalesCompletionQueue.get(0); // Get the first item
-
+                            wbs.Txid = salesCompletionResult.TxId;
 //                            String timeUse = String.format("Total Charging time %02d Hours %02d Minutes", hours, m);
                             String timeUse = String.format("Total Charging time: " + salesCompletionResult.ChargingPeriod);
                             SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
@@ -1314,7 +1382,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
-boolean stopChargeBack = false;
+    boolean stopChargeBack = false;
 
     @Override
     public void onClick(View view) {
@@ -1435,9 +1503,9 @@ boolean stopChargeBack = false;
                                                                 .commit();
 
                                                     } else if (SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("AVAILABLE")
-                                                        || SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("PREPARING")
-                                                        || SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("FINISHING")
-                                                        || SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("PLUGINTOSTART")) {
+                                                            || SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("PREPARING")
+                                                            || SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("FINISHING")
+                                                            || SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("PLUGINTOSTART")) {
                                                         IsStopChargeTapCard = false;
                                                         IsCharging = true;
                                                         isOneConnector = true;
@@ -1824,72 +1892,71 @@ boolean stopChargeBack = false;
                 try {
                     boolean r = sonicInterface.Abort();
 
-                if(r) {
-                    LogUtils.i("Abort Succesful");
-                    if (wbs.componentList.length == 1) {
-                        if (isOneConnector) {
+                    if (r) {
+                        LogUtils.i("Abort Succesful");
+                        if (wbs.componentList.length == 1) {
+                            if (isOneConnector) {
 
 
 //                            SimpleDateFormat targetFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 //                            String formattedDate = targetFormat.format(SelectedChargingStationComponent.Connectors.get(selectedConnectorIndex).Description);
 
-                            String descriptionString = SelectedChargingStationComponent.Connectors.get(selectedConnectorIndex).Description;
-                            String formattedDate ="";
+                                String descriptionString = SelectedChargingStationComponent.Connectors.get(selectedConnectorIndex).Description;
+                                String formattedDate = "";
 
-                            LogUtils.i("descriptionString pre", descriptionString);
-                            // Check if the descriptionString is not empty
-                            if (descriptionString != null && !descriptionString.isEmpty()) {
-                                SimpleDateFormat sourceFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+                                LogUtils.i("descriptionString pre", descriptionString);
+                                // Check if the descriptionString is not empty
+                                if (descriptionString != null && !descriptionString.isEmpty()) {
+                                    SimpleDateFormat sourceFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 
-                                try {
-                                    Date descriptionDate = sourceFormat.parse(descriptionString);
+                                    try {
+                                        Date descriptionDate = sourceFormat.parse(descriptionString);
 
-                                    // Formatting to another format if needed
-                                    SimpleDateFormat targetFormat = new SimpleDateFormat("yyyyMMddHHmms");
-                                    formattedDate = targetFormat.format(descriptionDate);
+                                        // Formatting to another format if needed
+                                        SimpleDateFormat targetFormat = new SimpleDateFormat("yyyyMMddHHmms");
+                                        formattedDate = targetFormat.format(descriptionDate);
 
-                                    System.out.println("Formatted Date: " + formattedDate);
-                                } catch (ParseException e) {
-                                    // Handle parsing exception
-                                    e.printStackTrace();
+                                        System.out.println("Formatted Date: " + formattedDate);
+                                    } catch (ParseException e) {
+                                        // Handle parsing exception
+                                        e.printStackTrace();
+                                    }
+                                } else {
+                                    System.out.println("Description string is empty or null. Cannot parse.");
                                 }
+
+
+                                bundle.putString("StartChargeTime", formattedDate);
+
+                                bundle.putString("HideStopButton", "false");
+                                getSupportFragmentManager().beginTransaction()
+                                        .replace(R.id.fragmentContainer, ChargingFragment.class, bundle)
+                                        .addToBackStack(null)
+                                        .commit();
                             } else {
-                                System.out.println("Description string is empty or null. Cannot parse.");
+                                ShowHideTitle(true);
+                                UpdateTitle("Connectors");
+                                selectConnectorFragment[0] = new SelectConnectorFragment(SelectedChargingStationComponent);
+                                getSupportFragmentManager().beginTransaction()
+                                        .setReorderingAllowed(true)
+                                        .replace(R.id.fragmentContainer, selectConnectorFragment[0])
+                                        .addToBackStack(null)
+                                        .commit();
                             }
 
-
-
-                            bundle.putString("StartChargeTime", formattedDate);
-
-                            bundle.putString("HideStopButton", "false");
-                            getSupportFragmentManager().beginTransaction()
-                                    .replace(R.id.fragmentContainer, ChargingFragment.class, bundle)
-                                    .addToBackStack(null)
-                                    .commit();
                         } else {
                             ShowHideTitle(true);
-                            UpdateTitle("Connectors");
-                            selectConnectorFragment[0] = new SelectConnectorFragment(SelectedChargingStationComponent);
+                            UpdateTitle("Select Charger");
                             getSupportFragmentManager().beginTransaction()
                                     .setReorderingAllowed(true)
-                                    .replace(R.id.fragmentContainer, selectConnectorFragment[0])
+                                    .replace(R.id.fragmentContainer, selectChargerFragment)
                                     .addToBackStack(null)
                                     .commit();
                         }
-
-                    } else {
-                        ShowHideTitle(true);
-                        UpdateTitle("Select Charger");
-                        getSupportFragmentManager().beginTransaction()
-                                .setReorderingAllowed(true)
-                                .replace(R.id.fragmentContainer, selectChargerFragment)
-                                .addToBackStack(null)
-                                .commit();
                     }
-                }
                 } catch (RemoteException e) {
                     e.printStackTrace();
-                } catch (Exception ex){
+                } catch (Exception ex) {
                     LogUtils.e("btnStopChargeTapCardBack exception: ", ex);
                 }
 
@@ -2009,8 +2076,8 @@ boolean stopChargeBack = false;
                     textView.setText(title);
                 }
             });
-        } catch (Exception e){
-            LogUtils.e("Update Title Exception",e);
+        } catch (Exception e) {
+            LogUtils.e("Update Title Exception", e);
         }
     }
 
@@ -2025,8 +2092,8 @@ boolean stopChargeBack = false;
                         textView.setText("");
                 }
             });
-        } catch (Exception e){
-            LogUtils.e("ShowHideTitle Exception",e);
+        } catch (Exception e) {
+            LogUtils.e("ShowHideTitle Exception", e);
         }
 
     }
@@ -2417,7 +2484,7 @@ boolean stopChargeBack = false;
             LogUtils.i("SettlementTimer Running");
             try {
                 GetStatusResult result = sonicInterface.getStatus();
-                if (GeneralVariable.CurrentFragment.equals("WelcomeFragment")) {
+                if (GeneralVariable.CurrentFragment.equals("WelcomeFragment") || GeneralVariable.CurrentFragment.equals("ChargingFragment")) {
                     StartSettlement();
                 } else {
                     runSettlement = true;
@@ -2551,7 +2618,7 @@ boolean stopChargeBack = false;
     public Component[] replaceComponent(Component[] componentList, Component newComponent, int connectorID) {
         for (int i = 0; i < componentList.length; i++) {
             if (componentList[i].ComponentId == newComponent.ComponentId) {
-                if(componentList[i].Connectors.get(0).ConnectorId == newComponent.Connectors.get(0).ConnectorId) {
+                if (componentList[i].Connectors.get(0).ConnectorId == newComponent.Connectors.get(0).ConnectorId) {
                     // Assuming getId() returns a unique identifier for each component
                     componentList[i] = newComponent; // Replace the component with the new one
                     break; // Exit the loop since we found and replaced the component
@@ -2564,7 +2631,7 @@ boolean stopChargeBack = false;
     public Component[] replaceComponentConnectors(Component[] componentList, String componentCode, List<Connector> newConnectors) {
         for (int i = 0; i < componentList.length; i++) {
             if (componentList[i].ComponentCode.equals(componentCode)) { // Assuming getId() returns a unique identifier for each component
-                if(componentList[i].Connectors.get(0).ConnectorId == newConnectors.get(0).ConnectorId) {
+                if (componentList[i].Connectors.get(0).ConnectorId == newConnectors.get(0).ConnectorId) {
                     componentList[i].Connectors = newConnectors; // Replace the component with the new one
                     break; // Exit the loop since we found and replaced the component
                 }
@@ -2594,7 +2661,7 @@ boolean stopChargeBack = false;
                     }
                 }
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             LogUtils.e(TAG, "UpdateConnectorStatus Exception: " + e);
         }
 
@@ -2652,12 +2719,12 @@ boolean stopChargeBack = false;
         try {
             for (Component component : componentList) {
                 if (component.ComponentCode.equals(componentCode)) {
-                    if(component.Connectors.get(0).ConnectorId == connectorID) {
+                    if (component.Connectors.get(0).ConnectorId == connectorID) {
                         return component;
                     }
                 }
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             LogUtils.e(TAG, "GetSelectedComponentbyComponentCode Exception: " + e);
         }
         return null;
