@@ -1364,14 +1364,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         handlerTimer.post(runnable);
 
         LogUtils.d(TAG, "onCreate ended.");
-        logAllSharedPrefValues();
+        logAndUpdateAllSharedPrefValues();
     }
 
-    private void logAllSharedPrefValues() {
+    private void logAndUpdateAllSharedPrefValues() {
         SharedPrefUI sharedPrefUI = new SharedPrefUI(this);
         Map<String, ?> allEntries = sharedPrefUI.getAll();
         for (Map.Entry<String, ?> entry : allEntries.entrySet()) {
-            Log.d(TAG, entry.getKey() + ": " + entry.getValue().toString());
+            String key = entry.getKey();
+            Object value = entry.getValue();
+
+//            LogUtils.i(TAG, key + ": " + value.toString());
+
+            if (value instanceof String) {
+                sharedPrefUI.WriteSharedPrefStr(key, (String) value);
+            } else if (value instanceof Integer) {
+                sharedPrefUI.WriteSharedPrefInt(key, (Integer) value);
+            } else if (value instanceof Boolean) {
+                sharedPrefUI.WriteSharedPrefBoolean(key, (Boolean) value);
+            } else if (value instanceof Float) {
+                sharedPrefUI.WriteSharedPrefFloat(key, (Float) value);
+            } else if (value instanceof Long) {
+                sharedPrefUI.WriteSharedPrefLong(key, (Long) value);
+            }
         }
     }
 
