@@ -50,4 +50,25 @@ public class SharedPrefUI {
     public Map<String, ?> getAll() {
         return sharedPreference.getAll();
     }
+
+    // Ensure these methods are added to your SharedPrefUI class
+    public void WriteSharedPrefFloat(String key, float value) {
+        SharedPreferences.Editor editor = sharedPreference.edit();
+        editor.putFloat(key, value);
+        editor.apply();
+    }
+
+    public float ReadSharedPrefFloat(String key) {
+        return sharedPreference.getFloat(key, 0.0f);
+    }
+
+    public void WriteSharedPrefLong(String key, long value) {
+        SharedPreferences.Editor editor = sharedPreference.edit();
+        editor.putLong(key, value);
+        editor.apply();
+    }
+
+    public long ReadSharedPrefLong(String key) {
+        return sharedPreference.getLong(key, 0L);
+    }
 }

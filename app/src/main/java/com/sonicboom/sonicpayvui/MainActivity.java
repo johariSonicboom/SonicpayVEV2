@@ -63,6 +63,7 @@ import com.sonicboom.sonicpayvui.EVModels.Connector;
 import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
 import com.sonicboom.sonicpayvui.EVModels.StartSales;
 import com.sonicboom.sonicpayvui.EVModels.StopChargeTapCardError;
+import com.sonicboom.sonicpayvui.EVModels.TransactionTableDB;
 import com.sonicboom.sonicpayvui.EVModels.eChargePointStatus;
 import com.sonicboom.sonicpayvui.models.DisplayInfo;
 import com.sonicboom.sonicpayvui.models.GetStatus;
@@ -122,7 +123,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public Component SelectedChargingStationComponent;
     public int selectedConnectorIndex;
     public boolean isOneConnector;
-    public List<com.sonicboom.sonicpayvui.SalesCompletion> SalesCompletionQueue = new ArrayList<>();
+    public ArrayList<TransactionTableDB> SalesCompletionQueue = new ArrayList<>();
     public boolean runSettlement;
     //Used to skip the Result Fragment if the SalesCompletion returns error to avoid showing two result fragments.
     public boolean IsSkipSalesCompletionResultFragment;
@@ -478,6 +479,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     IsSettlementRunning = false;
                     AutoSettlementHandler();
                 }
+                getSupportFragmentManager().beginTransaction()
+                        .setReorderingAllowed(true)
+                        .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
+                        .addToBackStack(null)
+                        .commit();
 
             }
 
@@ -616,9 +622,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else {
 //                    message += result.StatusCode;
                     message += result.StatusCode + "-" + eStatusCode.getDescFromCode(result.StatusCode);
-                     if(result.StatusCode.equals("PS")){
-                         StartSettlement();
-                     };
+                    if (result.StatusCode.equals("PS")) {
+                        StartSettlement();
+                    }
+                    ;
                 }
                 bundle.putString("Message", message);
             } else {
@@ -639,36 +646,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (startSales != null) {
                     LogUtils.i("startSales in PreAuth", startSales.isSuccess);
                     if (startSales.isSuccess) {
-//                        try {
-//                            new Date().getTime();
-//                            SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
-//                            String formattedDate = format.format(new Date());
-//
-//                            Thread.sleep(3000);
-//                            ShowHideTitle(true);
-//                            UpdateTitle("Charging");
-//                            StartCharging(formattedDate);
-
-//                        if (wbs.componentList.length == 1 && SelectedChargingStationComponent.Connectors.size() > 1) {
-//                            bundle.putBoolean("stayOnFragment", true);
-//                        }else{
-//                            bundle.putBoolean("stayOnFragment", false);
-//                        }
-//
-//                        try {
-//                        Thread.sleep(3000);
-//                        UpdateTitle("Plug In To Charge");
-//                        UpdateTitleColor(R.color.main_blue);
-//                        ShowHideTitle(true);
-//                        btnStartCharge.setVisibility(View.GONE);
-//                        getSupportFragmentManager().beginTransaction()
-//                                .setReorderingAllowed(true)
-//                                .replace(R.id.fragmentContainer, PlugInToStartFragment.class, bundle)
-//                                .addToBackStack(null)
-//                                .commit();
-//                        } catch (InterruptedException e) {
-//                            e.printStackTrace();
-//                        }
                         try {
                             Thread.sleep(4000);
                             ChangeToPluginFragment();
@@ -718,6 +695,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             .addToBackStack(null)
                             .commit();
                 }
+
+
             }
         }
 
@@ -780,6 +759,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             .commit();
                 }
                 IsSkipSalesCompletionResultFragment = false;
+
+//                  DB
+//                if (SalesCompletionQueue != null && !SalesCompletionQueue.isEmpty()) {
+                TransactionTableDB transactionTableDB = SalesCompletionQueue.get(0);
+                transactionTableDB.Status = "S";
+                databaseHelper.updateData(transactionTableDB);
+                SalesCompletionQueue.remove(0);
+//                }
+
                 if (isSuccess) {
                     wbs.SalesCompletionResultResponse(result);
                 }
@@ -1057,6 +1045,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     WebSocketHandler wbs = null;
     private Handler handlerTimer;
     private Runnable runnable;
+    public DatabaseHelper databaseHelper;
 
     @SuppressLint("DefaultLocale")
     @Override
@@ -1335,16 +1324,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void run() {
                 try {
+                    LogUtils.i("GeneralVariable Status", GeneralVariable.Status);
+//                    ArrayList<TransactionTableDB> SalesCompletionQueueDB = databaseHelper.getFailedSalesCompletionTransactions();
+//                    for(TransactionTableDB salesCompletionQueueDB:SalesCompletionQueueDB) {
+//                        SalesCompletionQueue.add(salesCompletionQueueDB);
+//                    }
+
+                    ArrayList<TransactionTableDB> SalesCompletionQueueDB = databaseHelper.getFailedSalesCompletionTransactions();
+                    for (TransactionTableDB salesCompletionQueueDB : SalesCompletionQueueDB) {
+                        if (!SalesCompletionQueue.contains(salesCompletionQueueDB)) {
+                            SalesCompletionQueue.add(salesCompletionQueueDB);
+                        }
+                    }
+
+//                    LogUtils.i("SalesCompletionQueue", SalesCompletionQueue);
                     if (SalesCompletionQueue != null && !SalesCompletionQueue.isEmpty()) {
                         if (GeneralVariable.CurrentFragment.equals("WelcomeFragment") || GeneralVariable.CurrentFragment.equals("ChargingFragment")) {
-                            LogUtils.i("Executing Sales Completion in Queue");
-                            com.sonicboom.sonicpayvui.SalesCompletion salesCompletionResult = SalesCompletionQueue.get(0); // Get the first item
+//                            LogUtils.i("Executing Sales Completion in Queue");
+                            TransactionTableDB salesCompletionResult = SalesCompletionQueue.get(0); // Get the first item
                             wbs.Txid = salesCompletionResult.TxId;
                             wbs.salesCompletionComponentCode = salesCompletionResult.ComponentCode;
-//                            String timeUse = String.format("Total Charging time %02d Hours %02d Minutes", hours, m);
+
                             String timeUse = String.format("Total Charging time: " + salesCompletionResult.ChargingPeriod);
-                            SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
-                            SalesCompletionQueue.remove(0); // Remove the first item
+
+//                            if (salesCompletionResult.NoOfRetries <= 3) {
+//                                SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
+//                            } else {
+//                                salesCompletionResult.Status = "E";
+//                            }
+
+                            if(!GeneralVariable.Status.equals("Disconnected")) {
+                                LogUtils.i("Executing Sales Completion in Queue");
+                                SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
+                                salesCompletionResult.NoOfRetries = salesCompletionResult.NoOfRetries + 1;
+                                databaseHelper.updateData(salesCompletionResult);
+                            }
+
+//                            salesCompletionResult.NoOfRetries = salesCompletionResult.NoOfRetries + 1;
+//                            databaseHelper.updateData(salesCompletionResult);
+//                            salesCompletionResult.Status = "S";
+//                            databaseHelper.updateData(salesCompletionResult);
+//                            SalesCompletionQueue.remove(0); // Remove the first item
                         }
                     }
 
@@ -1353,7 +1373,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         runSettlement = false;
                     }
 
-                    handler.postDelayed(this, 3000); // Schedule the runnable to run again after 3 seconds
+                    handler.postDelayed(this, 5000); // Schedule the runnable to run again after 3 seconds
                 } catch (Exception e) {
                     LogUtils.e("Error in runnable: ", e);
                 }
@@ -1363,17 +1383,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 // Start the runnable for the first time
         handlerTimer.post(runnable);
 
+        databaseHelper = new DatabaseHelper(MainActivity.this);
+
+
         LogUtils.d(TAG, "onCreate ended.");
-        logAllSharedPrefValues();
+        logAndUpdateAllSharedPrefValues();
     }
 
-    private void logAllSharedPrefValues() {
+    private void logAndUpdateAllSharedPrefValues() {
         SharedPrefUI sharedPrefUI = new SharedPrefUI(this);
         Map<String, ?> allEntries = sharedPrefUI.getAll();
         for (Map.Entry<String, ?> entry : allEntries.entrySet()) {
-            Log.d(TAG, entry.getKey() + ": " + entry.getValue().toString());
+            String key = entry.getKey();
+            Object value = entry.getValue();
+
+            LogUtils.i(TAG, key + ": " + value.toString());
+
+            if (value instanceof String) {
+                sharedPrefUI.WriteSharedPrefStr(key, (String) value);
+            } else if (value instanceof Integer) {
+                sharedPrefUI.WriteSharedPrefInt(key, (Integer) value);
+            } else if (value instanceof Boolean) {
+                sharedPrefUI.WriteSharedPrefBoolean(key, (Boolean) value);
+            } else if (value instanceof Float) {
+                sharedPrefUI.WriteSharedPrefFloat(key, (Float) value);
+            } else if (value instanceof Long) {
+                sharedPrefUI.WriteSharedPrefLong(key, (Long) value);
+            }
         }
     }
+
 
     @Override
     protected void onDestroy() {
@@ -2374,7 +2413,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void SalesCompletion(double amount, String TransactionTrace, String TimeUse) {
         try {
-
             TotalAmountCharges = (int) (amount * 100);
             SalesCompletionResult = TimeUse;
             boolean SalesCompletionIsSuceess = sonicInterface.SalesCompletion((int) (amount * 100), TransactionTrace, callbackInterface);
