@@ -440,8 +440,9 @@ public class WebSocketHandler {
                         String formattedDate = format.format(new Date());
 
                         try {
-                            Thread.sleep(5000);
+//                            Thread.sleep(5000);
                             if (componentList.length == 1 && componentList[0].Connectors.size() <= 1) {
+                                Thread.sleep(5000);
                                 mainActivity.isOneConnector = true;
                                 mainActivity.StartCharging(notificationResponse.Connectors.get(0).Description, "false");
                             }
