@@ -761,12 +761,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 IsSkipSalesCompletionResultFragment = false;
 
 //                  DB
-//                if (SalesCompletionQueue != null && !SalesCompletionQueue.isEmpty()) {
+                if (SalesCompletionQueue != null && !SalesCompletionQueue.isEmpty()) {
                 TransactionTableDB transactionTableDB = SalesCompletionQueue.get(0);
                 transactionTableDB.Status = "S";
                 databaseHelper.updateData(transactionTableDB);
                 SalesCompletionQueue.remove(0);
-//                }
+                }
 
                 if (isSuccess) {
                     wbs.SalesCompletionResultResponse(result);
@@ -1044,6 +1044,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     WebSocketHandler wbs = null;
     private Handler handlerTimer;
+    private Handler retryHandler;
     private Runnable runnable;
     public DatabaseHelper databaseHelper;
 
@@ -1318,18 +1319,105 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         txtStatus = findViewById(R.id.txtstatus);
         wbs = new WebSocketHandler(this);
 
+//        handlerTimer = new Handler();
+//
+//        runnable = new Runnable() {
+//            @Override
+//            public void run() {
+//                try {
+////                    LogUtils.i("GeneralVariable Status", GeneralVariable.Status);
+////                    ArrayList<TransactionTableDB> SalesCompletionQueueDB = databaseHelper.getFailedSalesCompletionTransactions();
+////                    for(TransactionTableDB salesCompletionQueueDB:SalesCompletionQueueDB) {
+////                        SalesCompletionQueue.add(salesCompletionQueueDB);
+////                    }
+//
+//                    ArrayList<TransactionTableDB> SalesCompletionQueueDB = databaseHelper.getFailedSalesCompletionTransactions();
+//                    for (TransactionTableDB salesCompletionQueueDB : SalesCompletionQueueDB) {
+//                        if (!SalesCompletionQueue.contains(salesCompletionQueueDB)) {
+//                            SalesCompletionQueue.add(salesCompletionQueueDB);
+//                        }
+//                    }
+//
+////                    LogUtils.i("SalesCompletionQueue", SalesCompletionQueue);
+//                    if (SalesCompletionQueue != null && !SalesCompletionQueue.isEmpty()) {
+//                        if (GeneralVariable.CurrentFragment.equals("WelcomeFragment") || GeneralVariable.CurrentFragment.equals("ChargingFragment")) {
+////                            LogUtils.i("Executing Sales Completion in Queue");
+//                            TransactionTableDB salesCompletionResult = SalesCompletionQueue.get(0); // Get the first item
+//                            wbs.Txid = salesCompletionResult.TxId;
+//                            wbs.salesCompletionComponentCode = salesCompletionResult.ComponentCode;
+//
+//                            String timeUse = String.format("Total Charging time: " + salesCompletionResult.ChargingPeriod);
+//
+//                            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//
+//                            // Parse the LastModified time
+//                            Date lastModified = formatter.parse(salesCompletionResult.LastModified);
+//                            Calendar calendar = Calendar.getInstance();
+//                            calendar.setTime(lastModified);
+////                            calendar.add(Calendar.MINUTE, 5);
+//                            calendar.add(Calendar.MINUTE, 5);
+//                            Date lastModifiedPlus5Minutes = calendar.getTime();
+//
+//                            // Get the current time
+//                            Date currentTime = new Date();
+//
+////                            if (salesCompletionResult.NoOfRetries <= 3) {
+////                                if (currentTime.after(lastModifiedPlus5Minutes)) {
+////                                    SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
+////                                    salesCompletionResult.NoOfRetries = salesCompletionResult.NoOfRetries + 1;
+////                                    // Update the LastModified time
+////                                    salesCompletionResult.LastModified = formatter.format(currentTime);
+////                                    databaseHelper.updateData(salesCompletionResult);
+////                                }
+////                            } else {
+////                                salesCompletionResult.Status = "E";
+////                            }
+//
+//                            if(!GeneralVariable.Status.equals("Disconnected")) {
+//                                LogUtils.i("Executing Sales Completion in Queue");
+//                                if (salesCompletionResult.NoOfRetries <= 3) {
+//                                    if (currentTime.after(lastModifiedPlus5Minutes)) {
+//                                        SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
+//                                        salesCompletionResult.NoOfRetries = salesCompletionResult.NoOfRetries + 1;
+//                                        // Update the LastModified time
+//                                        salesCompletionResult.LastModified = formatter.format(currentTime);
+//                                        databaseHelper.updateData(salesCompletionResult);
+//                                    }
+//                                } else {
+//                                    salesCompletionResult.Status = "E";
+//                                }
+//                            }
+//
+////                            salesCompletionResult.NoOfRetries = salesCompletionResult.NoOfRetries + 1;
+////                            databaseHelper.updateData(salesCompletionResult);
+////                            salesCompletionResult.Status = "S";
+////                            databaseHelper.updateData(salesCompletionResult);
+////                            SalesCompletionQueue.remove(0); // Remove the first item
+//                        }
+//                    }
+//
+//                    if (runSettlement) {
+//                        StartSettlement();
+//                        runSettlement = false;
+//                    }
+//
+//                    handler.postDelayed(this, 5000); // Schedule the runnable to run again after 3 seconds
+//                } catch (Exception e) {
+//                    LogUtils.e("Error in runnable: ", e);
+//                }
+//            }
+//        };
+//
+//// Start the runnable for the first time
+//        handlerTimer.post(runnable);
+
         handlerTimer = new Handler();
+        retryHandler = new Handler();
 
         runnable = new Runnable() {
             @Override
             public void run() {
                 try {
-                    LogUtils.i("GeneralVariable Status", GeneralVariable.Status);
-//                    ArrayList<TransactionTableDB> SalesCompletionQueueDB = databaseHelper.getFailedSalesCompletionTransactions();
-//                    for(TransactionTableDB salesCompletionQueueDB:SalesCompletionQueueDB) {
-//                        SalesCompletionQueue.add(salesCompletionQueueDB);
-//                    }
-
                     ArrayList<TransactionTableDB> SalesCompletionQueueDB = databaseHelper.getFailedSalesCompletionTransactions();
                     for (TransactionTableDB salesCompletionQueueDB : SalesCompletionQueueDB) {
                         if (!SalesCompletionQueue.contains(salesCompletionQueueDB)) {
@@ -1337,34 +1425,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         }
                     }
 
-//                    LogUtils.i("SalesCompletionQueue", SalesCompletionQueue);
                     if (SalesCompletionQueue != null && !SalesCompletionQueue.isEmpty()) {
+                        TransactionTableDB salesCompletionResult = SalesCompletionQueue.get(0); // Get the first item
+
                         if (GeneralVariable.CurrentFragment.equals("WelcomeFragment") || GeneralVariable.CurrentFragment.equals("ChargingFragment")) {
-//                            LogUtils.i("Executing Sales Completion in Queue");
-                            TransactionTableDB salesCompletionResult = SalesCompletionQueue.get(0); // Get the first item
                             wbs.Txid = salesCompletionResult.TxId;
                             wbs.salesCompletionComponentCode = salesCompletionResult.ComponentCode;
 
                             String timeUse = String.format("Total Charging time: " + salesCompletionResult.ChargingPeriod);
+                            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                            Date lastModified = formatter.parse(salesCompletionResult.ReceiveSalesCompletionDateTime);
+                            Calendar calendar = Calendar.getInstance();
+                            calendar.setTime(lastModified);
+                            calendar.add(Calendar.MINUTE, 5);
+                            Date lastModifiedPlus5Minutes = calendar.getTime();
+                            Date currentTime = new Date();
 
-//                            if (salesCompletionResult.NoOfRetries <= 3) {
-//                                SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
-//                            } else {
-//                                salesCompletionResult.Status = "E";
-//                            }
+                            if (!GeneralVariable.Status.equals("Disconnected")) {
+                                if (GeneralVariable.CurrentFragment.equals("WelcomeFragment") && salesCompletionResult.NoOfRetries == 0) {
+                                    // First attempt
+                                    LogUtils.i("Executing Sales Completion in Queue (First Attempt)");
+                                    SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
+                                    salesCompletionResult.NoOfRetries = salesCompletionResult.NoOfRetries + 1;;
+                                    salesCompletionResult.ReceiveSalesCompletionDateTime = formatter.format(currentTime);
+                                    databaseHelper.updateData(salesCompletionResult);
+                                } else if (salesCompletionResult.NoOfRetries <= 3 && currentTime.after(lastModifiedPlus5Minutes)) {
+                                    // Retry attempt
+                                    LogUtils.i("Executing Sales Completion in Queue (Retry Attempt)");
+                                    SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
+                                    salesCompletionResult.NoOfRetries = salesCompletionResult.NoOfRetries + 1;
+                                    salesCompletionResult.ReceiveSalesCompletionDateTime = formatter.format(currentTime);
+                                    databaseHelper.updateData(salesCompletionResult);
+                                }
 
-                            if(!GeneralVariable.Status.equals("Disconnected")) {
-                                LogUtils.i("Executing Sales Completion in Queue");
-                                SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
-                                salesCompletionResult.NoOfRetries = salesCompletionResult.NoOfRetries + 1;
-                                databaseHelper.updateData(salesCompletionResult);
+                                // Schedule retry if needed
+                                if (salesCompletionResult.NoOfRetries <= 3) {
+                                    retryHandler.postDelayed(this, 5 * 60 * 1000); // Retry in 5 minutes
+                                } else {
+                                    salesCompletionResult.Status = "E";
+                                    databaseHelper.updateData(salesCompletionResult);
+                                }
                             }
-
-//                            salesCompletionResult.NoOfRetries = salesCompletionResult.NoOfRetries + 1;
-//                            databaseHelper.updateData(salesCompletionResult);
-//                            salesCompletionResult.Status = "S";
-//                            databaseHelper.updateData(salesCompletionResult);
-//                            SalesCompletionQueue.remove(0); // Remove the first item
                         }
                     }
 
@@ -1373,7 +1474,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         runSettlement = false;
                     }
 
-                    handler.postDelayed(this, 5000); // Schedule the runnable to run again after 3 seconds
+                    handlerTimer.postDelayed(this, 5000); // Schedule the runnable to run again after 5 seconds
                 } catch (Exception e) {
                     LogUtils.e("Error in runnable: ", e);
                 }
@@ -1382,6 +1483,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 // Start the runnable for the first time
         handlerTimer.post(runnable);
+
+
 
         databaseHelper = new DatabaseHelper(MainActivity.this);
 

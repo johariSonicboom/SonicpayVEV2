@@ -2,11 +2,11 @@ package com.sonicboom.sonicpayvui.EVModels;
 
 //- SalesCompletion Status:
 //        - "I", Initial value
-//        - "R", Received SalesCompletion
 //        - "S", Success
 //        - "F", Failed
 //        - "E", No of retries exceeded
 
+import java.sql.Date;
 import java.util.Objects;
 
 public class TransactionTableDB {
@@ -31,6 +31,8 @@ public class TransactionTableDB {
     public String Status;
     public int NoOfRetries;
 
+    public String ReceiveSalesCompletionDateTime;
+
     @Override
     public String toString() {
         return "TransactionTableDB{" +
@@ -53,6 +55,7 @@ public class TransactionTableDB {
                 ", ChargingPeriod='" + ChargingPeriod + '\'' +
                 ", Status='" + Status + '\'' +
                 ", NoOfRetries=" + NoOfRetries +
+                ", ReceiveSalesCompletionDateTime=" + ReceiveSalesCompletionDateTime +
                 '}';
     }
 

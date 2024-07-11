@@ -32,6 +32,8 @@ import java.net.URISyntaxException;
 import java.security.SecureRandom;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -471,8 +473,9 @@ public class WebSocketHandler {
                         String formattedDate = format.format(new Date());
 
                         try {
-                            Thread.sleep(5000);
+//                            Thread.sleep(5000);
                             if (componentList.length == 1 && componentList[0].Connectors.size() <= 1) {
+                                Thread.sleep(5000);
                                 mainActivity.isOneConnector = true;
                                 mainActivity.StartCharging(notificationResponse.Connectors.get(0).Description, "false");
                             }
@@ -623,11 +626,34 @@ public class WebSocketHandler {
 
         if (previousTransactionTrace != salesCompletionResult.TransactionTrace) {
             previousTransactionTrace = salesCompletionResult.TransactionTrace;
+            TransactionTableDB transactionTableDB = mainActivity.databaseHelper.getTransactionByTrace(salesCompletionResult.TransactionTrace);
+
+            // Get the current time
+            Date currentTime = new Date();
+
+            // Format the time as needed
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String formattedCurrentTime = formatter.format(currentTime);
+
+            // Assign the current time to transactionTableDB.LastModified
+            transactionTableDB.ReceiveSalesCompletionDateTime = formattedCurrentTime;
+
+
             if (salesCompletionResult.CustumErrorMessage != null) {
                 try {
                     Thread.sleep(3000);
                     mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, String.format("Total Chargin time %02d Hours %02d Minutes", 0, 0));
                     LogUtils.i("SalesCompletion custumErrorMessage", "custumErrorMessage is Not Null : " + salesCompletionResult.CustumErrorMessage);
+
+//                    TransactionTableDB transactionTableDB = mainActivity.databaseHelper.getTransactionByTrace(salesCompletionResult.TransactionTrace);
+                    LogUtils.i("transactionTableDB in WS:", transactionTableDB.toString());
+                    transactionTableDB.ChargingPeriod = salesCompletionResult.ChargingPeriod;
+                    transactionTableDB.CustumErrorMessage = salesCompletionResult.CustumErrorMessage;
+                    transactionTableDB.TxId = salesCompletionResult.TxId;
+                    transactionTableDB.Amount = salesCompletionResult.Amount;
+
+                    transactionTableDB.Status = "S";
+                    mainActivity.databaseHelper.updateData(transactionTableDB);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -643,13 +669,17 @@ public class WebSocketHandler {
 //                boolean success = mainActivity.databaseHelper.insertData(salesCompletionDB);
 
                 //DB
-                LogUtils.i("TransactionTrace", salesCompletionResult.TransactionTrace);
-                TransactionTableDB transactionTableDB = mainActivity.databaseHelper.getTransactionByTrace(salesCompletionResult.TransactionTrace);
+//                LogUtils.i("TransactionTrace", salesCompletionResult.TransactionTrace);
+//                TransactionTableDB transactionTableDB = mainActivity.databaseHelper.getTransactionByTrace(salesCompletionResult.TransactionTrace);
+                try{
                 LogUtils.i("transactionTableDB in WS:", transactionTableDB.toString());
                 transactionTableDB.ChargingPeriod = salesCompletionResult.ChargingPeriod;
                 transactionTableDB.CustumErrorMessage = salesCompletionResult.CustumErrorMessage;
                 transactionTableDB.TxId = salesCompletionResult.TxId;
                 transactionTableDB.Amount = salesCompletionResult.Amount;
+                } catch (Exception ex){
+                    LogUtils.i("SalesCompletion DB exception:", ex);
+                }
 
                 if (GeneralVariable.CurrentFragment.equals("WelcomeFragment") || GeneralVariable.CurrentFragment.equals("ChargingFragment")) {
                     LogUtils.i("SalesCompletion Executed");

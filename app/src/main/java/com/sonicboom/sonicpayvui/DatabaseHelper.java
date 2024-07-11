@@ -14,7 +14,6 @@ import java.util.ArrayList;
 
 //- SalesCompletion Status:
 //        - "I", Initial value
-//        - "R", Received SalesCompletion
 //        - "S", Success
 //        - "F", Failed
 //        - "E", No of retries exceeded
@@ -41,6 +40,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String CHARGING_PERIOD = "ChargingPeriod";
     public static final String STATUS = "Status";
     public static final String NO_OF_RETRIES = "NoOfRetries";
+    public static final String RECEIVE_SALES_COMPLETION_DATE_TIME = "ReceiveSalesCompletionDateTime";
 
     public DatabaseHelper(@Nullable Context context) {
         super(context, "ev.db", null, 1);
@@ -67,7 +67,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 CUSTUM_ERROR_MESSAGE + " TEXT, " +
                 CHARGING_PERIOD + " TEXT, " +
                 STATUS + " TEXT, " +
-                NO_OF_RETRIES + " INTEGER)";
+                NO_OF_RETRIES + " INTEGER, " +
+                RECEIVE_SALES_COMPLETION_DATE_TIME + " TEXT)"
+                ;
 
         db.execSQL(createTableStatement);
     }
@@ -102,6 +104,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cv.put(CHARGING_PERIOD, transactionTableDB.ChargingPeriod);
         cv.put(STATUS, transactionTableDB.Status);
         cv.put(NO_OF_RETRIES, transactionTableDB.NoOfRetries);
+        cv.put(RECEIVE_SALES_COMPLETION_DATE_TIME, transactionTableDB.ReceiveSalesCompletionDateTime);
 
         long insert = db.insert(TRANSACTION_TABLE, null, cv);
 
@@ -137,6 +140,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cv.put(CHARGING_PERIOD, transactionTableDB.ChargingPeriod);
         cv.put(STATUS, transactionTableDB.Status);
         cv.put(NO_OF_RETRIES, transactionTableDB.NoOfRetries);
+        cv.put(RECEIVE_SALES_COMPLETION_DATE_TIME, transactionTableDB.ReceiveSalesCompletionDateTime);
 
         // Updating the record with the specified Trace
         int update = db.update(TRANSACTION_TABLE, cv, TRANSACTION_TRACE + " = ?", new String[]{String.valueOf(transactionTableDB.TransactionTrace)});
@@ -177,6 +181,7 @@ public TransactionTableDB getTransactionByTrace(String trace) {
         String chargingPeriod = cursor.getString(cursor.getColumnIndexOrThrow(CHARGING_PERIOD));
         String status = cursor.getString(cursor.getColumnIndexOrThrow(STATUS));
         int noOfRetries = cursor.getInt(cursor.getColumnIndexOrThrow(NO_OF_RETRIES));
+        String receiveSalesCompletionDateTime = cursor.getString(cursor.getColumnIndexOrThrow(RECEIVE_SALES_COMPLETION_DATE_TIME));
 
         transactionTableDB = new TransactionTableDB();
         transactionTableDB.ComponentCode = componentCode;
@@ -198,6 +203,7 @@ public TransactionTableDB getTransactionByTrace(String trace) {
         transactionTableDB.ChargingPeriod = chargingPeriod;
         transactionTableDB.Status = status;
         transactionTableDB.NoOfRetries = noOfRetries;
+        transactionTableDB.ReceiveSalesCompletionDateTime = receiveSalesCompletionDateTime;
     }
     cursor.close();
     LogUtils.i("Get Based on Trace:", transactionTableDB.toString());
@@ -232,6 +238,7 @@ public TransactionTableDB getTransactionByTrace(String trace) {
                 String chargingPeriod = cursor.getString(cursor.getColumnIndexOrThrow(CHARGING_PERIOD));
                 String retrievedStatus = cursor.getString(cursor.getColumnIndexOrThrow(STATUS));
                 int noOfRetries = cursor.getInt(cursor.getColumnIndexOrThrow(NO_OF_RETRIES));
+                String receiveSalesCompletionDateTime = cursor.getString(cursor.getColumnIndexOrThrow(RECEIVE_SALES_COMPLETION_DATE_TIME));
 
                 TransactionTableDB transaction = new TransactionTableDB();
                 transaction.ComponentCode = componentCode;
@@ -253,6 +260,7 @@ public TransactionTableDB getTransactionByTrace(String trace) {
                 transaction.ChargingPeriod = chargingPeriod;
                 transaction.Status = retrievedStatus;
                 transaction.NoOfRetries = noOfRetries;
+                transaction.ReceiveSalesCompletionDateTime = receiveSalesCompletionDateTime;
 
                 transactionsList.add(transaction);
             } while (cursor.moveToNext());
@@ -290,6 +298,7 @@ public TransactionTableDB getTransactionByTrace(String trace) {
                 String chargingPeriod = cursor.getString(cursor.getColumnIndexOrThrow(CHARGING_PERIOD));
                 String retrievedStatus = cursor.getString(cursor.getColumnIndexOrThrow(STATUS));
                 int noOfRetries = cursor.getInt(cursor.getColumnIndexOrThrow(NO_OF_RETRIES));
+                String receiveSalesCompletionDateTime = cursor.getString(cursor.getColumnIndexOrThrow(RECEIVE_SALES_COMPLETION_DATE_TIME));
 
                 TransactionTableDB transaction = new TransactionTableDB();
                 transaction.ComponentCode = componentCode;
@@ -311,6 +320,7 @@ public TransactionTableDB getTransactionByTrace(String trace) {
                 transaction.ChargingPeriod = chargingPeriod;
                 transaction.Status = retrievedStatus;
                 transaction.NoOfRetries = noOfRetries;
+                transaction.ReceiveSalesCompletionDateTime = receiveSalesCompletionDateTime;
 
                 transactionsList.add(transaction);
             } while (cursor.moveToNext());
@@ -347,6 +357,7 @@ public TransactionTableDB getTransactionByTrace(String trace) {
                 String chargingPeriod = cursor.getString(cursor.getColumnIndexOrThrow(CHARGING_PERIOD));
                 String retrievedStatus = cursor.getString(cursor.getColumnIndexOrThrow(STATUS));
                 int noOfRetries = cursor.getInt(cursor.getColumnIndexOrThrow(NO_OF_RETRIES));
+                String receiveSalesCompletionDateTime = cursor.getString(cursor.getColumnIndexOrThrow(RECEIVE_SALES_COMPLETION_DATE_TIME));
 
                 TransactionTableDB transaction = new TransactionTableDB();
                 transaction.ComponentCode = componentCode;
@@ -368,6 +379,7 @@ public TransactionTableDB getTransactionByTrace(String trace) {
                 transaction.ChargingPeriod = chargingPeriod;
                 transaction.Status = retrievedStatus;
                 transaction.NoOfRetries = noOfRetries;
+                transaction.ReceiveSalesCompletionDateTime = receiveSalesCompletionDateTime;
 
                 transactionsList.add(transaction);
             } while (cursor.moveToNext());
