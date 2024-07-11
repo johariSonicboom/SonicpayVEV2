@@ -200,7 +200,7 @@ public class SPUIConfigFragment extends PreferenceFragmentCompat {
         @Override
         public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
             setPreferencesFromResource(R.xml.sp_ui_tcp_preferences, rootKey);
-            ((ConfigActivity) requireActivity()).UpdateTitle("TCP Configuration");
+            ((ConfigActivity) requireActivity()).UpdateTitle("EV Configuration");
         }
     }
 

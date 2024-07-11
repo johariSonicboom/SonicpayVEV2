@@ -20,6 +20,7 @@ import com.sonicboom.sonicpayvui.EVModels.GetStatusResponse;
 import com.sonicboom.sonicpayvui.EVModels.SharedResource;
 import com.sonicboom.sonicpayvui.EVModels.StartSales;
 import com.sonicboom.sonicpayvui.EVModels.StartTransaction;
+import com.sonicboom.sonicpayvui.EVModels.TransactionTableDB;
 import com.sonicboom.sonicpayvui.EVModels.eChargePointStatus;
 import com.sonicboom.sonicpayvui.EVModels.vSalesCompletionResult;
 import com.sonicboom.sonicpayvui.EVModels.StopChargeTapCard;
@@ -31,6 +32,8 @@ import java.net.URISyntaxException;
 import java.security.SecureRandom;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -97,7 +100,7 @@ public class WebSocketHandler {
                         sharedResource.setCondition();
                         break;
                     case "SalesCompletion":
-                        String SalesCompletionACK = String.format("%s|%s|%s|%s", Received[0], Received[1] ,"SalesCompletion", "ACK");
+                        String SalesCompletionACK = String.format("%s|%s|%s|%s", Received[0], Received[1], "SalesCompletion", "ACK");
                         new Thread(() -> {
                             webSocketClient.send(SalesCompletionACK);
                         }).start();
@@ -168,7 +171,7 @@ public class WebSocketHandler {
     public StartSales startSales;
 
     private void StartSalesReceived(String notificationResponseMsg) {
-        LogUtils.i("StartSalesReceived",notificationResponseMsg);
+        LogUtils.i("StartSalesReceived", notificationResponseMsg);
         startSales = new Gson().fromJson(notificationResponseMsg, StartSales.class);
     }
 
@@ -207,9 +210,15 @@ public class WebSocketHandler {
             for (Component component : componentList) {
                 GetStatus(component.ComponentCode, component.Connectors.get(0).ConnectorId);
             }
+
+            //Populate SalesCompletion Queue
+//            ArrayList<TransactionTableDB> SalesCompletionQueueDB = mainActivity.databaseHelper.getExceededSalesCompletionTransactions();
+//            for(TransactionTableDB salesCompletionQueueDB:SalesCompletionQueueDB) {
+//                mainActivity.SalesCompletionQueue.add(salesCompletionQueueDB);
+//            }
         } catch (InterruptedException e) {
             e.printStackTrace();
-        } catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
             LogUtils.e("Init exception during Init", ex);
         }
@@ -288,8 +297,32 @@ public class WebSocketHandler {
 
         webSocketClient.send(StartTransactionMessage);
         LogUtils.e("SalesResultResponse ", StartTransactionMessage);
-        sharedResource = new SharedResource();
 
+        //Add to database
+
+        TransactionTableDB transactionTableDB = new TransactionTableDB();
+
+        transactionTableDB.ComponentCode = mainActivity.SelectedChargingStationComponent.ComponentCode;
+        transactionTableDB.TransactionTrace = PreAuthResponse.emvInfo.TransactionTrace;
+        transactionTableDB.CardNumber = PreAuthResponse.CardNo;
+        transactionTableDB.HashPAN = PreAuthResponse.Token;
+        transactionTableDB.SystemPaymentId = Integer.parseInt(PreAuthResponse.SystemId);
+        transactionTableDB.CardType = PreAuthResponse.CardType.getValue();
+        transactionTableDB.PhoneNumber = PhoneNumber;
+        transactionTableDB.MID = PreAuthResponse.emvInfo.MerchantId;
+        transactionTableDB.TID = PreAuthResponse.emvInfo.TerminalId;
+        transactionTableDB.AuthCode = PreAuthResponse.emvInfo.ApprovalCode;
+        transactionTableDB.AID = PreAuthResponse.emvInfo.AID;
+        transactionTableDB.RNN = PreAuthResponse.emvInfo.RRN;
+        transactionTableDB.Connector = startTransaction.Connector;
+
+        transactionTableDB.Status = "I";
+        transactionTableDB.NoOfRetries = 0;
+
+        boolean success = mainActivity.databaseHelper.insertData(transactionTableDB);
+
+
+        sharedResource = new SharedResource();
         try {
             sharedResource.waitForCondition(10000);
             return startSales;
@@ -356,7 +389,7 @@ public class WebSocketHandler {
 
                             try {
                                 Thread.sleep(5000);
-                                int connectorIndex = mainActivity.getConnectorIndexByID(component,statusNotificationResponse.ConnectorId);
+                                int connectorIndex = mainActivity.getConnectorIndexByID(component, statusNotificationResponse.ConnectorId);
                                 component.Connectors.get(connectorIndex).Description = statusNotificationResponse.Description;
                                 mainActivity.replaceComponent(componentList, component, statusNotificationResponse.ConnectorId);
 
@@ -399,7 +432,7 @@ public class WebSocketHandler {
                 mainActivity.replaceComponent(componentList, mainActivity.SelectedChargingStationComponent, statusNotificationResponse.ConnectorId);
 
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             LogUtils.e("StatusNotificationReceived Exception: ", e);
         }
 
@@ -584,49 +617,94 @@ public class WebSocketHandler {
     }
 
     public SalesCompletion salesCompletionResult;
-    private String previousTransactionTrace ="";
+    private String previousTransactionTrace = "";
     public String salesCompletionComponentCode;
 
     public void SalesCompletionReceived(String StopChargeMsg) {
         mainActivity.preAuthSuccess = false;
         salesCompletionResult = new Gson().fromJson(StopChargeMsg, SalesCompletion.class);
 
-        if(previousTransactionTrace != salesCompletionResult.TransactionTrace) {
+        if (previousTransactionTrace != salesCompletionResult.TransactionTrace) {
             previousTransactionTrace = salesCompletionResult.TransactionTrace;
+            TransactionTableDB transactionTableDB = mainActivity.databaseHelper.getTransactionByTrace(salesCompletionResult.TransactionTrace);
+
+            // Get the current time
+            Date currentTime = new Date();
+
+            // Format the time as needed
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String formattedCurrentTime = formatter.format(currentTime);
+
+            // Assign the current time to transactionTableDB.LastModified
+            transactionTableDB.ReceiveSalesCompletionDateTime = formattedCurrentTime;
+
+
             if (salesCompletionResult.CustumErrorMessage != null) {
                 try {
                     Thread.sleep(3000);
                     mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, String.format("Total Chargin time %02d Hours %02d Minutes", 0, 0));
                     LogUtils.i("SalesCompletion custumErrorMessage", "custumErrorMessage is Not Null : " + salesCompletionResult.CustumErrorMessage);
+
+//                    TransactionTableDB transactionTableDB = mainActivity.databaseHelper.getTransactionByTrace(salesCompletionResult.TransactionTrace);
+                    LogUtils.i("transactionTableDB in WS:", transactionTableDB.toString());
+                    transactionTableDB.ChargingPeriod = salesCompletionResult.ChargingPeriod;
+                    transactionTableDB.CustumErrorMessage = salesCompletionResult.CustumErrorMessage;
+                    transactionTableDB.TxId = salesCompletionResult.TxId;
+                    transactionTableDB.Amount = salesCompletionResult.Amount;
+
+                    transactionTableDB.Status = "S";
+                    mainActivity.databaseHelper.updateData(transactionTableDB);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
 
             } else {
-                    LogUtils.i("custumErrorMessage is Null", "custumErrorMessage is Null");
-                    Txid = salesCompletionResult.TxId;
-                    salesCompletionComponentCode = salesCompletionResult.ComponentCode;
+                LogUtils.i("custumErrorMessage is Null", "custumErrorMessage is Null");
+                Txid = salesCompletionResult.TxId;
+                salesCompletionComponentCode = salesCompletionResult.ComponentCode;
 
-                    String timeUse = String.format("Total Charging time: " + salesCompletionResult.ChargingPeriod);
+                String timeUse = String.format("Total Charging time: " + salesCompletionResult.ChargingPeriod);
 
-                    if (GeneralVariable.CurrentFragment.equals("WelcomeFragment") || GeneralVariable.CurrentFragment.equals("ChargingFragment")) {
-                        LogUtils.i("SalesCompletion Executed");
-                        mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
-                    } else {
-                        LogUtils.i("SalesCompletion added to Queue");
-                        mainActivity.SalesCompletionQueue.add(salesCompletionResult);
-                    }
-                    try {
-                        mainActivity.UpdateStatus("Available");
-                        GeneralVariable.ChargePointStatus = "Available";
-                        mainActivity.SelectedChargingStationComponent.StartChargeTime = null;
+//                SalesCompletionDB salesCompletionDB = new SalesCompletionDB(salesCompletionResult.ComponentCode, salesCompletionResult.TransactionTrace, salesCompletionResult.Amount, salesCompletionResult.TxId, salesCompletionResult.CustumErrorMessage, salesCompletionResult.ChargingPeriod, "N", 0);
+//                boolean success = mainActivity.databaseHelper.insertData(salesCompletionDB);
+
+                //DB
+//                LogUtils.i("TransactionTrace", salesCompletionResult.TransactionTrace);
+//                TransactionTableDB transactionTableDB = mainActivity.databaseHelper.getTransactionByTrace(salesCompletionResult.TransactionTrace);
+                try{
+                LogUtils.i("transactionTableDB in WS:", transactionTableDB.toString());
+                transactionTableDB.ChargingPeriod = salesCompletionResult.ChargingPeriod;
+                transactionTableDB.CustumErrorMessage = salesCompletionResult.CustumErrorMessage;
+                transactionTableDB.TxId = salesCompletionResult.TxId;
+                transactionTableDB.Amount = salesCompletionResult.Amount;
+                } catch (Exception ex){
+                    LogUtils.i("SalesCompletion DB exception:", ex);
+                }
+
+                if (GeneralVariable.CurrentFragment.equals("WelcomeFragment") || GeneralVariable.CurrentFragment.equals("ChargingFragment")) {
+                    LogUtils.i("SalesCompletion Executed");
+                    mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
+
+                    transactionTableDB.Status = "S";
+                    mainActivity.databaseHelper.updateData(transactionTableDB);
+                } else {
+                    LogUtils.i("SalesCompletion added to Queue");
+//                        mainActivity.SalesCompletionQueue.add(salesCompletionResult);
+
+                    transactionTableDB.Status = "F";
+                    mainActivity.databaseHelper.updateData(transactionTableDB);
+                }
+                  try {
+                    mainActivity.UpdateStatus("Available");
+                    GeneralVariable.ChargePointStatus = "Available";
+                    mainActivity.SelectedChargingStationComponent.StartChargeTime = null;
 
                 } catch (Exception ex) {
                     mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, String.format("Total Chargin time %02d Hours %02d Minutes", 0, 0));
                     LogUtils.i("SalesCompletionReceivedError", ex);
                 }
             }
-        } else{
+        } else {
             LogUtils.i("SalesCompletion did not execute because the current trace is the same as prevous trace");
         }
     }
@@ -644,13 +722,13 @@ public class WebSocketHandler {
         Gson gson = new Gson();
         String StopChargeTapCardMessage = String.format("0|%s|%s|%s", uniqId, "StopChargeTapCard", gson.toJson(result));
 
-        try{
+        try {
             new Thread(() -> {
 
                 webSocketClient.send(StopChargeTapCardMessage);
                 LogUtils.i("StopChargeTapCardResultResponse ", StopChargeTapCardMessage);
             }).start();
-        } catch (Exception e){
+        } catch (Exception e) {
             LogUtils.i("StopChargeTapCardResultResponse Exception", e);
         }
     }
