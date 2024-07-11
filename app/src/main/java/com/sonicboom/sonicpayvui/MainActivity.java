@@ -129,8 +129,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public boolean IsSkipSalesCompletionResultFragment;
     public boolean preAuthSuccess = false;
 
-
-    public boolean IsCharging;
     TextView txtStatus;
     public final IAIDLCardCallbackInterface callbackInterface = new IAIDLCardCallbackInterface.Stub() {
 
@@ -140,14 +138,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             preAuthSuccess = false;
 
             if (!result.CardType.name().equals("Unknown")) {
-//                if (IsStopChargeTapCard) {
 
                 StopChargeTapCard stopChargeTapCardResponse = new StopChargeTapCard();
                 stopChargeTapCardResponse.CardNo = result.CardNo;
                 stopChargeTapCardResponse.HashedPAN = result.Token;
                 stopChargeTapCardResponse.ComponentCode = SelectedChargingStationComponent.ComponentCode;
 
-//
                 stopChargeTapCardResponse.ConnectorId = getConnectorIDByIndex(SelectedChargingStationComponent, SelectedChargingStationComponent.SelectedConnector);
 
 
@@ -162,13 +158,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .addToBackStack(null)
                         .commit();
 
-//                }
             } else {
 
                 if (!stopChargeBack) {
-//                    ShowHideTitle(true);
+
                     LogUtils.i("Read Card Error");
-//                if (!isOneConnector) {
                     Bundle bundle = new Bundle();
                     boolean isSuccess = false;
                     bundle.putBoolean("IsSuccess", isSuccess);
@@ -182,7 +176,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
                             .addToBackStack(null)
                             .commit();
-//                }
                 } else {
                     stopChargeBack = false;
                 }
@@ -376,51 +369,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             }
         }
-
-//        @Override
-//        public void SettlementCallback(SettlementResult[] result) {
-//            LogUtils.i(TAG, "SettlementCallback:" + new Gson().toJson(result));
-//
-//            boolean isSuccess = true;
-//            String errorCode = "SF";
-//
-//            if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.enable_tcp))) {
-//                TCPGeneralMessage response = new TCPGeneralMessage();
-//                response.Command = "Settlement";
-//
-//                List<Settlement.SettlementResponse> settlementResponses = new ArrayList<>();
-//                for (SettlementResult hostResult : result) {
-//                    Settlement.SettlementResponse settlementResponse = new Settlement.SettlementResponse();
-//                    settlementResponse.BatchNo = hostResult.BatchNo;
-//                    settlementResponse.StatusCode = hostResult.StatusCode;
-//                    settlementResponse.BatchCount = hostResult.BatchCount;
-//                    settlementResponse.HostNo = hostResult.HostNo;
-//                    settlementResponse.BatchAmount = hostResult.BatchAmount;
-//                    settlementResponse.RefundCount = hostResult.RefundCount;
-//                    settlementResponse.RefundAmount = hostResult.RefundAmount;
-//                    settlementResponses.add(settlementResponse);
-//                    if (!hostResult.StatusCode.equals(eStatusCode.Approved.getCode()) || !hostResult.StatusCode.equals(eTngStatusCode.No_Error.getCode())) {
-//                        isSuccess = false;
-//                        errorCode = hostResult.StatusCode;
-//
-//                    }
-//                }
-//
-//                response.Data = settlementResponses;
-//                response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
-//
-//            }
-//            Bundle bundle = new Bundle();
-//            bundle.putBoolean("IsSuccess", isSuccess);
-//            bundle.putString("Title", isSuccess ? "Successful" : "Unsuccessful");
-//            bundle.putString("Message", isSuccess ? "Close batch successfully" : eStatusCode.getDescFromCode(errorCode));
-//
-//            getSupportFragmentManager().beginTransaction()
-//                    .setReorderingAllowed(true)
-//                    .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
-//                    .addToBackStack(null)
-//                    .commit();
-//        }
 
         int SettlementRetryCount = 0;
 
@@ -732,7 +680,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 bundle.putString("Message", wbs.salesCompletionResult.CustumErrorMessage);
 
 
-//                LogUtils.i("StopChargeTapCardErrorReceived", "StopChargeTapCardErrorReceived");
+                LogUtils.i("StopChargeTapCardErrorReceived", wbs.salesCompletionResult.CustumErrorMessage);
                 getSupportFragmentManager().beginTransaction()
                         .setReorderingAllowed(true)
                         .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
@@ -762,10 +710,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 //                  DB
                 if (SalesCompletionQueue != null && !SalesCompletionQueue.isEmpty()) {
-                TransactionTableDB transactionTableDB = SalesCompletionQueue.get(0);
-                transactionTableDB.Status = "S";
-                databaseHelper.updateData(transactionTableDB);
-                SalesCompletionQueue.remove(0);
+                    TransactionTableDB transactionTableDB = SalesCompletionQueue.get(0);
+                    transactionTableDB.Status = "S";
+                    databaseHelper.updateData(transactionTableDB);
+                    SalesCompletionQueue.remove(0);
                 }
 
                 if (isSuccess) {
@@ -1315,110 +1263,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnStartCharge = findViewById(R.id.btnStartCharge);
         btnStartCharge.setText("");
         btnStartCharge.setOnClickListener(this);
-        //findViewById(R.id.btnPhoneNumber).setOnClickListener(this);
         txtStatus = findViewById(R.id.txtstatus);
         wbs = new WebSocketHandler(this);
-
-//        handlerTimer = new Handler();
-//
-//        runnable = new Runnable() {
-//            @Override
-//            public void run() {
-//                try {
-////                    LogUtils.i("GeneralVariable Status", GeneralVariable.Status);
-////                    ArrayList<TransactionTableDB> SalesCompletionQueueDB = databaseHelper.getFailedSalesCompletionTransactions();
-////                    for(TransactionTableDB salesCompletionQueueDB:SalesCompletionQueueDB) {
-////                        SalesCompletionQueue.add(salesCompletionQueueDB);
-////                    }
-//
-//                    ArrayList<TransactionTableDB> SalesCompletionQueueDB = databaseHelper.getFailedSalesCompletionTransactions();
-//                    for (TransactionTableDB salesCompletionQueueDB : SalesCompletionQueueDB) {
-//                        if (!SalesCompletionQueue.contains(salesCompletionQueueDB)) {
-//                            SalesCompletionQueue.add(salesCompletionQueueDB);
-//                        }
-//                    }
-//
-////                    LogUtils.i("SalesCompletionQueue", SalesCompletionQueue);
-//                    if (SalesCompletionQueue != null && !SalesCompletionQueue.isEmpty()) {
-//                        if (GeneralVariable.CurrentFragment.equals("WelcomeFragment") || GeneralVariable.CurrentFragment.equals("ChargingFragment")) {
-////                            LogUtils.i("Executing Sales Completion in Queue");
-//                            TransactionTableDB salesCompletionResult = SalesCompletionQueue.get(0); // Get the first item
-//                            wbs.Txid = salesCompletionResult.TxId;
-//                            wbs.salesCompletionComponentCode = salesCompletionResult.ComponentCode;
-//
-//                            String timeUse = String.format("Total Charging time: " + salesCompletionResult.ChargingPeriod);
-//
-//                            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-//
-//                            // Parse the LastModified time
-//                            Date lastModified = formatter.parse(salesCompletionResult.LastModified);
-//                            Calendar calendar = Calendar.getInstance();
-//                            calendar.setTime(lastModified);
-////                            calendar.add(Calendar.MINUTE, 5);
-//                            calendar.add(Calendar.MINUTE, 5);
-//                            Date lastModifiedPlus5Minutes = calendar.getTime();
-//
-//                            // Get the current time
-//                            Date currentTime = new Date();
-//
-////                            if (salesCompletionResult.NoOfRetries <= 3) {
-////                                if (currentTime.after(lastModifiedPlus5Minutes)) {
-////                                    SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
-////                                    salesCompletionResult.NoOfRetries = salesCompletionResult.NoOfRetries + 1;
-////                                    // Update the LastModified time
-////                                    salesCompletionResult.LastModified = formatter.format(currentTime);
-////                                    databaseHelper.updateData(salesCompletionResult);
-////                                }
-////                            } else {
-////                                salesCompletionResult.Status = "E";
-////                            }
-//
-//                            if(!GeneralVariable.Status.equals("Disconnected")) {
-//                                LogUtils.i("Executing Sales Completion in Queue");
-//                                if (salesCompletionResult.NoOfRetries <= 3) {
-//                                    if (currentTime.after(lastModifiedPlus5Minutes)) {
-//                                        SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
-//                                        salesCompletionResult.NoOfRetries = salesCompletionResult.NoOfRetries + 1;
-//                                        // Update the LastModified time
-//                                        salesCompletionResult.LastModified = formatter.format(currentTime);
-//                                        databaseHelper.updateData(salesCompletionResult);
-//                                    }
-//                                } else {
-//                                    salesCompletionResult.Status = "E";
-//                                }
-//                            }
-//
-////                            salesCompletionResult.NoOfRetries = salesCompletionResult.NoOfRetries + 1;
-////                            databaseHelper.updateData(salesCompletionResult);
-////                            salesCompletionResult.Status = "S";
-////                            databaseHelper.updateData(salesCompletionResult);
-////                            SalesCompletionQueue.remove(0); // Remove the first item
-//                        }
-//                    }
-//
-//                    if (runSettlement) {
-//                        StartSettlement();
-//                        runSettlement = false;
-//                    }
-//
-//                    handler.postDelayed(this, 5000); // Schedule the runnable to run again after 3 seconds
-//                } catch (Exception e) {
-//                    LogUtils.e("Error in runnable: ", e);
-//                }
-//            }
-//        };
-//
-//// Start the runnable for the first time
-//        handlerTimer.post(runnable);
 
         handlerTimer = new Handler();
         retryHandler = new Handler();
 
+
+        //Timer to check if any salesCompletion to execute
         runnable = new Runnable() {
             @Override
             public void run() {
                 try {
-                    ArrayList<TransactionTableDB> SalesCompletionQueueDB = databaseHelper.getFailedSalesCompletionTransactions();
+//                    ArrayList<TransactionTableDB> SalesCompletionQueueDB = databaseHelper.getFailedSalesCompletionTransactions();
+                    ArrayList<TransactionTableDB> SalesCompletionQueueDB = databaseHelper.getTransactionsByStatus("F");
                     for (TransactionTableDB salesCompletionQueueDB : SalesCompletionQueueDB) {
                         if (!SalesCompletionQueue.contains(salesCompletionQueueDB)) {
                             SalesCompletionQueue.add(salesCompletionQueueDB);
@@ -1446,7 +1304,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     // First attempt
                                     LogUtils.i("Executing Sales Completion in Queue (First Attempt)");
                                     SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, timeUse);
-                                    salesCompletionResult.NoOfRetries = salesCompletionResult.NoOfRetries + 1;;
+                                    salesCompletionResult.NoOfRetries = salesCompletionResult.NoOfRetries + 1;
+                                    ;
                                     salesCompletionResult.ReceiveSalesCompletionDateTime = formatter.format(currentTime);
                                     databaseHelper.updateData(salesCompletionResult);
                                 } else if (salesCompletionResult.NoOfRetries <= 3 && currentTime.after(lastModifiedPlus5Minutes)) {
@@ -1484,10 +1343,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 // Start the runnable for the first time
         handlerTimer.post(runnable);
 
-
-
         databaseHelper = new DatabaseHelper(MainActivity.this);
-
 
         LogUtils.d(TAG, "onCreate ended.");
         logAndUpdateAllSharedPrefValues();
@@ -1500,7 +1356,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             String key = entry.getKey();
             Object value = entry.getValue();
 
-            LogUtils.i(TAG, key + ": " + value.toString());
+//            Logs all the config Values
+//            LogUtils.i(TAG, key + ": " + value.toString());
 
             if (value instanceof String) {
                 sharedPrefUI.WriteSharedPrefStr(key, (String) value);
@@ -1570,7 +1427,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     .replace(R.id.fragmentContainer, WelcomeFragment.class, null)
                                     .addToBackStack(null)
                                     .commit();
-//                            btnStartCharge.setVisibility(View.VISIBLE);
                         }
                     }
                 };
@@ -1594,7 +1450,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 }
 
                                 wbs.GetStatus(component.ComponentCode, component.Connectors.get(0).ConnectorId);
-//                                wbs.GetStatusList(wbs.componentList);
                                 if (component.Connectors != null && !component.Connectors.isEmpty()) {
                                     LogUtils.i("Start Component Status :" + component.ComponentCode + " | ConnectorID :" + component.Connectors.get(0).ConnectorId, component.Connectors.get(0).Status);
                                 } else {
@@ -1615,13 +1470,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         if (wbs.componentList.length == 1) {
                                             SelectedChargingStationComponent = wbs.componentList[0];
                                             SelectedChargingStation = SelectedChargingStationComponent.ComponentName;
-//                                            SelectedChargingStationComponent.StartChargeTime = null;
 
                                             // One charge station, One Connector
                                             if (SelectedChargingStationComponent.Connectors.size() <= 1) {
                                                 if (SelectedChargingStationComponent.Connectors.get(0).Status.toUpperCase(Locale.ROOT).equals("BLOCKED")) {
                                                     Toast.makeText(MainActivity.this, "Please unplug charger", Toast.LENGTH_SHORT).show();
-//                                                    btnStartCharge.setVisibility(View.VISIBLE);
                                                     getSupportFragmentManager().beginTransaction()
                                                             .setReorderingAllowed(true)
                                                             .replace(R.id.fragmentContainer, WelcomeFragment.class, null)
@@ -1650,7 +1503,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                             || SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("FINISHING")
                                                             || SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("PLUGINTOSTART")) {
                                                         IsStopChargeTapCard = false;
-                                                        IsCharging = true;
                                                         isOneConnector = true;
 
                                                         if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.IsSkipFare))) {
@@ -1786,7 +1638,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     .replace(R.id.fragmentContainer, WelcomeFragment.class, null)
                                     .addToBackStack(null)
                                     .commit();
-//                            btnStartCharge.setVisibility(View.VISIBLE);
                         }
                     } else {
                         if (SelectedChargingStationComponent.Connectors.size() > 1) {
@@ -1799,7 +1650,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     .addToBackStack(null)
                                     .commit();
                         } else {
-//                        selectChargerFragment = new SelectChargerFragment(wbs.componentList, selectedConnectorIndex);
                             ShowHideTitle(true);
                             UpdateTitle("Select Charger");
                             getSupportFragmentManager().beginTransaction()
@@ -1827,7 +1677,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .replace(R.id.fragmentContainer, WelcomeFragment.class, null)
                         .addToBackStack(null)
                         .commit();
-//                btnStartCharge.setVisibility(View.VISIBLE);
                 break;
 
             //Tapping the charger card
@@ -1912,6 +1761,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Toast.makeText(this, "Charging Station Not Available", Toast.LENGTH_SHORT).show();
                 }
                 break;
+            //Current implementation does not use the select connector fragment
             case R.id.connectorCard:
                 IsStopChargeTapCard = false;
 
@@ -1922,7 +1772,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 if (connectorStatusText.equals("AVAILABLE") || connectorStatusText.equals("PREPARING")) {
                     selectedConnectorIndex = getConnectorIndexByID(SelectedChargingStationComponent, Integer.valueOf(connector.getText().toString()));
-//                selectedConnectorIndex = Integer.valueOf(connector.getText().toString()) - 1;
 
                     SelectedChargingStationComponent.SelectedConnector = selectedConnectorIndex;
                     replaceComponent(wbs.componentList, SelectedChargingStationComponent, SelectedChargingStationComponent.Connectors.get(0).ConnectorId);
@@ -1997,7 +1846,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 .addToBackStack(null)
                                 .commit();
                     } else {
-//                        btnStartCharge.setVisibility(View.VISIBLE);
                         ShowHideTitle(true);
                         getSupportFragmentManager().beginTransaction()
                                 .setReorderingAllowed(true)
@@ -2016,7 +1864,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 .addToBackStack(null)
                                 .commit();
                     } else {
-//                        selectChargerFragment = new SelectChargerFragment(wbs.componentList, selectedConnectorIndex);
                         ShowHideTitle(true);
                         UpdateTitle("Select Charger");
                         getSupportFragmentManager().beginTransaction()
@@ -2039,10 +1886,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         LogUtils.i("Abort Succesful");
                         if (wbs.componentList.length == 1) {
                             if (isOneConnector) {
-
-
-//                            SimpleDateFormat targetFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-//                            String formattedDate = targetFormat.format(SelectedChargingStationComponent.Connectors.get(selectedConnectorIndex).Description);
 
                                 String descriptionString = SelectedChargingStationComponent.Connectors.get(selectedConnectorIndex).Description;
                                 String formattedDate = "";
@@ -2067,7 +1910,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 } else {
                                     System.out.println("Description string is empty or null. Cannot parse.");
                                 }
-
 
                                 bundle.putString("StartChargeTime", formattedDate);
 
@@ -2106,16 +1948,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
 
             case R.id.btnBackConnector:
-//                selectedConnectorIndex = 0;
                 if (wbs.componentList.length == 1) {
-//                    btnStartCharge.setVisibility(View.VISIBLE);
                     getSupportFragmentManager().beginTransaction()
                             .setReorderingAllowed(true)
                             .replace(R.id.fragmentContainer, WelcomeFragment.class, null)
                             .addToBackStack(null)
                             .commit();
                 } else {
-//                    selectChargerFragment = new SelectChargerFragment(wbs.componentList, selectedConnectorIndex);
                     UpdateTitle("Select Charger");
                     getSupportFragmentManager().beginTransaction()
                             .setReorderingAllowed(true)
@@ -2148,13 +1987,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.btnBackPlugin:
-//                SalesCompletion(0, wbs.startTransactionTrace, String.format("Total Charging time %02d Hours %02d Minutes", 0, 0));
                 getSupportFragmentManager().beginTransaction()
                         .setReorderingAllowed(true)
                         .replace(R.id.fragmentContainer, WelcomeFragment.class, null)
                         .addToBackStack(null)
                         .commit();
-//                btnStartCharge.setVisibility(View.VISIBLE);
                 break;
             default:
                 throw new RuntimeException("Unknown button ID");
@@ -2287,13 +2124,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     case Idle:
                         btnStartCharge.setText("START");
                         btnStartCharge.setClickable(true);
-//                        btnStartCharge.setVisibility(View.VISIBLE);
                         GeneralVariable.Status = "Connected";
                         break;
                     case Disconnected:
                         btnStartCharge.setText("Disconnected");
                         btnStartCharge.setClickable(false);
-//                        btnStartCharge.setVisibility(View.VISIBLE);
                         GeneralVariable.Status = "Disconnected";
 
                         if (!GeneralVariable.CurrentFragment.equals("WelcomeFragment")) {
@@ -2308,7 +2143,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         break;
                     case NotFound:
                         UpdateTitle("Component Not Found");
-//                        btnStartCharge.setVisibility(View.VISIBLE);
                         GeneralVariable.Status = "Not Found";
                         break;
 
@@ -2444,17 +2278,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 bundle.putString("StartChargeTime", time);
                 bundle.putString("HideStopButton", hideStopButton);
 
-//                StartChargeTime = time;
-//                UpdateTitle("Charging");
-//                UpdateTitleColor(R.color.main_blue);
-//                ShowHideTitle(true);
-//                btnStartCharge.setVisibility(View.GONE);
-//                getSupportFragmentManager().beginTransaction()
-//                        .setReorderingAllowed(true)
-//                        .replace(R.id.fragmentContainer, PlugInToStartFragment.class, bundle)
-//                        .addToBackStack(null)
-//                        .commit();
-
                 StartChargeTime = time;
                 UpdateTitle("Charging");
                 UpdateTitleColor(R.color.main_blue);
@@ -2477,23 +2300,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void run() {
 
                 Bundle bundle = new Bundle();
-
-//                LogUtils.i("wbs.componentList.length", wbs.componentList.length);
-//                LogUtils.i("wbs.componentList[0].Connectors.size()", wbs.componentList[0].Connectors.size());
-
-//                if (wbs.componentList.length == 1 && wbs.componentList[0].Connectors.size() <= 1) {
-//                    LogUtils.i("StayOnFragment", "true");
-//                    bundle.putBoolean("StayOnFragment", true);
-//                } else {
-//                    LogUtils.i("StayOnFragment", "false");
-//                    bundle.putBoolean("StayOnFragment", false);
-//                }
-
                 LogUtils.i("StayOnFragment", "true");
                 bundle.putBoolean("StayOnFragment", true);
 
-//                    try {
-//                        Thread.sleep(3000);
                 UpdateTitle("Plug In To Charge");
                 UpdateTitleColor(R.color.main_blue);
                 ShowHideTitle(true);
@@ -2503,9 +2312,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .replace(R.id.fragmentContainer, PlugInToStartFragment.class, bundle)
                         .addToBackStack(null)
                         .commit();
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
 
             }
         });
@@ -2561,14 +2367,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                         settlementList.add(calSTTime.getTime());
                         // only create the timer if not created yet
-
-
                     }
                 }
                 Date NextSettlementTime = getSmallestDate(settlementList);
                 Timer settlementTimer = new Timer();
-//                Date date= new Date();
-//                date.setTime(date.getTime() + 10000);
                 LogUtils.i(TAG, "[CheckSchedule] Next Settlement Schedule: " + NextSettlementTime);
                 settlementTimer.schedule(new MyTimerTask(), NextSettlementTime);
             }
@@ -2585,15 +2387,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public boolean TriggerSettlementHandler() {
         try {
-
-
             Date date = new Date();
             date.setTime(date.getTime() + 2000);
             Timer settlementTimer = new Timer();
             LogUtils.i(TAG, "[CheckSchedule1] Next Settlement Schedule: " + date);
 
             settlementTimer.schedule(new MyTimerTaskWithFixHost(), date);
-
 
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -2716,7 +2515,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             e.printStackTrace();
         }
 
-
         Bundle bundle = new Bundle();
         boolean isSuccess = false;
         ShowHideTitle(true);
@@ -2724,8 +2522,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         bundle.putString("Title", "Invalid Card");
         bundle.putString("Message", stopChargeTapCardError.CustumError);
 
-
-//        LogUtils.i("StopChargeTapCardErrorReceived", "StopChargeTapCardErrorReceived");
         getSupportFragmentManager().beginTransaction()
                 .setReorderingAllowed(true)
                 .replace(R.id.fragmentContainer, ResultFragment.class, bundle)
@@ -2856,7 +2652,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return -1; // Return -1 if no matching ConnectorId is found
     }
 
-
     public Component GetSelectedComponentbyComponentCode(String componentCode, Component[] componentList, int connectorID) {
         try {
             for (Component component : componentList) {
@@ -2871,6 +2666,4 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         return null;
     }
-
 }
-

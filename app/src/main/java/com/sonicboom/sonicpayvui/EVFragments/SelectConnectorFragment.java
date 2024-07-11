@@ -71,6 +71,7 @@ public class SelectConnectorFragment extends Fragment {
         return fragment;
     }
 
+    //Current implementation does not use the select connector fragment
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,13 +92,6 @@ public class SelectConnectorFragment extends Fragment {
 
         // Get the GridLayout where you want to add the card views
         GridLayout cardContainer2 = view.findViewById(R.id.cardConnectorContainer);
-
-//        List<Connector> connectors = new ArrayList<>();
-//
-//        connectors.add(new Connector(1, "Available", ""));
-//        connectors.add(new Connector(2, "Available", ""));
-//        Connector connector = component.connectors.get(0);
-
 
         for (Connector connector : component.Connectors) {
             // Inflate the card view layout
@@ -188,7 +182,6 @@ public class SelectConnectorFragment extends Fragment {
         timeoutTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                // Redirect to another fragment here
                 redirectToAnotherFragment();
             }
         }, GoBackToWelcomeTimeOutDuration); //

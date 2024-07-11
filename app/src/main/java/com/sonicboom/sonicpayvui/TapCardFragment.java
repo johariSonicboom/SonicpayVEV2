@@ -91,9 +91,6 @@ public class TapCardFragment extends Fragment {
         else {
             LinearLayout amountLayout = view.findViewById(R.id.tapcard_amountLayout);
             amountLayout.setVisibility(View.GONE);
-//            amount.setVisibility(View.INVISIBLE);
-//            TextView amountCurrency = view.findViewById(R.id.tapCard_totalAmountCurrency);
-//            amountCurrency.setVisibility(View.INVISIBLE);
         }
 
         boolean IsQRMerchantScanEnabled = false;

@@ -123,6 +123,8 @@ public class SelectChargerFragment extends Fragment {
 
             ImageView statusIcon = cardView.findViewById(R.id.statusIcon);
             ImageView imageCharger = cardView.findViewById(R.id.imageViewCharger);
+
+
             LinearLayout statusLayout = cardView.findViewById(R.id.statusLayout);
             int color;
 

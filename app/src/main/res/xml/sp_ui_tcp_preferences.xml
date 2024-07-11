@@ -9,12 +9,14 @@
             android:key="@string/ComponentCode"
             android:title="Segment"
             app:useSimpleSummaryProvider="true" />
+
         <EditTextPreference
             android:title="Client Code"
             android:key="@string/client_code"
             android:inputType="text"
             app:useSimpleSummaryProvider="true"
             android:defaultValue=""/>
+
         <EditTextPreference
             android:title="OCPP Server"
             android:key="@string/WebSocketURL"
@@ -31,7 +33,7 @@
             android:key="@string/LoadingTimeOutDuration"
             android:inputType="text"
             app:useSimpleSummaryProvider="true"
-            android:defaultValue="10000"/>
+            android:defaultValue="20000"/>
 
         <EditTextPreference
             android:title="Plug In Time Out Duration (in ms)"
@@ -58,6 +60,6 @@
             android:title="Enable Tap Card to Stop Charging"
             android:key="@string/EnableTapCardStopCharge"
             android:defaultValue="false" />
-    </PreferenceCategory>
 
+    </PreferenceCategory>
 </PreferenceScreen>

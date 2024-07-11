@@ -388,7 +388,4 @@ public TransactionTableDB getTransactionByTrace(String trace) {
         return transactionsList;
     }
 
-
-
-
 }

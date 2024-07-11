@@ -45,9 +45,6 @@ public class WebSocketHandler {
     private WebSocketClient webSocketClient;
     private SharedResource sharedResource;
     private String InitResul = "";
-    private String NotificationReceivedResult = "";
-    //    public Component component;
-//    public Component selectedComponent;
     MainActivity mainActivity;
 
     public WebSocketHandler(MainActivity a) {
@@ -96,7 +93,6 @@ public class WebSocketHandler {
                         break;
                     case "GetCharPointStatus":
                         NotificationReceived(Received[3]);
-                        NotificationReceivedResult = message;
                         sharedResource.setCondition();
                         break;
                     case "SalesCompletion":
@@ -211,16 +207,11 @@ public class WebSocketHandler {
                 GetStatus(component.ComponentCode, component.Connectors.get(0).ConnectorId);
             }
 
-            //Populate SalesCompletion Queue
-//            ArrayList<TransactionTableDB> SalesCompletionQueueDB = mainActivity.databaseHelper.getExceededSalesCompletionTransactions();
-//            for(TransactionTableDB salesCompletionQueueDB:SalesCompletionQueueDB) {
-//                mainActivity.SalesCompletionQueue.add(salesCompletionQueueDB);
-//            }
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (Exception ex) {
             ex.printStackTrace();
-            LogUtils.e("Init exception during Init", ex);
+            LogUtils.e("Init exception", ex);
         }
 
     }
@@ -258,12 +249,10 @@ public class WebSocketHandler {
         Gson gson = new Gson();
 
         String GetChargePointMessage = String.format("0|%s|%s|%s", uniqId, "GetCharPointStatusByList", gson.toJson(charPointStatusRequestList));
-        //new Thread(() -> {
         sharedResource = new SharedResource();
         webSocketClient.send(GetChargePointMessage);
         sharedResource.waitForCondition(10000);
         LogUtils.e("GetStatus ", GetChargePointMessage);
-        //}).start();
 
     }
 
@@ -299,7 +288,6 @@ public class WebSocketHandler {
         LogUtils.e("SalesResultResponse ", StartTransactionMessage);
 
         //Add to database
-
         TransactionTableDB transactionTableDB = new TransactionTableDB();
 
         transactionTableDB.ComponentCode = mainActivity.SelectedChargingStationComponent.ComponentCode;
@@ -338,7 +326,6 @@ public class WebSocketHandler {
         String uniqId = RandomString(16);
         vSalesCompletionResult SalesCompletion = new vSalesCompletionResult();
 
-//        SalesCompletion.ComponentCode = mainActivity.SelectedChargingStationComponent.ComponentCode;
         SalesCompletion.ComponentCode = salesCompletionComponentCode;
         SalesCompletion.TransactionTrace = result.TransactionTrace;
 
@@ -354,7 +341,6 @@ public class WebSocketHandler {
         String SalesCompletionMessage = String.format("0|%s|%s|%s", uniqId, "SalesCompletionResult", gson.toJson(SalesCompletion));
 
         new Thread(() -> {
-
             webSocketClient.send(SalesCompletionMessage);
             LogUtils.e("SalesCompletionResultResponse ", SalesCompletionMessage);
         }).start();
@@ -410,11 +396,7 @@ public class WebSocketHandler {
                             } catch (Exception ex) {
                                 LogUtils.e("NotificationReceived ", ex);
                             }
-                        }
-//                        else if (mainActivity.SelectedChargingStationComponent.StartChargeTime != null) {
-//                            mainActivity.UpdateChargePointStatus(eChargePointStatus.Charging);
-//                        }
-                        else {
+                        } else {
                             LogUtils.i("StartCharging failed");
                             mainActivity.ChangeToWelcomeFragment();
                         }
@@ -472,32 +454,24 @@ public class WebSocketHandler {
                         SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
                         String formattedDate = format.format(new Date());
 
-                        try {
+//                        try {
 //                            Thread.sleep(5000);
                             if (componentList.length == 1 && componentList[0].Connectors.size() <= 1) {
-                                Thread.sleep(5000);
+//                                Thread.sleep(5000);
                                 mainActivity.isOneConnector = true;
                                 mainActivity.StartCharging(notificationResponse.Connectors.get(0).Description, "false");
                             }
-//                            else {
-//                                mainActivity.StartCharging(notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description, "true");
-//                            }
 
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
+//                        } catch (InterruptedException e) {
+//                            e.printStackTrace();
+//                        }
 
                         try {
-//                            mainActivity.SelectedChargingStationComponent = mainActivity.GetSelectedComponentbyComponentCode(notificationResponse.ComponentCode, componentList);
                             mainActivity.SelectedChargingStationComponent.StartChargeTime = format.parse(notificationResponse.Connectors.get(0).Description);
-//                            mainActivity.replaceComponent(componentList, mainActivity.SelectedChargingStationComponent);
                         } catch (Exception ex) {
                             LogUtils.e(ex);
                         }
                     }
-//                    else if (mainActivity.SelectedChargingStationComponent.StartChargeTime != null) {
-////                        mainActivity.UpdateChargePointStatus(eChargePointStatus.Charging);
-//                    }
                     else {
                         LogUtils.i("StartCharging failed");
                         mainActivity.ChangeToWelcomeFragment();
@@ -544,75 +518,6 @@ public class WebSocketHandler {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
-
-//            Component component = mainActivity.GetSelectedComponentbyComponentCode(notificationResponse.ComponentCode, componentList, notificationResponse.Connectors.get(0).ConnectorId);
-//
-//            mainActivity.replaceComponentConnectors(componentList, notificationResponse.ComponentCode, notificationResponse.Connectors);
-//
-//            String connectorStatus;
-//
-//            if (component.Connectors.isEmpty()) {
-//                connectorStatus = "Offline";
-//            } else {
-//                connectorStatus = notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Status;
-//            }
-//
-//            component.FareChargeText = notificationResponse.FareChargeText;
-//            component.FareChargeDescription = notificationResponse.DescriptionText;
-//            mainActivity.replaceComponent(componentList, component, component.Connectors.get(0).ConnectorId);
-//
-//            LogUtils.i("connectorStatus", connectorStatus.toLowerCase(Locale.ROOT));
-//            switch (connectorStatus.toLowerCase(Locale.ROOT)) {
-//                case "preparing":
-//
-//                    break;
-//                case "startcharge":
-//                case "charging":
-//                    if (!notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description.isEmpty()) {
-//
-//                        new Date().getTime();
-//                        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
-//                        String formattedDate = format.format(new Date());
-//
-//                        try {
-//                            Thread.sleep(5000);
-//                            if (componentList.length == 1 && componentList[0].Connectors.size() <= 1) {
-//                                mainActivity.isOneConnector = true;
-//                                mainActivity.StartCharging(notificationResponse.Connectors.get(0).Description, "false");
-//                            }
-////                            else {
-////                                mainActivity.StartCharging(notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description, "true");
-////                            }
-//
-//                        } catch (InterruptedException e) {
-//                            e.printStackTrace();
-//                        }
-//
-//                        try {
-////                            mainActivity.SelectedChargingStationComponent = mainActivity.GetSelectedComponentbyComponentCode(notificationResponse.ComponentCode, componentList);
-//                            mainActivity.SelectedChargingStationComponent.StartChargeTime = format.parse(notificationResponse.Connectors.get(0).Description);
-////                            mainActivity.replaceComponent(componentList, mainActivity.SelectedChargingStationComponent);
-//                        } catch (Exception ex) {
-//                            LogUtils.e(ex);
-//                        }
-//                    } else if (mainActivity.SelectedChargingStationComponent.StartChargeTime != null) {
-//                        mainActivity.UpdateChargePointStatus(eChargePointStatus.Charging);
-//                    } else {
-//                        mainActivity.ChangeToWelcomeFragment();
-//                    }
-//
-//                    break;
-//                case "available":
-////                        mainActivity.UpdateChargePointStatus(eChargePointStatus.Idle);
-//                    component.FareChargeText = notificationResponse.FareChargeText;
-//                    component.FareChargeDescription = notificationResponse.DescriptionText;
-//                    mainActivity.replaceComponent(componentList, component, component.Connectors.get(0).ConnectorId);
-//                    break;
-//                case "offline":
-////                        mainActivity.UpdateChargePointStatus(eChargePointStatus.Disconnected);
-//                    break;
-//            }
         }
     }
 
@@ -645,8 +550,6 @@ public class WebSocketHandler {
                     mainActivity.SalesCompletion(salesCompletionResult.Amount, salesCompletionResult.TransactionTrace, String.format("Total Chargin time %02d Hours %02d Minutes", 0, 0));
                     LogUtils.i("SalesCompletion custumErrorMessage", "custumErrorMessage is Not Null : " + salesCompletionResult.CustumErrorMessage);
 
-//                    TransactionTableDB transactionTableDB = mainActivity.databaseHelper.getTransactionByTrace(salesCompletionResult.TransactionTrace);
-                    LogUtils.i("transactionTableDB in WS:", transactionTableDB.toString());
                     transactionTableDB.ChargingPeriod = salesCompletionResult.ChargingPeriod;
                     transactionTableDB.CustumErrorMessage = salesCompletionResult.CustumErrorMessage;
                     transactionTableDB.TxId = salesCompletionResult.TxId;
@@ -665,19 +568,14 @@ public class WebSocketHandler {
 
                 String timeUse = String.format("Total Charging time: " + salesCompletionResult.ChargingPeriod);
 
-//                SalesCompletionDB salesCompletionDB = new SalesCompletionDB(salesCompletionResult.ComponentCode, salesCompletionResult.TransactionTrace, salesCompletionResult.Amount, salesCompletionResult.TxId, salesCompletionResult.CustumErrorMessage, salesCompletionResult.ChargingPeriod, "N", 0);
-//                boolean success = mainActivity.databaseHelper.insertData(salesCompletionDB);
-
                 //DB
-//                LogUtils.i("TransactionTrace", salesCompletionResult.TransactionTrace);
-//                TransactionTableDB transactionTableDB = mainActivity.databaseHelper.getTransactionByTrace(salesCompletionResult.TransactionTrace);
-                try{
-                LogUtils.i("transactionTableDB in WS:", transactionTableDB.toString());
-                transactionTableDB.ChargingPeriod = salesCompletionResult.ChargingPeriod;
-                transactionTableDB.CustumErrorMessage = salesCompletionResult.CustumErrorMessage;
-                transactionTableDB.TxId = salesCompletionResult.TxId;
-                transactionTableDB.Amount = salesCompletionResult.Amount;
-                } catch (Exception ex){
+                try {
+                    LogUtils.i("transactionTableDB in WS:", transactionTableDB.toString());
+                    transactionTableDB.ChargingPeriod = salesCompletionResult.ChargingPeriod;
+                    transactionTableDB.CustumErrorMessage = salesCompletionResult.CustumErrorMessage;
+                    transactionTableDB.TxId = salesCompletionResult.TxId;
+                    transactionTableDB.Amount = salesCompletionResult.Amount;
+                } catch (Exception ex) {
                     LogUtils.i("SalesCompletion DB exception:", ex);
                 }
 
@@ -689,12 +587,11 @@ public class WebSocketHandler {
                     mainActivity.databaseHelper.updateData(transactionTableDB);
                 } else {
                     LogUtils.i("SalesCompletion added to Queue");
-//                        mainActivity.SalesCompletionQueue.add(salesCompletionResult);
 
                     transactionTableDB.Status = "F";
                     mainActivity.databaseHelper.updateData(transactionTableDB);
                 }
-                  try {
+                try {
                     mainActivity.UpdateStatus("Available");
                     GeneralVariable.ChargePointStatus = "Available";
                     mainActivity.SelectedChargingStationComponent.StartChargeTime = null;
@@ -705,7 +602,7 @@ public class WebSocketHandler {
                 }
             }
         } else {
-            LogUtils.i("SalesCompletion did not execute because the current trace is the same as prevous trace");
+            LogUtils.i("SalesCompletion did not execute because the current trace is the same as previous trace");
         }
     }
 
@@ -724,7 +621,6 @@ public class WebSocketHandler {
 
         try {
             new Thread(() -> {
-
                 webSocketClient.send(StopChargeTapCardMessage);
                 LogUtils.i("StopChargeTapCardResultResponse ", StopChargeTapCardMessage);
             }).start();
