@@ -1,17 +1,11 @@
 package com.sonicboom.sonicpayvui;
 
 
-import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-
-import androidx.fragment.app.FragmentManager;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.sbs.aidl.Class.SalesCompletionResult;
 import com.sbs.aidl.Class.SalesResult;
-import com.sonicboom.sonicpayvui.EVFragments.ChargingFragment;
 import com.sonicboom.sonicpayvui.EVModels.Component;
 import com.sonicboom.sonicpayvui.EVModels.GeneralVariable;
 import com.sonicboom.sonicpayvui.EVModels.GetCharPointStatusRequest;
@@ -26,14 +20,10 @@ import com.sonicboom.sonicpayvui.EVModels.vSalesCompletionResult;
 import com.sonicboom.sonicpayvui.EVModels.StopChargeTapCard;
 import com.sonicboom.sonicpayvui.utils.LogUtils;
 
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.SecureRandom;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -196,7 +186,7 @@ public class WebSocketHandler {
 
             if (componentList.length > 0) {
                 mainActivity.SelectedChargingStationComponent = componentList[0];
-                mainActivity.selectedConnectorIndex = 0;
+                mainActivity.SelectedConnectorIndex = 0;
             } else {
                 mainActivity.UpdateChargePointStatus(eChargePointStatus.NotFound);
                 return;
@@ -278,7 +268,7 @@ public class WebSocketHandler {
         startTransaction.AuthCode = PreAuthResponse.emvInfo.ApprovalCode;
         startTransaction.AID = PreAuthResponse.emvInfo.AID;
         startTransaction.RNN = PreAuthResponse.emvInfo.RRN;
-        startTransaction.Connector = mainActivity.getConnectorIDByIndex(mainActivity.SelectedChargingStationComponent, mainActivity.selectedConnectorIndex);
+        startTransaction.Connector = mainActivity.getConnectorIDByIndex(mainActivity.SelectedChargingStationComponent, mainActivity.SelectedConnectorIndex);
         Gson gson = new Gson();
         String StartTransactionMessage = String.format("0|%s|%s|%s", uniqId, "StartSales", gson.toJson(startTransaction));
 
@@ -382,7 +372,7 @@ public class WebSocketHandler {
                                 if (componentList.length == 1 && componentList[0].Connectors.size() <= 1) {
                                     mainActivity.ShowHideTitle(true);
                                     mainActivity.UpdateTitle("Charging");
-                                    mainActivity.isOneConnector = true;
+                                    mainActivity.IsOneConnector = true;
                                     mainActivity.StartCharging(statusNotificationResponse.Description, "false");
                                 } else {
                                     mainActivity.StartCharging(statusNotificationResponse.Description, "true");
@@ -434,7 +424,7 @@ public class WebSocketHandler {
             if (component.Connectors.isEmpty()) {
                 connectorStatus = "Offline";
             } else {
-                connectorStatus = notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Status;
+                connectorStatus = notificationResponse.Connectors.get(mainActivity.SelectedConnectorIndex).Status;
             }
 
             component.FareChargeText = notificationResponse.FareChargeText;
@@ -448,7 +438,7 @@ public class WebSocketHandler {
                     break;
                 case "startcharge":
                 case "charging":
-                    if (!notificationResponse.Connectors.get(mainActivity.selectedConnectorIndex).Description.isEmpty()) {
+                    if (!notificationResponse.Connectors.get(mainActivity.SelectedConnectorIndex).Description.isEmpty()) {
 
                         new Date().getTime();
                         SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -458,7 +448,7 @@ public class WebSocketHandler {
 //                            Thread.sleep(5000);
                             if (componentList.length == 1 && componentList[0].Connectors.size() <= 1) {
 //                                Thread.sleep(5000);
-                                mainActivity.isOneConnector = true;
+                                mainActivity.IsOneConnector = true;
                                 mainActivity.StartCharging(notificationResponse.Connectors.get(0).Description, "false");
                             }
 
@@ -506,7 +496,7 @@ public class WebSocketHandler {
                 SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
                 Thread.sleep(5000);
                 if (componentList.length == 1 && componentList[0].Connectors.size() <= 1) {
-                    mainActivity.isOneConnector = true;
+                    mainActivity.IsOneConnector = true;
                     mainActivity.StartCharging(componentList[0].Connectors.get(0).Description, "false");
                 }
 
@@ -526,7 +516,7 @@ public class WebSocketHandler {
     public String salesCompletionComponentCode;
 
     public void SalesCompletionReceived(String StopChargeMsg) {
-        mainActivity.preAuthSuccess = false;
+        mainActivity.PreAuthSuccess = false;
         salesCompletionResult = new Gson().fromJson(StopChargeMsg, SalesCompletion.class);
 
         if (previousTransactionTrace != salesCompletionResult.TransactionTrace) {

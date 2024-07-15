@@ -3,7 +3,6 @@ package com.sonicboom.sonicpayvui.EVFragments;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.RemoteException;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -208,7 +207,7 @@ public class ChargingFragment extends Fragment {
 //                stopChargeButton.setVisibility(View.INVISIBLE);
 //            }
 
-        if (!((MainActivity) requireActivity()).isOneConnector) {
+        if (!((MainActivity) requireActivity()).IsOneConnector) {
             startTimerForRedirection();
             LogUtils.i("Charging Fragment", "Timer is activated");
         } else {

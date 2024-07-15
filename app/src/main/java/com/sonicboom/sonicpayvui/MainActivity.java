@@ -73,7 +73,6 @@ import com.sonicboom.sonicpayvui.models.PreAuth;
 import com.sonicboom.sonicpayvui.models.Sale;
 import com.sonicboom.sonicpayvui.models.SaleP1P2;
 import com.sonicboom.sonicpayvui.models.SalesCompletion;
-import com.sonicboom.sonicpayvui.models.Settlement;
 import com.sonicboom.sonicpayvui.EVModels.StopChargeTapCard;
 import com.sonicboom.sonicpayvui.models.TCPGeneralMessage;
 import com.sonicboom.sonicpayvui.models.Void;
@@ -88,10 +87,8 @@ import com.sonicboom.sonicpayvui.utils.Utils;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -121,13 +118,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private boolean IsStopChargeTapCard;
     private String SelectedChargingStation;
     public Component SelectedChargingStationComponent;
-    public int selectedConnectorIndex;
-    public boolean isOneConnector;
+    public int SelectedConnectorIndex;
+    public boolean IsOneConnector;
     public ArrayList<TransactionTableDB> SalesCompletionQueue = new ArrayList<>();
-    public boolean runSettlement;
+    public boolean RunSettlement;
     //Used to skip the Result Fragment if the SalesCompletion returns error to avoid showing two result fragments.
     public boolean IsSkipSalesCompletionResultFragment;
-    public boolean preAuthSuccess = false;
+    public boolean PreAuthSuccess = false;
 
     TextView txtStatus;
     public final IAIDLCardCallbackInterface callbackInterface = new IAIDLCardCallbackInterface.Stub() {
@@ -135,7 +132,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void ReadCardCallback(ReadCardResult result) {
             LogUtils.i(TAG, "ReadCardCallback:" + new Gson().toJson(result));
-            preAuthSuccess = false;
+            PreAuthSuccess = false;
 
             if (!result.CardType.name().equals("Unknown")) {
 
@@ -146,9 +143,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 stopChargeTapCardResponse.ConnectorId = getConnectorIDByIndex(SelectedChargingStationComponent, SelectedChargingStationComponent.SelectedConnector);
 
-
                 wbs.StopChargeTapCardResultResponse(stopChargeTapCardResponse);
-
 
                 UpdateTitle("Stop Charge");
                 ShowHideTitle(true);
@@ -202,7 +197,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 response.Data = parkingEntryResponse;
                 response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
-
 
             }
             Bundle bundle = new Bundle();
@@ -284,7 +278,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     response.Data = saleResponse;
                     response.Checksum = Utils.md5(response.Command + new Gson().toJson(response.Data));
-
 
                 }
                 Bundle bundle = new Bundle();
@@ -556,7 +549,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void PreAuthCallback(SalesResult result) throws RemoteException {
             LogUtils.i(TAG, "PreAuthCallback:" + new Gson().toJson(result));
-            preAuthSuccess = false;
+            PreAuthSuccess = false;
             Bundle bundle = new Bundle();
             boolean isSuccess = result.StatusCode.equals(eTngStatusCode.No_Error.getCode()) || result.StatusCode.equals(eStatusCode.Approved.getCode());
             bundle.putBoolean("IsSuccess", isSuccess);
@@ -577,7 +570,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 bundle.putString("Message", message);
             } else {
-                preAuthSuccess = true;
+                PreAuthSuccess = true;
             }
 
             bundle.putString("Amount", String.format("%.2f", (double) TotalAmountCharges / 100f));
@@ -602,7 +595,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         }
 
                     } else {
-                        preAuthSuccess = false;
+                        PreAuthSuccess = false;
                         LogUtils.i("startSales in PreAuth is not success");
                         new Thread(() -> {
                             try {
@@ -629,7 +622,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 .commit();
                     }
                 } else {
-                    preAuthSuccess = false;
+                    PreAuthSuccess = false;
                     LogUtils.e(TAG, "startSales is null");
                     bundle = new Bundle();
                     isSuccess = false;
@@ -1328,9 +1321,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         }
                     }
 
-                    if (runSettlement) {
+                    if (RunSettlement) {
                         StartSettlement();
-                        runSettlement = false;
+                        RunSettlement = false;
                     }
 
                     handlerTimer.postDelayed(this, 5000); // Schedule the runnable to run again after 5 seconds
@@ -1387,7 +1380,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
         Log.i(TAG, "onClick: " + view.getId());
-        SelectChargerFragment selectChargerFragment = new SelectChargerFragment(wbs.componentList, selectedConnectorIndex);
+        SelectChargerFragment selectChargerFragment = new SelectChargerFragment(wbs.componentList, SelectedConnectorIndex);
         final SelectConnectorFragment[] selectConnectorFragment = new SelectConnectorFragment[1];
 
 
@@ -1395,8 +1388,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (view.getId()) {
             case R.id.btnStartCharge:
                 // Handle button A click
-                selectedConnectorIndex = 0;
-                isOneConnector = false;
+                SelectedConnectorIndex = 0;
+                IsOneConnector = false;
 
                 // Update UI to show loading state
                 UpdateTitle("Loading");
@@ -1475,6 +1468,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                             if (SelectedChargingStationComponent.Connectors.size() <= 1) {
                                                 if (SelectedChargingStationComponent.Connectors.get(0).Status.toUpperCase(Locale.ROOT).equals("BLOCKED")) {
                                                     Toast.makeText(MainActivity.this, "Please unplug charger", Toast.LENGTH_SHORT).show();
+                                                    LogUtils.i("Charger status is BLOCKED");
                                                     getSupportFragmentManager().beginTransaction()
                                                             .setReorderingAllowed(true)
                                                             .replace(R.id.fragmentContainer, WelcomeFragment.class, null)
@@ -1489,10 +1483,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                                                         SimpleDateFormat targetFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 //                                                        String formattedDate = targetFormat.format(SelectedChargingStationComponent.StartChargeTime);
-                                                        String formattedDate = targetFormat.format(SelectedChargingStationComponent.Connectors.get(selectedConnectorIndex).Description);
+                                                        String formattedDate = targetFormat.format(SelectedChargingStationComponent.Connectors.get(SelectedConnectorIndex).Description);
                                                         bundle.putString("StartChargeTime", formattedDate);
                                                         bundle.putString("HideStopButton", "false");
-                                                        isOneConnector = true;
+                                                        IsOneConnector = true;
                                                         getSupportFragmentManager().beginTransaction()
                                                                 .replace(R.id.fragmentContainer, ChargingFragment.class, bundle)
                                                                 .addToBackStack(null)
@@ -1503,7 +1497,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                             || SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("FINISHING")
                                                             || SelectedChargingStationComponent.Connectors.get(SelectedChargingStationComponent.SelectedConnector).Status.toUpperCase(Locale.ROOT).equals("PLUGINTOSTART")) {
                                                         IsStopChargeTapCard = false;
-                                                        isOneConnector = true;
+                                                        IsOneConnector = true;
 
                                                         if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.IsSkipFare))) {
                                                             ShowHideTitle(true);
@@ -1548,6 +1542,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                     }
                                                 }
                                                 // One Charge Station, Multiple Connectors
+                                                // Current implementation should not trigger this function
+                                                // Code for reference only
                                             } else {
                                                 btnStartCharge.setVisibility(View.GONE);
                                                 UpdateTitle("Connectors");
@@ -1563,7 +1559,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                             // Multiple Charge Stations
                                         } else {
                                             // Multiple Charge Station will always go to Select Charger Fragment
-                                            selectedConnectorIndex = 0;
+                                            SelectedConnectorIndex = 0;
 
                                             btnStartCharge.setVisibility(View.GONE);
                                             UpdateTitle("Select Charger");
@@ -1618,7 +1614,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             //Phone Fragment Cancel Button
             case R.id.btnCancel:
-                selectedConnectorIndex = 0;
+                SelectedConnectorIndex = 0;
 
                 if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.IsSkipFare))) {
                     if (wbs.componentList.length == 1) {
@@ -1698,7 +1694,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if (SelectedChargingStationComponent != null &&
                             SelectedChargingStationComponent.Connectors != null &&
                             SelectedChargingStationComponent.Connectors.size() < 2) {
-                        selectedConnectorIndex = 0;
+                        SelectedConnectorIndex = 0;
                         if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.IsSkipFare))) {
                             ShowHideTitle(true);
                             UpdateTitle("Key in Phone No");
@@ -1771,9 +1767,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 String connectorStatusText = connectorStatus.getText().toString().toUpperCase(Locale.ROOT);
 
                 if (connectorStatusText.equals("AVAILABLE") || connectorStatusText.equals("PREPARING")) {
-                    selectedConnectorIndex = getConnectorIndexByID(SelectedChargingStationComponent, Integer.valueOf(connector.getText().toString()));
+                    SelectedConnectorIndex = getConnectorIndexByID(SelectedChargingStationComponent, Integer.valueOf(connector.getText().toString()));
 
-                    SelectedChargingStationComponent.SelectedConnector = selectedConnectorIndex;
+                    SelectedChargingStationComponent.SelectedConnector = SelectedConnectorIndex;
                     replaceComponent(wbs.componentList, SelectedChargingStationComponent, SelectedChargingStationComponent.Connectors.get(0).ConnectorId);
 
                     if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.IsSkipFare))) {
@@ -1799,8 +1795,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else if (connectorStatusText.equals("CHARGING") || connectorStatusText.equals("STARTCHARGE")) {
                     try {
                         if (new SharedPrefUI(getApplicationContext()).ReadSharedPrefBoolean(getString(R.string.EnableTapCardStopCharge))) {
-                            selectedConnectorIndex = getConnectorIndexByID(SelectedChargingStationComponent, Integer.valueOf(connector.getText().toString()));
-                            SelectedChargingStationComponent.SelectedConnector = selectedConnectorIndex;
+                            SelectedConnectorIndex = getConnectorIndexByID(SelectedChargingStationComponent, Integer.valueOf(connector.getText().toString()));
+                            SelectedChargingStationComponent.SelectedConnector = SelectedConnectorIndex;
                             boolean result = sonicInterface.ReadCard(true, callbackInterface);
                             IsStopChargeTapCard = true;
                             if (result) {
@@ -1885,9 +1881,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if (r) {
                         LogUtils.i("Abort Succesful");
                         if (wbs.componentList.length == 1) {
-                            if (isOneConnector) {
+                            if (IsOneConnector) {
 
-                                String descriptionString = SelectedChargingStationComponent.Connectors.get(selectedConnectorIndex).Description;
+                                String descriptionString = SelectedChargingStationComponent.Connectors.get(SelectedConnectorIndex).Description;
                                 String formattedDate = "";
 
                                 LogUtils.i("descriptionString pre", descriptionString);
@@ -1918,7 +1914,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         .replace(R.id.fragmentContainer, ChargingFragment.class, bundle)
                                         .addToBackStack(null)
                                         .commit();
-                            } else {
+                            }
+                            //Current implementation will not trigger this condition
+                            else {
                                 ShowHideTitle(true);
                                 UpdateTitle("Connectors");
                                 selectConnectorFragment[0] = new SelectConnectorFragment(SelectedChargingStationComponent);
@@ -2428,7 +2426,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (GeneralVariable.CurrentFragment.equals("WelcomeFragment") || GeneralVariable.CurrentFragment.equals("ChargingFragment")) {
                     StartSettlement();
                 } else {
-                    runSettlement = true;
+                    RunSettlement = true;
                 }
 
             } catch (RemoteException e) {

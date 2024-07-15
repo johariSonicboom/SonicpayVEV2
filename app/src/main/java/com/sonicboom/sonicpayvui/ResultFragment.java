@@ -8,7 +8,6 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import android.os.Handler;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -177,11 +176,10 @@ public class ResultFragment extends Fragment {
         if (mStickPage)
             return;
 
-//        if(GeneralVariable.CurrentFragment.equals(""))
-        if(!((MainActivity)requireActivity()).preAuthSuccess) {
+        if(!((MainActivity)requireActivity()).PreAuthSuccess) {
             startAutoRedirectionToIdlePage();
         }else{
-            ((MainActivity)requireActivity()).preAuthSuccess = false;
+            ((MainActivity)requireActivity()).PreAuthSuccess = false;
         }
         startTimerForTimeout();
     }
